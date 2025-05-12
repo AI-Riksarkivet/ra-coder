@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: kaniko-build-devenv
+spec:
+  serviceAccountName: ci-service-account
+  entrypoint: kaniko-build
+  arguments:
+    parameters:
+      - name: dockerfileContent 
+  templates:
+    - name: kaniko-build
+      dag:
+        tasks:
+          - name: build-image
+            template: kaniko
+            arguments:
+              artifacts:
+                - name: dockerfile 
+                  raw:
+                    data: "{{workflow.parameters.dockerfileContent}}"
+    - name: kaniko
+      inputs:
+        artifacts:
+          - name: dockerfile 
+            path: /workspace/Dockerfile 
+      container:
+        image: registry.ra.se:5002/gcr.io/kaniko-project/executor:latest 
+        command: ["/kaniko/executor"]
+        args:
+          - --context=dir:///workspace
+          - --dockerfile=/workspace/Dockerfile
+          - --destination=registry.ra.se:5002/devenv:v9.0.0
+          - --insecure
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+      volumes:
+        - name: workspace
+          emptyDir: {}
