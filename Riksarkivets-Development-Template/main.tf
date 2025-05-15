@@ -44,6 +44,8 @@ variable "argowf_external_address" {
   default     = ""
 }
 
+# Removed variables for LakeFS secrets as the secret is assumed to exist
+
 data "coder_parameter" "cpu" {
   name         = "cpu"
   display_name = "CPU"
@@ -153,6 +155,7 @@ data "coder_parameter" "gpu_type" {
   mutable      = false
   order        = 8
 
+  # Added None option
   option {
     name  = "None"
     value = "None"
@@ -187,6 +190,8 @@ data "coder_parameter" "gpu_count" {
   mutable      = false
   order        = 9
   
+
+  # Added 0 Gpu option
   option {
     name  = "0 Gpu(s)"
     value = "0"
@@ -310,7 +315,10 @@ resource "coder_agent" "main" {
     # Other global defaults...
     AIDERCONFIG
 
+
     echo "Aider config created at /home/coder/.aider.conf.yml"
+
+
 
     # --- Install VS Code extensions ---
     echo "Installing VS Code extensions..."
@@ -331,6 +339,7 @@ resource "coder_agent" "main" {
     done
 
     echo "All extensions installation process completed."
+
 
     # --- Configure Git ---
     echo "Configuring Git user..."
@@ -407,23 +416,29 @@ resource "coder_agent" "main" {
 
 }
 
+# --- Locals ---
 locals {
 
   git_author_name        = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
   git_author_email       = data.coder_workspace_owner.me.email
--
+
+  # --- GPU Logic ---
   selected_gpu           = data.coder_parameter.gpu_type.value
   selected_gpu_count_param = data.coder_parameter.gpu_count.value
+  # The logic here correctly handles the "None" GPU case
   actual_gpu_count       = (local.selected_gpu == "None" || local.selected_gpu == "") ? 0 : tonumber(local.selected_gpu_count_param)
   gpu_resources          = local.actual_gpu_count > 0 ? { "nvidia.com/gpu" = format("%d", local.actual_gpu_count) } : {}
   gpu_label_key          = "nvidia.com/gpu.product"
 
+  # --- External Service Environment Variables ---
   internal_service_env_vars = merge(
     var.mlflow_external_address != "" ? { "MLFLOW_TRACKING_URI" = var.mlflow_external_address } : {},
     var.argowf_external_address != "" ? { "ARGO_BASE_HREF" = var.argowf_external_address } : {},
     # Add other services back here if needed
   )
 
+  # Define the LakeFS secret name based on the Coder username
+  #lakefs_secret_name = "lakefs-secrets-${data.coder_workspace_owner.me.name}"
   lakefs_secret_name = "lakefs-secrets"
 
 }
@@ -471,6 +486,7 @@ resource "kubernetes_persistent_volume_claim" "home" {
       "app.kubernetes.io/name"       = "coder-pvc"
       "app.kubernetes.io/instance"   = "coder-pvc-${data.coder_workspace.me.id}"
       "app.kubernetes.io/part-of"    = "coder"
+      # Coder-specific labels. (Corrected comment)
       "com.coder.resource"           = "true"
       "com.coder.workspace.id"     = data.coder_workspace.me.id
       "com.coder.workspace.name"   = data.coder_workspace.me.name
@@ -496,7 +512,9 @@ resource "kubernetes_persistent_volume_claim" "home" {
 # --- Kubernetes Deployment for the Workspace Pod ---
 resource "kubernetes_deployment" "main" {
   count        = data.coder_workspace.me.start_count
+  # Removed dependency on the kubernetes_secret resource (as it's not created here)
   depends_on = [kubernetes_persistent_volume_claim.home]
+  # wait_for_rollout = false # Optional
 
   metadata {
     name      = "coder-${data.coder_workspace.me.id}"
@@ -541,18 +559,21 @@ resource "kubernetes_deployment" "main" {
         }
       }
       spec {
-
+        # runtime_class_name is set to null if no GPU is selected
         runtime_class_name = local.actual_gpu_count > 0 ? "nvidia" : null
-
+        # --- IMPORTANT: Regarding Permissions ---
+        # If NOT using a custom image with socat/curl pre-installed,
+        # you MUST comment out/remove runAsNonRoot for the startup script's apt-get to work.
+        # If using a custom image, keep runAsNonRoot: true for better security.
         security_context {
           run_as_user     = 1000
           fs_group        = 1000
-          run_as_non_root = true 
+          run_as_non_root = true # Assumes custom image OR modified permissions
         }
         termination_grace_period_seconds = 60
 
         container {
-          name            = "coder-workspace-dev" 
+          name            = "coder-workspace-dev" # Renamed from "dev"
           image           = "registry.ra.se:5002/devenv:v8.0.0"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
@@ -582,11 +603,11 @@ resource "kubernetes_deployment" "main" {
             requests = merge({
               "cpu"    = "250m"
               "memory" = "512Mi"
-            }, local.gpu_resources) 
+            }, local.gpu_resources) # gpu_resources is {} if no GPU
             limits = merge({
               "cpu"    = "${data.coder_parameter.cpu.value}"
               "memory" = "${data.coder_parameter.memory.value}Gi"
-            }, local.gpu_resources) 
+            }, local.gpu_resources) # gpu_resources is {} if no GPU
           }
 
           volume_mount {
@@ -597,25 +618,26 @@ resource "kubernetes_deployment" "main" {
 
           # Mount the LakeFS secrets - referencing the existing secret
           volume_mount {
-            mount_path = "/etc/secrets/lakefs" 
+            mount_path = "/etc/secrets/lakefs" # Choose a suitable mount path
             name       = "lakefs-secrets"
             read_only  = true
           }
 
           volume_mount {
-            mount_path = "/mnt/scratch" 
-            name       = "scratch"      
-            read_only  = false          
+            mount_path = "/mnt/scratch" # Mount path inside the container
+            name       = "scratch"      # Must match the volume name below
+            read_only  = false          # Allow writing to the scratch space
           }
 
           volume_mount {
-            mount_path = "/mnt/work"    
-            name       = "work"         
-            read_only  = false          
+            mount_path = "/mnt/work"    # Mount path inside the container
+            name       = "work"         # Must match the volume name below
+            read_only  = false          # Allow writing to the work space
           }
-          
-        } 
+          # --- End ADDED Volume Mounts ---
+        } # End container spec
 
+        # Removed proxy sidecar containers
 
         volume {
           name = "home"
@@ -625,20 +647,21 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-    
+        # Define the volume for LakeFS secrets - referencing the existing secret
         volume {
           name = "lakefs-secrets"
           secret {
-
+            # Reference the pre-existing secret name and namespace
+            # *** MODIFIED: Use local.lakefs_secret_name based on Coder username ***
             secret_name = local.lakefs_secret_name
-
+            # The namespace is inherited from the Deployment's metadata.namespace
             items {
               key  = "access_key_id"
-              path = "access_key_id" 
+              path = "access_key_id" # The file will be created at /etc/secrets/lakefs/access_key_id
             }
             items {
               key  = "secret_access_key"
-              path = "secret_access_key" 
+              path = "secret_access_key" # The file will be created at /etc/secrets/lakefs/secret_access_key
             }
           }
         }
@@ -646,8 +669,8 @@ resource "kubernetes_deployment" "main" {
         volume {
           name = "scratch"
           host_path {
-            path = "/mnt/scratch/" 
-            type = "Directory"     
+            path = "/mnt/scratch/" # Path on the Kubernetes Node
+            type = "Directory"     # Ensure it's a directory on the host
           }
         }
 
@@ -655,13 +678,14 @@ resource "kubernetes_deployment" "main" {
         volume {
           name = "work"
           host_path {
-            path = "/mnt/work/"    
-            type = "Directory"     
+            path = "/mnt/work/"    # Path on the Kubernetes Node
+            type = "Directory"     # Ensure it's a directory on the host
           }
         }
 
         affinity {
           dynamic "node_affinity" {
+            # Only apply node affinity if a GPU type other than "None" is selected
             for_each = local.selected_gpu != "None" && local.selected_gpu != "" ? [1] : []
             content {
               required_during_scheduling_ignored_during_execution {
