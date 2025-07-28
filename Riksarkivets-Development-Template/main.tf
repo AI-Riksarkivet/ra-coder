@@ -429,6 +429,10 @@ locals {
   actual_gpu_count       = (local.selected_gpu == "None" || local.selected_gpu == "") ? 0 : tonumber(local.selected_gpu_count_param)
   gpu_resources          = local.actual_gpu_count > 0 ? { "nvidia.com/gpu" = format("%d", local.actual_gpu_count) } : {}
   gpu_label_key          = "nvidia.com/gpu.product"
+  
+  # --- Container Image Logic ---
+  # Use CPU image when no GPUs are requested, otherwise use CUDA image
+  container_image        = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" : "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0-cpu"
 
   # --- External Service Environment Variables ---
   internal_service_env_vars = merge(
@@ -574,7 +578,7 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = "registry.ra.se:5002/devenv:v8.0.0"
+          image           = local.container_image
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 

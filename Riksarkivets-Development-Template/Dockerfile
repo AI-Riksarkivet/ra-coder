@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM registry.ra.se:5002/ubuntu:jammy
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive
@@ -23,28 +23,36 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
+# CUDA support (conditional)
+ARG ENABLE_CUDA=true
 ARG CUDA_VERSION_MAJOR_MINOR=12.2
 ARG CUDA_DISTRO=ubuntu2204
 ARG CUDA_ARCH=x86_64
 
-# Add NVIDIA GPG keys and repository
-RUN apt-get update && \
-    # Ensure dependencies for adding repos are present (wget installed above)
-    apt-get install -y --no-install-recommends gnupg2 && \
-    wget https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/cuda-keyring_1.1-1_all.deb && \
-    dpkg -i cuda-keyring_1.1-1_all.deb && \
-    rm cuda-keyring_1.1-1_all.deb && \
-    apt-get update
+# Add NVIDIA GPG keys and repository (only if CUDA enabled)
+RUN if [ "$ENABLE_CUDA" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends gnupg2 && \
+        wget https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/cuda-keyring_1.1-1_all.deb && \
+        dpkg -i cuda-keyring_1.1-1_all.deb && \
+        rm cuda-keyring_1.1-1_all.deb && \
+        apt-get update; \
+    fi
 
-# Install CUDA Toolkit components
-RUN apt-get install -y --no-install-recommends \
-    cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR} \
-    cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR} \
-    cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install CUDA Toolkit components (only if CUDA enabled)
+RUN if [ "$ENABLE_CUDA" = "true" ]; then \
+        apt-get install -y --no-install-recommends \
+        cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR} \
+        cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR} \
+        cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi
 
-ENV PATH=/usr/local/cuda-${CUDA_VERSION_MAJOR_MINOR}/bin:${PATH}
-ENV LD_LIBRARY_PATH=/usr/local/cuda-${CUDA_VERSION_MAJOR_MINOR}/lib64:${LD_LIBRARY_PATH}
+# Set CUDA environment variables (only if CUDA enabled)
+RUN if [ "$ENABLE_CUDA" = "true" ]; then \
+        echo "export PATH=/usr/local/cuda-${CUDA_VERSION_MAJOR_MINOR}/bin:\$PATH" >> /etc/environment && \
+        echo "export LD_LIBRARY_PATH=/usr/local/cuda-${CUDA_VERSION_MAJOR_MINOR}/lib64:\$LD_LIBRARY_PATH" >> /etc/environment; \
+    fi
 # --- End CUDA Install ---
 
 RUN  useradd coder \
@@ -93,6 +101,7 @@ RUN eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
     brew tap treeverse/lakefs && \
     brew install \
     python@3.12 \
+    node@22 \
     argo \
     awscli \
     helm \
@@ -110,8 +119,16 @@ RUN echo "Creating Python 3.12 virtual environment at ${VENV_PATH}..." && \
     echo "Activating venv and installing Python packages into ${VENV_PATH}..." && \
     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
     source ${VENV_PATH}/bin/activate && \
+    if [ "$ENABLE_CUDA" = "true" ]; then \
+        echo "Installing CUDA-enabled PyTorch..." && \
+        uv pip install --no-cache \
+        torch==2.3.1+cu121 torchvision==0.18.1+cu121 torchaudio==2.3.1+cu121 --index-url https://download.pytorch.org/whl/cu121; \
+    else \
+        echo "Installing CPU-only PyTorch..." && \
+        uv pip install --no-cache \
+        torch==2.3.1+cpu torchvision==0.18.1+cpu torchaudio==2.3.1+cpu --index-url https://download.pytorch.org/whl/cpu; \
+    fi && \
     uv pip install --no-cache \
-    torch==2.3.1+cu121 torchvision==0.18.1+cu121 torchaudio==2.3.1+cu121 --index-url https://download.pytorch.org/whl/cu121 \
     # --- Core Data Science ---
     numpy \
     pandas \
@@ -127,6 +144,10 @@ RUN echo "Creating Python 3.12 virtual environment at ${VENV_PATH}..." && \
     aider-chat \
     # --- Clean Cache ---
     && rm -rf /tmp/uv-cache # && \
+
+# Install Claude Code CLI
+RUN eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
+    npm install -g @anthropic-ai/claude-code
 
 RUN echo "Adding venv activation and brew shellenv to .profile and .bashrc..." && \
     echo ". ${VENV_PATH}/bin/activate" >> ~/.profile && \

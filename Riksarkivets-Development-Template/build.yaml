@@ -7,7 +7,11 @@ spec:
   entrypoint: kaniko-build
   arguments:
     parameters:
-      - name: dockerfileContent 
+      - name: dockerfileContent
+      - name: enableCuda
+        value: "true"
+      - name: imageName
+        value: "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" 
   templates:
     - name: kaniko-build
       dag:
@@ -30,8 +34,10 @@ spec:
         args:
           - --context=dir:///workspace
           - --dockerfile=/workspace/Dockerfile
-          - --destination=registry.ra.se:5002/devenv:v9.0.0
+          - --destination={{workflow.parameters.imageName}}
           - --insecure
+          - --insecure-registry=registry.ra.se:5002
+          - --build-arg=ENABLE_CUDA={{workflow.parameters.enableCuda}}
         volumeMounts:
           - name: workspace
             mountPath: /workspace
