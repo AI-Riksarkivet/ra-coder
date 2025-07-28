@@ -111,7 +111,8 @@ RUN eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
     duckdb \
     huggingface-cli \
     ruff \
-    uv && \
+    uv \
+    terraform && \
     brew cleanup --prune=all #&& \
 
 RUN echo "Creating Python 3.12 virtual environment at ${VENV_PATH}..." && \
