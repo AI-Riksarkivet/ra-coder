@@ -28,5 +28,5 @@ echo "Workflow submitted with: $WORKFLOW_NAME"
 echo "Following logs for $WORKFLOW_NAME..."
 argo logs --follow "$WORKFLOW_NAME" -n ci
 
-echo "Deleting workflow $WORKFLOW_NAME..."
-argo delete "$WORKFLOW_NAME" -n ci
+echo "Workflow $WORKFLOW_NAME completed. Will be auto-deleted after 3 hours."
+echo "To manually delete: argo delete $WORKFLOW_NAME -n ci"
