@@ -5,6 +5,8 @@ metadata:
 spec:
   serviceAccountName: ci-service-account
   entrypoint: kaniko-build
+  ttlStrategy:
+    secondsAfterCompletion: 10800  # 3 hours = 3 * 60 * 60 seconds
   arguments:
     parameters:
       - name: dockerfileContent
