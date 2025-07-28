@@ -20,15 +20,15 @@ docker-release: docker-build docker-tag docker-push
 # Kaniko build targets
 kaniko-build-cuda:
 	@echo "Building CUDA image with Kaniko via Argo..."
-	@./build.sh true
+	@./build.sh true $(SERVICE) $(TAG) $(REGISTRY)
 
 kaniko-build-cpu:
 	@echo "Building CPU image with Kaniko via Argo..."
-	@./build.sh false
+	@./build.sh false $(SERVICE) $(TAG) $(REGISTRY)
 
 kaniko-build:
 	@echo "Building image with Kaniko via Argo (CUDA=$(ENABLE_CUDA))..."
-	@./build.sh $(ENABLE_CUDA)
+	@./build.sh $(ENABLE_CUDA) $(SERVICE) $(TAG) $(REGISTRY)
 
 # Combined release targets
 release-cuda: kaniko-build-cuda
