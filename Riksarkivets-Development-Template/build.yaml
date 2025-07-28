@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: kaniko-build-devenv
+  generateName: kaniko-build-
 spec:
   serviceAccountName: ci-service-account
   entrypoint: kaniko-build

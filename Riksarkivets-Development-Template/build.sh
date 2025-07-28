@@ -15,7 +15,8 @@ fi
 
 echo "Submitting workflow with CUDA support: $ENABLE_CUDA"
 echo "Image name: $IMAGE_NAME"
-WORKFLOW_NAME=$(argo submit build.yaml --generate-name "my-workflow-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p imageName="$IMAGE_NAME" -n ci -o name)
+TIMESTAMP=$(date +%s)
+WORKFLOW_NAME=$(argo submit build.yaml --generate-name "kaniko-build-${SERVICE_NAME}-${TIMESTAMP}-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p imageName="$IMAGE_NAME" -n ci -o name)
 
 if [ -z "$WORKFLOW_NAME" ]; then
   echo "Failed to submit workflow or capture its name."
