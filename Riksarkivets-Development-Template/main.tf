@@ -653,6 +653,12 @@ resource "kubernetes_deployment" "main" {
             value = data.coder_parameter.hf_token.value
           }
 
+          # Set KUBECONFIG environment variable
+          env {
+            name  = "KUBECONFIG"
+            value = "/home/coder/.kube/config"
+          }
+
           dynamic "env" {
             for_each = local.internal_service_env_vars
             content {
@@ -695,6 +701,13 @@ resource "kubernetes_deployment" "main" {
             mount_path = "/mnt/work"    # Mount path inside the container
             name       = "work"         # Must match the volume name below
             read_only  = false          # Allow writing to the work space
+          }
+
+          # Mount default kubeconfig for basic cluster access
+          volume_mount {
+            mount_path = "/home/coder/.kube"
+            name       = "default-kubeconfig"
+            read_only  = true
           }
           # --- End ADDED Volume Mounts ---
         } # End container spec
@@ -750,6 +763,19 @@ resource "kubernetes_deployment" "main" {
           host_path {
             path = "/var/run/docker.sock"
             type = "Socket"
+          }
+        }
+
+        # Mount default kubeconfig with limited permissions
+        volume {
+          name = "default-kubeconfig"
+          secret {
+            secret_name = "default-kubeconfig"  # This secret should contain a kubeconfig with limited RBAC
+            items {
+              key  = "config"
+              path = "config"
+              mode = "0400"  # Read-only for owner only
+            }
           }
         }
 

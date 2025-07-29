@@ -1,0 +1,85 @@
+---
+# ClusterRole with limited developer permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-developer
+rules:
+# Basic read access to common resources
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "endpoints", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+# App resources read access
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["get", "list", "watch"]
+# Pod logs access
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+# Namespace info
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]
+# Events (useful for debugging)
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+# Basic networking info
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch"]
+# Storage info
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+# Argo Workflows access - read and basic operations
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows", "workflowtemplates", "cronworkflows", "clusterworkflowtemplates"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Argo Workflows logs and status
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows/status", "workflows/log"]
+  verbs: ["get", "list", "watch"]
+# CronWorkflow specific permissions
+- apiGroups: ["argoproj.io"]
+  resources: ["cronworkflows/status"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+# Workflow execution permissions (needed for cron workflows to create workflows)
+- apiGroups: ["argoproj.io"]
+  resources: ["workfloweventbindings", "sensors"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ServiceAccount for Coder workspaces
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coder-developer
+  namespace: coder  # Change this to your Coder namespace
+
+---
+# ClusterRoleBinding to bind the role to the service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: coder-developer-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: coder-developer
+subjects:
+- kind: ServiceAccount
+  name: coder-developer
+  namespace: coder  # Change this to your Coder namespace
+
+---
+# Secret to hold the ServiceAccount token (for Kubernetes 1.24+)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: coder-developer-token
+  namespace: coder  # Change this to your Coder namespace
+  annotations:
+    kubernetes.io/service-account.name: coder-developer
+type: kubernetes.io/service-account-token
