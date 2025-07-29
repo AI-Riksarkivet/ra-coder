@@ -53,17 +53,18 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
     brew install \
         python@3.12 \
         node@22 \
-        argo@3.6.7 \
-        awscli@2.27.9 \
-        helm@3.17.3 \
-        kubectl@1.33.0 \
-        lakefs@1.55.0 \
-        pre-commit@4.2.0 \
-        duckdb@1.2.2 \
-        huggingface-cli@0.30.2 \
-        ruff@0.11.8 \
-        uv@0.7.2 \
-        terraform@1.5.7 && \
+        argo \
+        awscli \
+        helm \
+        kubectl \
+        k9s \
+        lakefs \
+        pre-commit \
+        duckdb \
+        huggingface-cli \
+        ruff \
+        uv \
+        terraform && \
     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code && \
     brew cleanup --prune=all
 
@@ -77,6 +78,8 @@ COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew
 
 # Configure shell environment - users can create their own Python environments
 RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile && \
-    echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc
+    echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc && \
+    echo 'export PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH"' >> ~/.profile && \
+    echo 'export PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH"' >> ~/.bashrc
 
 CMD ["/bin/bash"]

@@ -44,6 +44,12 @@ variable "argowf_external_address" {
   default     = ""
 }
 
+# variable "anthropic_api_key" {
+#   type        = string
+#   description = "The Anthropic API key"
+#   sensitive   = true
+# }
+
 # Removed variables for LakeFS secrets as the secret is assumed to exist
 
 data "coder_parameter" "cpu" {
@@ -213,6 +219,27 @@ data "coder_parameter" "gpu_count" {
     value = "4"
   }
 
+}
+
+data "coder_parameter" "ai_prompt" {
+  type        = "string"
+  name        = "ai_prompt"
+  display_name = "AI Prompt"
+  default     = ""
+  description = "Write a prompt for Claude Code"
+  mutable     = true
+  order       = 10
+}
+
+data "coder_parameter" "anthropic_api_key" {
+  type        = "string"
+  name        = "anthropic_api_key"
+  display_name = "Anthropic API Key"
+  default     = ""
+  description = "Your Anthropic API key for Claude Code web interface"
+  sensitive   = true
+  mutable     = true
+  order       = 11
 }
 
 provider "kubernetes" {
@@ -413,10 +440,12 @@ locals {
 module "vscode-web" {
   count         = data.coder_workspace.me.start_count
   source        = "registry.coder.com/modules/vscode-web/coder"
-  version       = "1.0.14"
+  version       = "1.3.1"
   agent_id      = coder_agent.main.id
   accept_license = true
   subdomain     = false
+  extensions    =  [ "ms-python.python", "ms-python.debugpy"]
+  telemetry_level = "off"
 }
 
 module "filebrowser" {
@@ -434,6 +463,19 @@ module "dotfiles" {
   source   = "registry.coder.com/modules/dotfiles/coder"
   version  = "1.0.29"
   agent_id = coder_agent.main.id
+}
+
+module "claude-code" {
+  count               = data.coder_workspace.me.start_count
+  source              = "registry.coder.com/modules/claude-code/coder"
+  version             = "2.0.3"
+  agent_id            = coder_agent.main.id
+  folder              = "/home/coder"
+  install_claude_code = true
+  claude_code_version = "1.0.62"
+
+  # Enable experimental features
+  experiment_report_tasks = true
 }
 
 # --- Kubernetes Persistent Volume Claim ---
@@ -533,7 +575,7 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" : "registry.ra.se:5002/airiksarkivet/devenv:v12.0.0-cpu"
+          image           = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" : "registry.ra.se:5002/airiksarkivet/devenv:v13.2.0-cpu"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 
@@ -548,6 +590,29 @@ resource "kubernetes_deployment" "main" {
           env {
             name  = "LOGNAME"
             value = local.git_author_name
+          }
+
+          env {
+            name  = "PATH"
+            value = "/home/linuxbrew/.linuxbrew/opt/node@22/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/opt/venv-py312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          }
+          env {
+            name  = "CODER_MCP_CLAUDE_API_KEY"
+            value = data.coder_parameter.anthropic_api_key.value
+          }
+          env {
+            name  = "CODER_MCP_CLAUDE_TASK_PROMPT"
+            value = data.coder_parameter.ai_prompt.value
+          }
+          env {
+            name  = "CODER_MCP_APP_STATUS_SLUG"
+            value = "claude-code"
+          }
+          env {
+            name  = "CODER_MCP_CLAUDE_SYSTEM_PROMPT"
+            value = <<-EOT
+              You are a helpful assistant that can help with code.
+            EOT
           }
 
           dynamic "env" {
