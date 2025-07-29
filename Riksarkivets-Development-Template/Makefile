@@ -1,5 +1,5 @@
 SERVICE ?= devenv
-TAG ?= v13.2.0
+TAG ?= v13.3.0
 REGISTRY ?= registry.ra.se:5002
 IMAGE_NAME = airiksarkivet/$(SERVICE)
 ENABLE_CUDA ?= true

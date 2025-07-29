@@ -64,6 +64,7 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         huggingface-cli \
         ruff \
         vim \
+        gh \
         nano \
         uv \
         terraform && \
