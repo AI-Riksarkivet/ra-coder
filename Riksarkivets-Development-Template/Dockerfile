@@ -78,8 +78,6 @@ COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew
 
 # Configure shell environment - users can create their own Python environments
 RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile && \
-    echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc && \
-    echo 'export PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH"' >> ~/.profile && \
-    echo 'export PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH"' >> ~/.bashrc
+    echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc
 
 CMD ["/bin/bash"]
