@@ -594,7 +594,7 @@ resource "kubernetes_deployment" "main" {
 
           env {
             name  = "PATH"
-            value = "/home/linuxbrew/.linuxbrew/opt/node@22/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/opt/venv-py312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            value = "/home/coder/.local/bin:/home/linuxbrew/.linuxbrew/opt/node@22/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/opt/venv-py312/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           }
           env {
             name  = "CODER_MCP_CLAUDE_API_KEY"
