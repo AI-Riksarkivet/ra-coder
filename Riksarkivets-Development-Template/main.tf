@@ -345,6 +345,31 @@ resource "coder_agent" "main" {
     git config --global user.name "${local.git_author_name}"
     git config --global user.email "${local.git_author_email}"
 
+    # --- Configure Coder CLI ---
+    echo "Configuring Coder CLI authentication..."
+    # Set up Coder CLI with the current session token and URL
+    export CODER_SESSION_TOKEN="${coder_agent.main.token}"
+    export CODER_URL="$${CODER_URL:-http://10.100.127.31:30256}"
+    
+    # Create coder config directory and set up authentication
+    mkdir -p /home/coder/.config/coderv2
+    cat > /home/coder/.config/coderv2/config.yaml <<CODERCONFIG
+url: "$${CODER_URL:-http://10.100.127.31:30256}"
+CODERCONFIG
+
+    # Create session token file for persistent authentication
+    echo "${coder_agent.main.token}" > /home/coder/.config/coderv2/session
+    
+    # Set proper ownership and permissions
+    chown -R coder:coder /home/coder/.config/coderv2
+    chmod 600 /home/coder/.config/coderv2/session
+    
+    # Add environment variables to bashrc for persistent sessions
+    cat >> /home/coder/.bashrc <<BASHRCCONFIG
+export CODER_SESSION_TOKEN="${coder_agent.main.token}"
+export CODER_URL="$${CODER_URL:-http://10.100.127.31:30256}"
+BASHRCCONFIG
+
     # --- Display External Service Info ---
     echo ""
     echo "-----------------------------------------------------"
