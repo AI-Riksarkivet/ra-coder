@@ -231,12 +231,6 @@ resource "coder_agent" "main" {
     #!/bin/bash
     set -euo pipefail # Use strict mode
 
-    # --- Install/Start code-server ---
-    echo "Installing/Updating code-server..."
-    # Let install.sh find the latest version OR pin to a specific version
-    curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server
-    # Example pinning: curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server --version 4.91.1
-
     # --- Create Continue Config Directory ---
     echo "Setting up Continue Local Assistant configuration..."
     mkdir -p /home/coder/.continue
@@ -318,51 +312,23 @@ resource "coder_agent" "main" {
 
     echo "Aider config created at /home/coder/.aider.conf.yml"
 
-
-
-    # --- Install VS Code extensions ---
-    echo "Installing VS Code extensions..."
-    # Define the space-separated string of extension IDs
-    EXTENSIONS_STR="charliermarsh.ruff exiasr.hadolint kevinrose.vsc-python-indent redhat.vscode-yaml shardulm94.trailing-spaces pomdtr.excalidraw-editor tamasfe.even-better-toml PKief.material-icon-theme mhutchie.git-graph Continue.continue marimo-team.vscode-marimo"
-
-    echo "Attempting to install extensions from string: [$$EXTENSIONS_STR]"
-
-    # Use read into an array for more reliable iteration over space-separated values
-    # Set IFS to space for word splitting
-    IFS=' ' read -r -a extensions_array <<< "$$EXTENSIONS_STR"
-
-    # Loop through the array and install each extension
-    for ext in "$${extensions_array[@]}"; do
-      echo "Installing extension: $$ext"
-      # Use the code-server binary path
-      /tmp/code-server/bin/code-server --install-extension "$$ext" || echo "Warning: Failed to install extension $$ext"
-    done
-
-    echo "All extensions installation process completed."
-
-
     # --- Configure Git ---
     echo "Configuring Git user..."
     # Use Terraform interpolation to get owner name/email from locals
     git config --global user.name "${local.git_author_name}"
     git config --global user.email "${local.git_author_email}"
 
-    echo "Starting code-server..."
-    # Start code-server in the background
-    /tmp/code-server/bin/code-server --auth none --port 13337 --host 0.0.0.0 > /tmp/code-server.log 2>&1 &
-    echo "code-server started in background."
-
     # --- Display External Service Info ---
     echo ""
     echo "-----------------------------------------------------"
     echo "External Service Information:"
 
-    # Use $$VARNAME for shell variables inside the Terraform heredoc.
-    if [ -n "$$MLFLOW_TRACKING_URI" ]; then
-      echo "MLflow Tracking URI: $$MLFLOW_TRACKING_URI"
+    # Use $VARNAME for shell variables inside the Terraform heredoc.
+    if [ -n "$MLFLOW_TRACKING_URI" ]; then
+      echo "MLflow Tracking URI: $MLFLOW_TRACKING_URI"
     fi
-    if [ -n "$$ARGO_BASE_HREF" ]; then
-      echo "Argo Workflow UI: $$ARGO_BASE_HREF"
+    if [ -n "$ARGO_BASE_HREF" ]; then
+      echo "Argo Workflow UI: $ARGO_BASE_HREF"
     fi
     echo "-----------------------------------------------------"
     echo ""
@@ -444,20 +410,13 @@ locals {
 }
 
 # --- Coder Apps ---
-resource "coder_app" "code-server" {
-  agent_id     = coder_agent.main.id
-  slug         = "code-server"
-  display_name = "Code Server"
-  icon         = "/icon/code.svg"
-  url          = "http://localhost:13337?folder=/home/coder"
-  subdomain    = false
-  share        = "owner"
-
-  healthcheck {
-    url       = "http://localhost:13337/healthz"
-    interval  = 5
-    threshold = 6
-  }
+module "vscode-web" {
+  count         = data.coder_workspace.me.start_count
+  source        = "registry.coder.com/modules/vscode-web/coder"
+  version       = "1.0.14"
+  agent_id      = coder_agent.main.id
+  accept_license = true
+  subdomain     = false
 }
 
 module "filebrowser" {
@@ -574,7 +533,7 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" : "registry.ra.se:5002/airiksarkivet/devenv:v10.0.0-cpu"
+          image           = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v9.0.0" : "registry.ra.se:5002/airiksarkivet/devenv:v12.0.0-cpu"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 
