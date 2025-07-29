@@ -485,7 +485,7 @@ module "claude-code" {
   claude_code_version = "1.0.62"
 
   # Enable experimental features
-  experiment_report_tasks = true
+  experiment_report_tasks = false
 }
 
 # --- Kubernetes Persistent Volume Claim ---
