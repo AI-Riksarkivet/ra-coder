@@ -251,6 +251,16 @@ data "coder_parameter" "gh_token" {
   order       = 12
 }
 
+data "coder_parameter" "hf_token" {
+  type        = "string"
+  name        = "hf_token"
+  display_name = "Hugging Face Token"
+  default     = ""
+  description = "Hugging Face access token for CLI and API access"
+  mutable     = true
+  order       = 13
+}
+
 provider "kubernetes" {
   config_path = var.use_kubeconfig == true ? "~/.kube/config" : null
 }
@@ -637,6 +647,10 @@ resource "kubernetes_deployment" "main" {
           env {
             name  = "GH_TOKEN"
             value = data.coder_parameter.gh_token.value
+          }
+          env {
+            name  = "HF_TOKEN"
+            value = data.coder_parameter.hf_token.value
           }
 
           dynamic "env" {
