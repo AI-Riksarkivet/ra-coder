@@ -241,6 +241,16 @@ data "coder_parameter" "anthropic_api_key" {
   order       = 11
 }
 
+data "coder_parameter" "gh_token" {
+  type        = "string"
+  name        = "gh_token"
+  display_name = "GitHub Token"
+  default     = ""
+  description = "GitHub personal access token for API access"
+  mutable     = true
+  order       = 12
+}
+
 provider "kubernetes" {
   config_path = var.use_kubeconfig == true ? "~/.kube/config" : null
 }
@@ -623,6 +633,10 @@ resource "kubernetes_deployment" "main" {
             value = <<-EOT
               You are a helpful assistant that can help with code.
             EOT
+          }
+          env {
+            name  = "GH_TOKEN"
+            value = data.coder_parameter.gh_token.value
           }
 
           dynamic "env" {
