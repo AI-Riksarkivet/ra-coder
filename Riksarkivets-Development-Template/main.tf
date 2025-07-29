@@ -237,7 +237,6 @@ data "coder_parameter" "anthropic_api_key" {
   display_name = "Anthropic API Key"
   default     = ""
   description = "Your Anthropic API key for Claude Code web interface"
-  sensitive   = true
   mutable     = true
   order       = 11
 }
@@ -346,29 +345,15 @@ resource "coder_agent" "main" {
     git config --global user.email "${local.git_author_email}"
 
     # --- Configure Coder CLI ---
-    echo "Configuring Coder CLI authentication..."
-    # Set up Coder CLI with the current session token and URL
-    export CODER_SESSION_TOKEN="${coder_agent.main.token}"
-    export CODER_URL="$${CODER_URL:-http://10.100.127.31:30256}"
-    
-    # Create coder config directory and set up authentication
+    echo "Configuring Coder CLI..."
+    # Create coder config directory with basic URL configuration
     mkdir -p /home/coder/.config/coderv2
     cat > /home/coder/.config/coderv2/config.yaml <<CODERCONFIG
 url: "$${CODER_URL:-http://10.100.127.31:30256}"
 CODERCONFIG
-
-    # Create session token file for persistent authentication
-    echo "${coder_agent.main.token}" > /home/coder/.config/coderv2/session
     
-    # Set proper ownership and permissions
+    # Set proper ownership
     chown -R coder:coder /home/coder/.config/coderv2
-    chmod 600 /home/coder/.config/coderv2/session
-    
-    # Add environment variables to bashrc for persistent sessions
-    cat >> /home/coder/.bashrc <<BASHRCCONFIG
-export CODER_SESSION_TOKEN="${coder_agent.main.token}"
-export CODER_URL="$${CODER_URL:-http://10.100.127.31:30256}"
-BASHRCCONFIG
 
     # --- Display External Service Info ---
     echo ""
@@ -469,7 +454,7 @@ module "vscode-web" {
   agent_id      = coder_agent.main.id
   accept_license = true
   subdomain     = false
-  extensions    =  [ "ms-python.python", "ms-python.debugpy"]
+  extensions    =  [ "ms-python.python", "ms-python.debugpy", ""]
   telemetry_level = "off"
 }
 
