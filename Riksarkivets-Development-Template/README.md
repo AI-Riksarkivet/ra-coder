@@ -12,10 +12,10 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
     * Python 3.12 installed via Homebrew.
     * Dedicated virtual environment (`/opt/venv-py312`) managed by `uv`.
     * Auto-activated venv and Homebrew shell environment upon terminal login.
-* **Core Libraries:**
-    * **PyTorch:** Version 2.3.1 with CUDA 12.1 support (`torch`, `torchvision`, `torchaudio`).
-    * **Data Science:** `numpy`, `pandas`, `scikit-learn`, `matplotlib`.
-    * **Hugging Face:** `transformers`, `datasets`, `accelerate`.
+* **ML Package Support:**
+    * **PyTorch Ready:** CUDA 12.2 environment compatible with PyTorch CUDA 12.1 builds
+    * **Fast Package Installation:** Use `uv` for quick ML package installation
+    * **Framework Flexibility:** Install any ML framework (PyTorch, TensorFlow, JAX, etc.) as needed
 * **MLOps Tools:**
     * `mlflow` (client library).
     * `lakefs` (client CLI, configured via secrets).
@@ -98,15 +98,12 @@ Before using this template, ensure you have:
 * **Python Virtual Environment:** Located at `/opt/venv-py312`.
     * Created using Python 3.12 and `uv`.
     * Automatically activated in new shells.
-* **Key Python Packages (in venv):**
-    * `uv`: For Pip package management.
-    * `torch==2.3.1+cu121`
-    * `torchvision==0.18.1+cu121`
-    * `torchaudio==2.3.1+cu121`
-    * `numpy`, `pandas`, `scikit-learn`, `matplotlib`
-    * `transformers`, `datasets`, `accelerate` (Hugging Face)
-    * `mlflow` (MLOps)
-    * `aider-chat` (AI Coding Assistant)
+* **Python Package Management:**
+    * `uv`: Fast Python package installer and resolver (pre-installed)
+    * **Virtual environment**: Pre-configured at `/opt/venv-py312` (auto-activated)
+    * **Package installation**: Users install packages as needed using `uv add <package>`
+    * **CUDA-compatible PyTorch**: Install with `uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
+    * **Common ML packages**: Install as needed (numpy, pandas, scikit-learn, transformers, etc.)
 * **System Build Tools:** `build-essential`, `gfortran`, `pkg-config`, `libopenblas-dev`, `libasound2-dev`.
 
 ### Command-Line Tools (installed via Homebrew)
@@ -210,7 +207,49 @@ The agent startup script performs several key actions:
     * Configure the workspace parameters (CPU, Memory, Disk, GPU).
     * Set template variables (namespace, external service URLs if any).
     * Coder will provision the Kubernetes resources and start the agent.
-5.  **Connect:** Once the workspace is running, connect to it via the Coder dashboard, typically opening the `code-server` app.
+5.  **Connect:** Once the workspace is running, connect to it via the Coder dashboard, typically opening the VS Code Web app.
+
+## Getting Started
+
+### Installing Python Packages
+The workspace comes with a pre-configured Python 3.12 virtual environment and `uv` package manager:
+
+```bash
+# Install PyTorch with CUDA support
+uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install common data science packages
+uv add numpy pandas scikit-learn matplotlib seaborn
+
+# Install Hugging Face ecosystem
+uv add transformers datasets accelerate
+
+# Install MLOps tools
+uv add mlflow wandb
+
+# Install AI coding assistant
+uv add aider-chat
+
+# Create a project with dependencies
+uv init my-ml-project
+cd my-ml-project
+uv add torch transformers numpy
+```
+
+### Quick Start Commands
+```bash
+# Check Python and UV versions
+python --version
+uv --version
+
+# Verify CUDA availability (if GPU workspace)
+python -c "import torch; print(torch.cuda.is_available())"
+
+# Start a new ML project
+uv init my-project
+cd my-project
+uv add torch numpy matplotlib
+```
 
 ## Build System
 

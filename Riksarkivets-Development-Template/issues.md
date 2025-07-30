@@ -20,10 +20,14 @@
 - `README.md`: `v13.4.0` ✅ (previously updated)
 **Impact:** Eliminated build/deployment confusion and documentation inconsistencies.
 
-### 3. Missing Python Requirements Management
-**Issue:** No `requirements.txt`, `pyproject.toml`, or dependency management files found.  
-**Impact:** Python packages are hardcoded in Dockerfile, making dependency management difficult.  
-**Fix:** Add proper Python dependency management files.
+### 3. Python Package Management Clarity - ✅ RESOLVED
+**Issue:** Documentation incorrectly suggested Python packages were pre-installed in the workspace.
+**Status:** RESOLVED - Updated documentation to clarify the user-driven package management approach:
+- Python 3.12 and UV package manager are pre-installed
+- Virtual environment is pre-configured and auto-activated  
+- Users install packages as needed using `uv add <package>`
+- Added Getting Started section with common ML package installation examples
+**Impact:** Clear expectations for users, flexible package management, faster workspace startup.
 
 ### 4. Hardcoded Registry URLs
 **Files:** `main.tf`, `build.yaml`, `Makefile`  
