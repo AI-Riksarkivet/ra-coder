@@ -12,10 +12,12 @@ spec:
       - name: dockerfileContent
       - name: enableCuda
         value: "true"
-      - name: imageName
-        value: "registry.ra.se:5002/airiksarkivet/devenv:v13.6.0"
       - name: registry
-        value: "registry.ra.se:5002" 
+        value: "registry.ra.se:5002"
+      - name: imageRepository
+        value: "airiksarkivet/devenv"
+      - name: imageTag
+        value: "v13.6.0" 
   templates:
     - name: kaniko-build
       dag:
@@ -38,7 +40,7 @@ spec:
         args:
           - --context=dir:///workspace
           - --dockerfile=/workspace/Dockerfile
-          - --destination={{workflow.parameters.imageName}}
+          - --destination={{workflow.parameters.registry}}/{{workflow.parameters.imageRepository}}:{{workflow.parameters.imageTag}}
           - --insecure
           - --insecure-registry={{workflow.parameters.registry}}
           - --build-arg=ENABLE_CUDA={{workflow.parameters.enableCuda}}

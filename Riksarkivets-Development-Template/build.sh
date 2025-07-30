@@ -14,17 +14,20 @@ if [ -n "$CUSTOM_KUBECONFIG" ]; then
     KUBECONFIG_OPTION="--kubeconfig $CUSTOM_KUBECONFIG"
 fi
 
-# Set image name based on CUDA support
+# Set repository and tag based on CUDA support
+IMAGE_REPOSITORY="airiksarkivet/${SERVICE_NAME}"
 if [ "$ENABLE_CUDA" = "true" ]; then
-    IMAGE_NAME="${REGISTRY}/airiksarkivet/${SERVICE_NAME}:${TAG}"
+    IMAGE_TAG="${TAG}"
 else
-    IMAGE_NAME="${REGISTRY}/airiksarkivet/${SERVICE_NAME}:${TAG}-cpu"
+    IMAGE_TAG="${TAG}-cpu"
 fi
+
+IMAGE_NAME="${REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 
 echo "Submitting workflow with CUDA support: $ENABLE_CUDA"
 echo "Image name: $IMAGE_NAME"
 TIMESTAMP=$(date +%s)
-WORKFLOW_NAME=$(argo submit build.yaml $KUBECONFIG_OPTION --generate-name "kaniko-build-${SERVICE_NAME}-${TIMESTAMP}-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p imageName="$IMAGE_NAME" -p registry="$REGISTRY" -n ci -o name)
+WORKFLOW_NAME=$(argo submit build.yaml $KUBECONFIG_OPTION --generate-name "kaniko-build-${SERVICE_NAME}-${TIMESTAMP}-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p registry="$REGISTRY" -p imageRepository="$IMAGE_REPOSITORY" -p imageTag="$IMAGE_TAG" -n ci -o name)
 
 if [ -z "$WORKFLOW_NAME" ]; then
   echo "Failed to submit workflow or capture its name."
