@@ -168,7 +168,7 @@ LAKECTL_SECRET_ACCESS_KEY=$(cat /etc/secrets/lakefs/secret_access_key)
 **Impact:** Users working with TensorFlow, JAX, or other frameworks need manual setup.  
 **Fix:** Add support for multiple ML frameworks or easy switching mechanism.
 
-### 23. Missing RBAC Permissions for Argo Workflows - ⚠️ ACTION REQUIRED
+### 23. Missing RBAC Permissions for Argo Workflows - ✅ FIXED
 **File:** `rbac-setup.yaml`  
 **Issue:** Service account lacks permissions for `workflowtaskresults` API resources, causing Argo Workflows to fall back to legacy/insecure pod patches.
 **Evidence:** Build logs show warnings:
@@ -176,9 +176,9 @@ LAKECTL_SECRET_ACCESS_KEY=$(cat /etc/secrets/lakefs/secret_access_key)
 failed to patch task result, falling back to legacy/insecure pod patch
 workflowtaskresults.argoproj.io is forbidden: User "system:serviceaccount:ci:ci-service-account" cannot create resource "workflowtaskresults"
 ```
-**Status:** RBAC configuration updated in `rbac-setup.yaml` but requires cluster deployment.
-**Required Action:** 
-1. Apply updated RBAC: `kubectl apply -f rbac-setup.yaml`
-2. Update the `default-coder` kubeconfig secret with new permissions
-3. Restart Argo Workflows service account if needed
-**Impact:** Without this fix, workflows use less secure legacy patching method and generate warning logs.
+**Status:** RESOLVED - RBAC configuration applied and kubeconfig secret updated.
+**Actions Completed:** 
+1. ✅ Applied updated RBAC: `kubectl apply -f rbac-setup.yaml`
+2. ✅ Updated the `default-kubeconfig` secret with new service account permissions
+3. ✅ Verified new kubeconfig has `workflowtaskresults` create permissions
+**Impact:** Argo Workflows now use secure task result patching, eliminating warning logs and improving security.
