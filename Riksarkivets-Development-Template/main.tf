@@ -474,7 +474,7 @@ module "vscode-web" {
   agent_id      = coder_agent.main.id
   accept_license = true
   subdomain     = false
-  extensions    =  [ "ms-python.python", "ms-python.debugpy", ""]
+  extensions    =  [ "ms-python.python", "ms-python.debugpy", "anthropic.claude-code"]
   telemetry_level = "off"
 }
 
