@@ -223,9 +223,9 @@
 
 ## Version Information
 
-### Current Versions (as of analysis)
+### Current Versions (as of latest analysis)
 - **Template Version:** Not explicitly versioned
-- **Container Image:** v13.4.0 (production), v13.3.0 (build), v9.0.0/v8.0.0 (docs)
+- **Container Image:** v13.6.0 (standardized across all references)
 - **Coder Modules:**
   - VS Code Web: 1.3.1
   - File Browser: 1.0.30
@@ -268,5 +268,32 @@ The template is particularly well-suited for:
 - Team-based ML development with shared infrastructure
 - GPU-intensive computational workloads
 
-**Strengths:** Comprehensive ML tooling, AI integration, GPU support, Kubernetes-native  
+**Strengths:** Comprehensive ML tooling, AI integration, GPU support, Kubernetes-native, configurable registry URLs, proper RBAC permissions  
+**Recent Improvements:** Version standardization, configurable container registry, resolved RBAC permissions, VS Code connectivity checker  
 **Areas for Improvement:** Multi-framework support, enhanced security, better documentation, resource optimization
+
+## Recent Updates and Fixes
+
+### Resolved Issues (2024)
+- ✅ **Docker Volume Mount Not Used** - Removed unused docker-sock volume definition
+- ✅ **Image Version Inconsistencies** - Standardized all version references to v13.6.0
+- ✅ **Python Package Management Clarity** - Updated documentation for user-driven package management
+- ✅ **Hardcoded Registry URLs** - Made container registry URLs fully configurable
+- ✅ **Missing RBAC Permissions** - Added workflowtaskresults permissions for Argo Workflows
+
+### New Features Added
+- 🆕 **VS Code Connectivity Checker** - Network diagnostic tool for firewall environments
+- 🆕 **Configurable Container Registry** - Support for different registry environments
+- 🆕 **Enhanced RBAC** - Proper permissions for secure Argo Workflows operation
+
+### Outstanding Issues
+As of latest analysis, 18 issues remain outstanding:
+- **Security Issues:** 3 (high priority)  
+- **Configuration Issues:** 3
+- **Infrastructure Issues:** 3
+- **Documentation Issues:** 2
+- **Build System Issues:** 2
+- **Performance Issues:** 2
+- **ML-Specific Issues:** 3
+
+See `issues.md` for detailed information on remaining issues.

@@ -1,47 +1,4 @@
-# Issues Found in ML Workspace Template
-
-## Critical Issues
-
-### 1. Docker Volume Mount Not Used (main.tf:786-792) - ✅ FIXED
-**File:** `main.tf`  
-**Lines:** 786-792  
-**Issue:** Docker socket volume was defined but never mounted to the container.
-**Status:** RESOLVED - Removed unused docker-sock volume definition.
-**Impact:** Eliminated dead code and configuration inconsistency.
-
-### 2. Image Version Inconsistencies - ✅ FIXED
-**Files:** `main.tf`, `Makefile`, `build.sh`, `build.yaml`, `README.md`  
-**Issue:** Multiple conflicting image versions were referenced across configuration files.
-**Status:** RESOLVED - Standardized all version references to `v13.4.0`:
-- `main.tf:633`: `v13.4.0` ✅
-- `Makefile:2`: `v13.4.0` ✅ (updated from v13.3.0)
-- `build.sh:6`: `v13.4.0` ✅ (updated from v9.0.0)
-- `build.yaml:16`: `v13.4.0` ✅ (updated from v9.0.0)
-- `README.md`: `v13.4.0` ✅ (previously updated)
-**Impact:** Eliminated build/deployment confusion and documentation inconsistencies.
-
-### 3. Python Package Management Clarity - ✅ RESOLVED
-**Issue:** Documentation incorrectly suggested Python packages were pre-installed in the workspace.
-**Status:** RESOLVED - Updated documentation to clarify the user-driven package management approach:
-- Python 3.12 and UV package manager are pre-installed
-- Virtual environment is pre-configured and auto-activated  
-- Users install packages as needed using `uv add <package>`
-- Added Getting Started section with common ML package installation examples
-**Impact:** Clear expectations for users, flexible package management, faster workspace startup.
-
-### 4. Hardcoded Registry URLs - ✅ FIXED
-**Files:** `main.tf`, `build.yaml`, `Makefile`, `Dockerfile`, `build.sh`  
-**Issue:** Registry URL `registry.ra.se:5002` was hardcoded throughout configuration.
-**Status:** RESOLVED - Made registry URL configurable via multiple methods:
-- **Terraform variable**: `container_registry` variable in main.tf with default value
-- **Dockerfile build arg**: `REGISTRY` build argument with default value  
-- **Build system**: Environment variable `REGISTRY` overrides in Makefile and build scripts
-- **Argo workflows**: Registry parameter passed to build workflows
-**Configuration Options:**
-- Template level: Set `container_registry` variable in Coder template
-- Build level: Set `REGISTRY=your-registry.com make kaniko-build`
-- Environment: Export `REGISTRY=your-registry.com` before building
-**Impact:** Template is now portable across different container registry environments.
+# Outstanding Issues in ML Workspace Template
 
 ## Security Issues
 
@@ -168,17 +125,30 @@ LAKECTL_SECRET_ACCESS_KEY=$(cat /etc/secrets/lakefs/secret_access_key)
 **Impact:** Users working with TensorFlow, JAX, or other frameworks need manual setup.  
 **Fix:** Add support for multiple ML frameworks or easy switching mechanism.
 
-### 23. Missing RBAC Permissions for Argo Workflows - ✅ FIXED
-**File:** `rbac-setup.yaml`  
-**Issue:** Service account lacks permissions for `workflowtaskresults` API resources, causing Argo Workflows to fall back to legacy/insecure pod patches.
-**Evidence:** Build logs show warnings:
-```
-failed to patch task result, falling back to legacy/insecure pod patch
-workflowtaskresults.argoproj.io is forbidden: User "system:serviceaccount:ci:ci-service-account" cannot create resource "workflowtaskresults"
-```
-**Status:** RESOLVED - RBAC configuration applied and kubeconfig secret updated.
-**Actions Completed:** 
-1. ✅ Applied updated RBAC: `kubectl apply -f rbac-setup.yaml`
-2. ✅ Updated the `default-kubeconfig` secret with new service account permissions
-3. ✅ Verified new kubeconfig has `workflowtaskresults` create permissions
-**Impact:** Argo Workflows now use secure task result patching, eliminating warning logs and improving security.
+---
+
+## Recently Resolved Issues
+
+For reference, the following issues have been resolved:
+
+- **Issue #1:** Docker Volume Mount Not Used - ✅ FIXED
+- **Issue #2:** Image Version Inconsistencies - ✅ FIXED  
+- **Issue #3:** Python Package Management Clarity - ✅ RESOLVED
+- **Issue #4:** Hardcoded Registry URLs - ✅ FIXED
+- **Issue #23:** Missing RBAC Permissions for Argo Workflows - ✅ FIXED
+
+## Issue Summary
+
+**Total Outstanding Issues:** 18  
+**Security Issues:** 3 🔴  
+**Configuration Issues:** 3 🟡  
+**Infrastructure Issues:** 3 🟡  
+**Documentation Issues:** 2 🟡  
+**Build System Issues:** 2 🟡  
+**Performance Issues:** 2 🟡  
+**ML-Specific Issues:** 3 🟡  
+
+**Priority Breakdown:**
+- **High Priority (Security):** Issues 5, 6, 7, 11
+- **Medium Priority (Functionality):** Issues 8, 9, 10, 16, 20, 21, 22
+- **Low Priority (Quality of Life):** Issues 12, 13, 14, 15, 17, 18, 19
