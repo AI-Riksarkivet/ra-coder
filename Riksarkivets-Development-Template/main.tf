@@ -360,9 +360,25 @@ resource "coder_agent" "main" {
 
     # --- Configure Git ---
     echo "Configuring Git user..."
+    echo "Git author name: '${local.git_author_name}'"
+    echo "Git author email: '${local.git_author_email}'"
+    
     # Use Terraform interpolation to get owner name/email from locals
-    git config --global user.name "${local.git_author_name}"
-    git config --global user.email "${local.git_author_email}"
+    if git config --global user.name "${local.git_author_name}"; then
+        echo "Successfully set git user.name to '${local.git_author_name}'"
+    else
+        echo "ERROR: Failed to set git user.name"
+    fi
+    
+    if git config --global user.email "${local.git_author_email}"; then
+        echo "Successfully set git user.email to '${local.git_author_email}'"
+    else
+        echo "ERROR: Failed to set git user.email"
+    fi
+    
+    # Verify git configuration
+    echo "Current git configuration:"
+    git config --list | grep user || echo "WARNING: No git user config found"
 
     # --- Configure Coder CLI ---
     echo "Configuring Coder CLI..."
