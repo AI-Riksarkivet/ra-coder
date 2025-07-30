@@ -52,7 +52,7 @@ Before using this template, ensure you have:
         * NVIDIA GPU drivers installed on the nodes.
         * NVIDIA Container Toolkit (or equivalent like `nvidia-docker2`) and the `nvidia` runtime class configured.
         * Nodes labeled appropriately (e.g., `nvidia.com/gpu.product: NVIDIA-RTX-A6000`) if specific GPU types are targeted.
-3.  **Docker Image:** The Docker image defined by the `Dockerfile` (e.g., `registry.ra.se:5002/devenv:v8.0.0`) must be built and pushed to a registry accessible by your Kubernetes cluster. This template specifies `registry.ra.se:5002/devenv:v8.0.0`.
+3.  **Docker Image:** The Docker image defined by the `Dockerfile` (e.g., `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`) must be built and pushed to a registry accessible by your Kubernetes cluster. This template specifies `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`.
 4.  **Kubernetes Namespace:** The Kubernetes namespace specified by the `namespace` variable (e.g., `coder`) must exist.
 5.  **LakeFS Secret (Required for LakeFS integration):**
     * A Kubernetes secret named `lakefs-secrets` must exist in the **same namespace** where workspaces will be deployed.
@@ -68,11 +68,15 @@ Before using this template, ensure you have:
 
 ## Workspace Parameters (Configurable at Workspace Creation)
 
-* **CPU:** The number of CPU cores for the workspace (e.g., "2", "4", "8"). Default: "2".
-* **Memory:** The amount of memory in GB for the workspace (e.g., "4", "8", "16"). Default: "2".
-* **Home disk size:** The size of the persistent home disk in GB. Default: "10". (Not mutable after creation).
+* **CPU:** The number of CPU cores for the workspace (2, 4, 6, 8, 12, 16, 20, 24). Default: "2".
+* **Memory:** The amount of memory in GB for the workspace (2, 4, 6, 8, 16, 32, 64, 96). Default: "2".
+* **Home disk size:** The size of the persistent home disk in GB (1-99999). Default: "10". (Not mutable after creation).
 * **GPU Type:** Select the type of GPU. Options: "None", "Quadro RTX 5000", "NVIDIA RTX A5000", "NVIDIA RTX A6000", "NVIDIA RTX 6000 Ada Generation". Default: "None". (Not mutable after creation).
 * **Number of GPUs:** Number of GPUs to allocate (0-4). Ignored if GPU Type is "None". Default: "0". (Not mutable after creation).
+* **AI Prompt:** Custom prompt for Claude Code integration. Default: "". (Mutable).
+* **Anthropic API Key:** Your Anthropic API key for Claude Code. Default: "". (Mutable).
+* **GitHub Token:** GitHub personal access token for API access. Default: "". (Mutable).
+* **Hugging Face Token:** Hugging Face access token for CLI and API access. Default: "". (Mutable).
 
 ## Input Variables (Configurable in the Coder Template UI)
 
@@ -106,35 +110,42 @@ Before using this template, ensure you have:
 * **System Build Tools:** `build-essential`, `gfortran`, `pkg-config`, `libopenblas-dev`, `libasound2-dev`.
 
 ### Command-Line Tools (installed via Homebrew)
-* `argo`
-* `awscli`
-* `helm`
-* `kubectl`
-* `lakefs`
-* `pre-commit`
-* `duckdb`
-* `huggingface-cli`
-* `ruff` (Python linter)
-* General utilities: `jq`, `htop`, `tree`, `unzip`, `wget`, `curl`.
+* **Kubernetes & Cloud:**
+  * `kubectl` - Kubernetes CLI
+  * `helm` - Kubernetes package manager
+  * `k9s` - Kubernetes TUI
+  * `argo` - Argo Workflows CLI
+  * `awscli` - AWS CLI
+* **Development & ML:**
+  * `ruff` - Python linter and formatter
+  * `pre-commit` - Git hooks management
+  * `huggingface-cli` - Hugging Face Hub CLI
+  * `lakefs` - Data versioning CLI
+  * `duckdb` - In-process analytical database
+  * `uv` - Fast Python package installer
+  * `terraform` - Infrastructure as Code tool
+  * `gh` - GitHub CLI
+* **System Utilities:**
+  * `jq`, `htop`, `tree`, `unzip`, `wget`, `curl`, `vim`, `nano`
 
 ### IDE & Extensions
-* **`code-server`:** VS Code in the browser, accessible via a Coder app.
-* **Pre-installed VS Code Extensions:**
-    * `charliermarsh.ruff` (Ruff Linter)
-    * `exiasr.hadolint` (Dockerfile linter)
-    * `kevinrose.vsc-python-indent` (Python Indentation)
-    * `redhat.vscode-yaml` (YAML Support)
-    * `shardulm94.trailing-spaces` (Trailing Spaces)
-    * `pomdtr.excalidraw-editor` (Excalidraw Integration)
-    * `tamasfe.even-better-toml` (TOML Language Support)
-    * `PKief.material-icon-theme` (Material Icon Theme)
-    * `mhutchie.git-graph` (Git Graph)
-    * `Continue.continue` (AI Coding Assistant extension)
-    * `marimo-team.vscode-marimo` (Marimo Notebook support)
+* **VS Code Web:** Browser-based VS Code accessible via Coder app (no desktop installation required).
+* **Core VS Code Extensions (automatically installed):**
+    * `ms-python.python` - Python language support
+    * `ms-python.debugpy` - Python debugging
+    * `anthropic.claude-code` - Claude AI integration
+* **Additional Extensions (available in documentation):**
+    * Python development: Ruff linter, Python indentation
+    * Infrastructure: Dockerfile linter (Hadolint), YAML support  
+    * Productivity: Git Graph, Material Icon Theme, trailing spaces
+    * AI: Continue extension for local LLM integration
+    * Notebooks: Marimo reactive notebook support
+    * Visualization: Excalidraw editor integration
 
 ### AI Assistants Configuration
 * **Aider:** Configured via `/home/coder/.aider.conf.yml` to use the model `openai/all-hands/openhands-lm-32b-v0.1` at `http://llm-service.models:8000/v1`.
 * **Continue (VS Code Extension):** Configured via `/home/coder/.continue/config.yaml` for the "OpenHands Local (vLLM)" model, also pointing to `http://llm-service.models:8000/v1`.
+* **Claude Code:** Integrated via Coder module with configurable API key and prompts through workspace parameters.
 
 ## Configuration Details
 
@@ -153,7 +164,7 @@ Before using this template, ensure you have:
 
 ## Kubernetes Deployment Details
 
-* **Image:** Uses the custom Docker image `registry.ra.se:5002/devenv:v8.0.0` (or as specified in `kubernetes_deployment.main.spec.template.spec.container.image`).
+* **Image:** Uses the custom Docker image `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0` (GPU) or `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0-cpu` (CPU-only) as specified in the deployment configuration.
 * **Persistent Storage:**
     * `/home/coder` is backed by a `PersistentVolumeClaim` named `coder-<workspace-id>-home`. The size is determined by the `home_disk_size` parameter.
 * **GPU Support:**
@@ -173,27 +184,26 @@ Before using this template, ensure you have:
 
 ## Coder Apps
 
-* **Code Server:** Provides access to the VS Code IDE at `http://localhost:13337?folder=/home/coder`.
-* **Filebrowser:** A web-based file manager for the workspace.
+* **VS Code Web:** Provides access to the VS Code IDE via Coder app (port 13338 internally).
+* **File Browser:** A web-based file manager for the workspace (port 13339 internally).
+* **Claude Code:** Anthropic's AI coding assistant with web interface and CLI integration.
 * **Dotfiles:** Module to manage and apply your personal dotfiles.
 
 ## Agent Startup Script (`coder_agent.main.startup_script`)
 
 The agent startup script performs several key actions:
 
-1.  **Installs/Updates `code-server`:** Fetches and installs the latest standalone version of `code-server` to `/tmp/code-server`.
-2.  **Configures Continue:** Creates `/home/coder/.continue/config.yaml` for the local LLM setup.
-3.  **Configures `lakectl`:** Reads LakeFS credentials from the mounted secret `/etc/secrets/lakefs/` and writes `~/.lakectl.yaml`.
-4.  **Configures Aider:** Creates `/home/coder/.aider.conf.yml` for the local LLM setup.
-5.  **Installs VS Code Extensions:** Iterates through a list of predefined extensions and installs them using `code-server --install-extension`.
-6.  **Configures Git:** Sets global `user.name` and `user.email` using Coder workspace owner details.
-7.  **Starts `code-server`:** Launches `code-server` on `0.0.0.0:13337` without authentication.
-8.  **Displays Service Info:** Prints MLflow and Argo UI addresses to the agent log if configured.
+1.  **Configures Continue:** Creates `/home/coder/.continue/config.yaml` for the local LLM setup with OpenHands model.
+2.  **Configures LakeFS:** Reads LakeFS credentials from the mounted secret `/etc/secrets/lakefs/` and writes `~/.lakectl.yaml`.
+3.  **Configures Aider:** Creates `/home/coder/.aider.conf.yml` for the local LLM setup.
+4.  **Configures Git:** Sets global `user.name` and `user.email` using Coder workspace owner details.
+5.  **Configures Coder CLI:** Sets up basic Coder CLI configuration.
+6.  **Displays Service Info:** Prints MLflow and Argo UI addresses to the agent log if configured.
 
 ## How to Use
 
 1.  **Import Template:** Add this template to your Coder deployment.
-2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`registry.ra.se:5002/devenv:v8.0.0`). Modify the image tag in `main.tf` if you use a different one.
+2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`). Use the provided build system with `make kaniko-build` or modify the image tag in `main.tf` if you use a different one.
 3.  **Create Kubernetes Secret:** Ensure the `lakefs-secrets` secret is created in the target Kubernetes namespace.
 4.  **Create Workspace:**
     * Navigate to Coder and create a new workspace using this template.
@@ -202,13 +212,63 @@ The agent startup script performs several key actions:
     * Coder will provision the Kubernetes resources and start the agent.
 5.  **Connect:** Once the workspace is running, connect to it via the Coder dashboard, typically opening the `code-server` app.
 
+## Build System
+
+This template includes a comprehensive build system using Argo Workflows and Kaniko:
+
+* **Build Commands:**
+  * `make kaniko-build` - Build image using Kaniko in Kubernetes
+  * `make kaniko-build-cuda` - Build CUDA-enabled image  
+  * `make kaniko-build-cpu` - Build CPU-only image
+  * `make docker-release` - Local Docker build and push
+
+* **Build Configuration:**
+  * **Registry:** `registry.ra.se:5002` (configurable via Makefile)
+  * **Image Versions:** Separate CUDA and CPU variants
+  * **Workflow Cleanup:** Auto-deletion after 3 hours
+  * **Build Namespace:** `ci` (configurable)
+
 ## Customization
 
-* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Rebuild and push the image after changes.
-* **VS Code Extensions:** Add or remove extension IDs from the `EXTENSIONS_STR` variable in the `coder_agent.main.startup_script` within `main.tf`.
+* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Use the build system to rebuild and push images.
 * **LLM Configuration:**
     * Change the `apiBase` and `model` in `/home/coder/.continue/config.yaml` (within the startup script) for the Continue extension.
     * Change `openai-api-base` and `model` in `/home/coder/.aider.conf.yml` (within the startup script) for Aider.
 * **Resource Allocation:** Adjust default values or ranges for `cpu`, `memory`, etc., in the `data "coder_parameter"` blocks in `main.tf`.
 * **Kubernetes Manifests:** Modify the `kubernetes_deployment` or `kubernetes_persistent_volume_claim` resources in `main.tf` for advanced Kubernetes configurations.
+* **Registry Configuration:** Update registry URLs in `main.tf`, `Makefile`, and `build.yaml` for different container registries.
 * **Cloud CLIs:** Uncomment and install `azure-cli` or `google-cloud-sdk` in the Dockerfile if needed.
+
+## Security Features
+
+* **Container Security:** Runs as non-root user (UID 1000) with restricted permissions
+* **Secret Management:** LakeFS credentials mounted from Kubernetes secrets  
+* **Network Isolation:** Pod-level network policies (configurable)
+* **RBAC Integration:** Limited Kubernetes permissions via service account
+* **Token Management:** Secure handling of API tokens through workspace parameters
+
+## Monitoring and Observability
+
+The template includes comprehensive resource monitoring:
+
+* **Resource Metrics:** CPU, memory, and disk usage (container and host)
+* **Update Intervals:** 10-60 seconds for different metrics
+* **GPU Monitoring:** Resource allocation tracking (utilization monitoring available as enhancement)
+* **Service Health:** Automatic service discovery and health reporting
+
+## Version Information
+
+**Current Template Versions:**
+* **Container Image:** `v13.4.0` (CUDA), `v13.4.0-cpu` (CPU-only)
+* **VS Code Web Module:** `1.3.1`
+* **File Browser Module:** `1.0.30`  
+* **Claude Code Module:** `2.0.3`
+* **Dotfiles Module:** `1.0.29`
+
+## Support and Documentation
+
+For additional information, see:
+* **issues.md** - Known issues and troubleshooting
+* **features.md** - Missing features and enhancement suggestions  
+* **overview.md** - Complete tool inventory and configuration details
+* **CLAUDE.md** - Project context and development notes
