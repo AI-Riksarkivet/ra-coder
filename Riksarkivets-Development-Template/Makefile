@@ -39,7 +39,3 @@ release-cpu: kaniko-build-cpu
 
 release: kaniko-build
 	@echo "Image built and pushed via Kaniko successfully!"
-
-dev:
-	uv sync
-	docker compose up --build
