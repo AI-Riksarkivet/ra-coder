@@ -44,6 +44,12 @@ variable "argowf_external_address" {
   default     = ""
 }
 
+variable "container_registry" {
+  type        = string
+  description = "The container registry URL for workspace images (e.g., registry.example.com:5000). Used for both base images and workspace container images."
+  default     = "registry.ra.se:5002"
+}
+
 # variable "anthropic_api_key" {
 #   type        = string
 #   description = "The Anthropic API key"
@@ -629,7 +635,7 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "registry.ra.se:5002/airiksarkivet/devenv:v13.4.0" : "registry.ra.se:5002/airiksarkivet/devenv:v13.4.0-cpu"
+          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v13.4.0" : "${var.container_registry}/airiksarkivet/devenv:v13.4.0-cpu"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 

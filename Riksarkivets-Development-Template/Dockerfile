@@ -1,5 +1,7 @@
 # Stage 1: Base system setup
-FROM registry.ra.se:5002/ubuntu:jammy AS base
+
+ARG REGISTRY=registry.ra.se:5002
+FROM ${REGISTRY}/ubuntu:jammy AS base
 
 ARG ENABLE_CUDA=true
 ARG CUDA_VERSION_MAJOR_MINOR=12.2
@@ -55,6 +57,7 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         node@22 \
         argo \
         awscli \
+        azure-cli \
         helm \
         kubectl \
         k9s \
@@ -67,7 +70,8 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         gh \
         nano \
         uv \
-        terraform && \
+        terraform \
+        nvtop && \
     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code && \
     brew cleanup --prune=all
 

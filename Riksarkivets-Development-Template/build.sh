@@ -3,7 +3,7 @@
 # Parameters: ENABLE_CUDA, SERVICE_NAME, TAG, REGISTRY, KUBECONFIG
 ENABLE_CUDA=${1:-${ENABLE_CUDA:-true}}
 SERVICE_NAME=${2:-${SERVICE_NAME:-devenv}}
-TAG=${3:-${TAG:-v13.4.0}}
+TAG=${3:-${TAG:-v13.5.0-test}}
 REGISTRY=${4:-${REGISTRY:-registry.ra.se:5002}}
 CUSTOM_KUBECONFIG=${5:-${CUSTOM_KUBECONFIG:-}}
 
@@ -24,7 +24,7 @@ fi
 echo "Submitting workflow with CUDA support: $ENABLE_CUDA"
 echo "Image name: $IMAGE_NAME"
 TIMESTAMP=$(date +%s)
-WORKFLOW_NAME=$(argo submit build.yaml $KUBECONFIG_OPTION --generate-name "kaniko-build-${SERVICE_NAME}-${TIMESTAMP}-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p imageName="$IMAGE_NAME" -n ci -o name)
+WORKFLOW_NAME=$(argo submit build.yaml $KUBECONFIG_OPTION --generate-name "kaniko-build-${SERVICE_NAME}-${TIMESTAMP}-" -p dockerfileContent="$(cat Dockerfile)" -p enableCuda="$ENABLE_CUDA" -p imageName="$IMAGE_NAME" -p registry="$REGISTRY" -n ci -o name)
 
 if [ -z "$WORKFLOW_NAME" ]; then
   echo "Failed to submit workflow or capture its name."

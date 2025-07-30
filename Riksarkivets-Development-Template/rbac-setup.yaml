@@ -49,6 +49,10 @@ rules:
 - apiGroups: ["argoproj.io"]
   resources: ["workfloweventbindings", "sensors"]
   verbs: ["get", "list", "watch"]
+# Workflow task results (needed for secure task result patching)
+- apiGroups: ["argoproj.io"]
+  resources: ["workflowtaskresults"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 ---
 # ServiceAccount for Coder workspaces

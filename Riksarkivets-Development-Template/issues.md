@@ -29,11 +29,19 @@
 - Added Getting Started section with common ML package installation examples
 **Impact:** Clear expectations for users, flexible package management, faster workspace startup.
 
-### 4. Hardcoded Registry URLs
-**Files:** `main.tf`, `build.yaml`, `Makefile`  
-**Issue:** Registry URL `registry.ra.se:5002` is hardcoded throughout configuration.  
-**Impact:** Not portable to other environments.  
-**Fix:** Make registry URL configurable via variables.
+### 4. Hardcoded Registry URLs - ✅ FIXED
+**Files:** `main.tf`, `build.yaml`, `Makefile`, `Dockerfile`, `build.sh`  
+**Issue:** Registry URL `registry.ra.se:5002` was hardcoded throughout configuration.
+**Status:** RESOLVED - Made registry URL configurable via multiple methods:
+- **Terraform variable**: `container_registry` variable in main.tf with default value
+- **Dockerfile build arg**: `REGISTRY` build argument with default value  
+- **Build system**: Environment variable `REGISTRY` overrides in Makefile and build scripts
+- **Argo workflows**: Registry parameter passed to build workflows
+**Configuration Options:**
+- Template level: Set `container_registry` variable in Coder template
+- Build level: Set `REGISTRY=your-registry.com make kaniko-build`
+- Environment: Export `REGISTRY=your-registry.com` before building
+**Impact:** Template is now portable across different container registry environments.
 
 ## Security Issues
 
@@ -159,3 +167,18 @@ LAKECTL_SECRET_ACCESS_KEY=$(cat /etc/secrets/lakefs/secret_access_key)
 **Issue:** Only PyTorch is pre-installed, missing other popular frameworks.  
 **Impact:** Users working with TensorFlow, JAX, or other frameworks need manual setup.  
 **Fix:** Add support for multiple ML frameworks or easy switching mechanism.
+
+### 23. Missing RBAC Permissions for Argo Workflows - ⚠️ ACTION REQUIRED
+**File:** `rbac-setup.yaml`  
+**Issue:** Service account lacks permissions for `workflowtaskresults` API resources, causing Argo Workflows to fall back to legacy/insecure pod patches.
+**Evidence:** Build logs show warnings:
+```
+failed to patch task result, falling back to legacy/insecure pod patch
+workflowtaskresults.argoproj.io is forbidden: User "system:serviceaccount:ci:ci-service-account" cannot create resource "workflowtaskresults"
+```
+**Status:** RBAC configuration updated in `rbac-setup.yaml` but requires cluster deployment.
+**Required Action:** 
+1. Apply updated RBAC: `kubectl apply -f rbac-setup.yaml`
+2. Update the `default-coder` kubeconfig secret with new permissions
+3. Restart Argo Workflows service account if needed
+**Impact:** Without this fix, workflows use less secure legacy patching method and generate warning logs.

@@ -13,7 +13,9 @@ spec:
       - name: enableCuda
         value: "true"
       - name: imageName
-        value: "registry.ra.se:5002/airiksarkivet/devenv:v13.4.0" 
+        value: "registry.ra.se:5002/airiksarkivet/devenv:v13.5.0-test"
+      - name: registry
+        value: "registry.ra.se:5002" 
   templates:
     - name: kaniko-build
       dag:
@@ -31,15 +33,16 @@ spec:
           - name: dockerfile 
             path: /workspace/Dockerfile 
       container:
-        image: registry.ra.se:5002/gcr.io/kaniko-project/executor:latest 
+        image: "{{workflow.parameters.registry}}/gcr.io/kaniko-project/executor:latest" 
         command: ["/kaniko/executor"]
         args:
           - --context=dir:///workspace
           - --dockerfile=/workspace/Dockerfile
           - --destination={{workflow.parameters.imageName}}
           - --insecure
-          - --insecure-registry=registry.ra.se:5002
+          - --insecure-registry={{workflow.parameters.registry}}
           - --build-arg=ENABLE_CUDA={{workflow.parameters.enableCuda}}
+          - --build-arg=REGISTRY={{workflow.parameters.registry}}
         volumeMounts:
           - name: workspace
             mountPath: /workspace
