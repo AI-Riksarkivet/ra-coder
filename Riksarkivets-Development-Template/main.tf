@@ -782,13 +782,6 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-        volume {
-          name = "docker-sock"
-          host_path {
-            path = "/var/run/docker.sock"
-            type = "Socket"
-          }
-        }
 
         # Mount default kubeconfig with limited permissions
         volume {
