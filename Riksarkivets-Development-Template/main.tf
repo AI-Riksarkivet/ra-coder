@@ -302,7 +302,7 @@ resource "coder_agent" "main" {
       - provider: problems
       - provider: folder
       - provider: codebase
-    CONTINUECONFIG
+CONTINUECONFIG
 
 
     # Read LakeFS secrets from mounted files and create .lakectl.yaml
@@ -338,7 +338,7 @@ resource "coder_agent" "main" {
             max_attempts: 4
             max_wait_interval: 30s
             min_wait_interval: 200ms
-    LAKECTLCONFIG
+LAKECTLCONFIG
     echo "lakectl.yaml configured."
 
 
@@ -353,7 +353,7 @@ resource "coder_agent" "main" {
     openai-api-key: nokey # Assuming no key is needed for this local model
 
     # Other global defaults...
-    AIDERCONFIG
+AIDERCONFIG
 
 
     echo "Aider config created at /home/coder/.aider.conf.yml"
