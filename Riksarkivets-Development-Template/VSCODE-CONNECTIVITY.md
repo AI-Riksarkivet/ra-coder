@@ -2,6 +2,8 @@
 
 This script checks connectivity to VS Code-related domains to help diagnose firewall or network issues that might affect VS Code functionality.
 
+The domains tested are based on the official VS Code network requirements documented at: https://code.visualstudio.com/docs/setup/network#_common-hostnames
+
 ## Usage
 
 ```bash
