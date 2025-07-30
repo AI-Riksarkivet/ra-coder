@@ -453,6 +453,14 @@ CODERCONFIG
     timeout      = 1
   }
 
+  display_apps {
+    vscode = false
+    vscode_insiders = false
+    ssh_helper = false
+    port_forwarding_helper = false
+    web_terminal = true
+  }
+
 }
 
 # --- Locals ---
