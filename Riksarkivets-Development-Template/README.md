@@ -82,6 +82,7 @@ Before using this template, ensure you have:
 
 * `use_kubeconfig` (bool): Set to `true` if Coder runs outside the Kubernetes cluster and should use `~/.kube/config` from the Coder host. Default: `false` (for in-cluster Coder).
 * `namespace` (string): The Kubernetes namespace to create workspaces in. This namespace must exist.
+* `container_registry` (string): The container registry URL for workspace images (e.g., `registry.example.com:5000`). Default: `"registry.ra.se:5002"`.
 * `mlflow_external_address` (string): External URL for the MLflow Tracking Server UI (e.g., `http://mlflow.example.com`). Leave empty to disable MLflow app and environment variable injection. Default: `""`.
 * `argowf_external_address` (string): External URL for the Argo Workflow Server UI (e.g., `http://argo.example.com`). Leave empty to disable Argo Workflow app and environment variable injection. Default: `""`.
 
@@ -275,7 +276,7 @@ This template includes a comprehensive build system using Argo Workflows and Kan
     * Change `openai-api-base` and `model` in `/home/coder/.aider.conf.yml` (within the startup script) for Aider.
 * **Resource Allocation:** Adjust default values or ranges for `cpu`, `memory`, etc., in the `data "coder_parameter"` blocks in `main.tf`.
 * **Kubernetes Manifests:** Modify the `kubernetes_deployment` or `kubernetes_persistent_volume_claim` resources in `main.tf` for advanced Kubernetes configurations.
-* **Registry Configuration:** Update registry URLs in `main.tf`, `Makefile`, and `build.yaml` for different container registries.
+* **Registry Configuration:** Use the `container_registry` template variable to configure a different registry, or override via environment variables (`REGISTRY` for build tools).
 * **Cloud CLIs:** Uncomment and install `azure-cli` or `google-cloud-sdk` in the Dockerfile if needed.
 
 ## Security Features
