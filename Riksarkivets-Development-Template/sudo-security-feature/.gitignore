@@ -1,0 +1,4 @@
+# Temporary testing files
+*.tmp
+*.test
+test-*

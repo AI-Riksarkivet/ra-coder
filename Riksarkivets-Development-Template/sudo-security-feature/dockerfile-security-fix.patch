@@ -1,0 +1,71 @@
+# Dockerfile Security Fix - Replace insecure sudo configuration
+# 
+# Replace this insecure configuration:
+#     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd && \
+#     chmod 440 /etc/sudoers.d/nopasswd && \
+#
+# With this secure configuration:
+
+# BEFORE (Line 26-27 in Dockerfile):
+# echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd && \
+# chmod 440 /etc/sudoers.d/nopasswd && \
+
+# AFTER (Replacement):
+cat > /etc/sudoers.d/coder-restricted << 'EOF' && \
+# Secure sudo configuration for ML development workspace
+# Only allows specific commands needed for package management and development
+
+# Package management commands
+coder ALL=(ALL) NOPASSWD: /usr/bin/apt-get update, \
+                          /usr/bin/apt-get install *, \
+                          /usr/bin/apt-get remove *, \
+                          /usr/bin/apt-get purge *, \
+                          /usr/bin/apt-get autoremove, \
+                          /usr/bin/apt-get autoclean, \
+                          /usr/bin/apt-get clean, \
+                          /usr/bin/dpkg -i *, \
+                          /usr/bin/dpkg -r *, \
+                          /usr/bin/dpkg --configure *
+
+# Python package managers  
+coder ALL=(ALL) NOPASSWD: /usr/bin/pip install *, \
+                          /usr/bin/pip uninstall *, \
+                          /usr/bin/pip3 install *, \
+                          /usr/bin/pip3 uninstall *, \
+                          /usr/local/bin/uv *
+
+# Homebrew package manager
+coder ALL=(ALL) NOPASSWD: /home/linuxbrew/.linuxbrew/bin/brew *
+
+# System services (limited to user services)
+coder ALL=(ALL) NOPASSWD: /bin/systemctl --user *
+
+# File operations in specific directories
+coder ALL=(ALL) NOPASSWD: /bin/mkdir -p /opt/*, \
+                          /bin/mkdir -p /usr/local/*, \
+                          /bin/chown coder:coder /opt/*, \
+                          /bin/chown coder:coder /usr/local/*, \
+                          /bin/chmod * /opt/*, \
+                          /bin/chmod * /usr/local/*
+
+# GPU and hardware access (for ML workloads)  
+coder ALL=(ALL) NOPASSWD: /usr/bin/nvidia-smi, \
+                          /usr/bin/nvidia-ml-py
+
+# Development tools
+coder ALL=(ALL) NOPASSWD: /usr/local/bin/code-server *, \
+                          /usr/bin/git config --system *
+
+# Explicitly deny dangerous commands
+coder ALL=(ALL) !ALL: /bin/su, \
+                      /usr/bin/sudo, \
+                      /bin/chmod 777 *, \
+                      /bin/chmod 4755 *, \
+                      /usr/sbin/*, \
+                      /sbin/*, \
+                      /etc/init.d/*, \
+                      /bin/mount, \
+                      /bin/umount, \
+                      /usr/bin/passwd
+EOF
+chmod 440 /etc/sudoers.d/coder-restricted && \

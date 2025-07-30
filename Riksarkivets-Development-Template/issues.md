@@ -2,13 +2,20 @@
 
 ## Security Issues
 
-### 5. Container Runs with Full Sudo Access (Dockerfile:24)
+### 5. Container Runs with Full Sudo Access (Dockerfile:24) - 🔧 SOLUTION READY
 **File:** `Dockerfile`  
 **Line:** 24  
 **Issue:** `echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd`  
 **Impact:** Container user has unrestricted sudo access without password.  
 **Severity:** High  
-**Fix:** Restrict sudo access to specific commands needed for development.
+**Solution:** Complete secure sudo implementation available in `sudo-security-feature/` folder:
+- **Kaniko-compatible inline script embedding** (recommended for current build system)
+- **Self-service temporary access system** for additional permissions when needed
+- **Granular permissions** for package management, GPU monitoring, file operations only
+- **Automatic cleanup** of temporary elevated permissions
+- **Full audit trail** of all sudo usage
+**Implementation:** See `sudo-security-feature/README.md` for deployment options
+**Files:** `sudo-security-feature/dockerfile-inline-scripts.patch` (ready to apply)
 
 ### 6. Insecure Registry Configuration (build.yaml:40-41)
 **File:** `build.yaml`  

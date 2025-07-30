@@ -1,0 +1,30 @@
+# Alternative Solution: Download Scripts from Repository
+# This approach downloads the scripts from the git repository during build
+
+# Add this after the user creation section (around line 28):
+
+RUN apt-get update && apt-get install -y --no-install-recommends at curl && \
+    # Create secure sudo configuration
+    cat > /etc/sudoers.d/coder-restricted << 'EOF' && \
+# Secure sudo configuration for ML development workspace
+# Package management
+coder ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg
+coder ALL=(ALL) NOPASSWD: /usr/bin/pip, /usr/bin/pip3, /usr/local/bin/uv
+coder ALL=(ALL) NOPASSWD: /home/linuxbrew/.linuxbrew/bin/brew
+# System monitoring
+coder ALL=(ALL) NOPASSWD: /usr/bin/nvidia-smi
+# File operations in safe directories
+coder ALL=(ALL) NOPASSWD: /bin/mkdir, /bin/chown, /bin/chmod
+EOF
+    chmod 440 /etc/sudoers.d/coder-restricted && \
+    # Download security scripts from repository
+    curl -fsSL https://raw.githubusercontent.com/your-org/coder-templates/main/scripts/request-sudo-access.sh \
+         -o /usr/local/bin/request-sudo-access && \
+    chmod +x /usr/local/bin/request-sudo-access && \
+    # Create helpful aliases
+    echo 'alias sudo-help="request-sudo-access"' >> /home/coder/.bashrc && \
+    echo 'alias sudo-status="sudo -l"' >> /home/coder/.bashrc && \
+    rm -rf /var/lib/apt/lists/*
+
+# Note: This requires the scripts to be available in a public repository
+# or accessible via the build environment
