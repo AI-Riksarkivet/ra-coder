@@ -397,6 +397,13 @@ CODERCONFIG
     # Set proper ownership
     chown -R coder:coder /home/coder/.config/coderv2
 
+    # --- Configure Dagger for Kubernetes ---
+    echo "Configuring Dagger for Kubernetes engine..."
+    # Set Dagger to use Kubernetes engine in dagger namespace
+    echo 'export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=default"' >> ~/.bashrc
+    echo 'export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=default"' >> ~/.profile
+    echo "Dagger configured to use Kubernetes engine in dagger namespace"
+
     # --- Display External Service Info ---
     echo ""
     echo "-----------------------------------------------------"
@@ -409,6 +416,7 @@ CODERCONFIG
     if [ -n "$ARGO_BASE_HREF" ]; then
       echo "Argo Workflow UI: $ARGO_BASE_HREF"
     fi
+    echo "Dagger Engine: kube-pod://dagger (namespace: dagger)"
     echo "-----------------------------------------------------"
     echo ""
     echo "Coder agent setup complete. Workspace is starting."
