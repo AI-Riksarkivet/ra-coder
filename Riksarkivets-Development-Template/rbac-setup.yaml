@@ -87,3 +87,66 @@ metadata:
   annotations:
     kubernetes.io/service-account.name: coder-developer
 type: kubernetes.io/service-account-token
+
+---
+# Namespace-specific Role for Dagger engine communication
+# This allows pod/exec access only in the dagger namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dagger
+  name: dagger-pod-exec
+rules:
+# Allow pod/exec for Dagger engine communication
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+
+---
+# RoleBinding to grant coder-developer service account access to dagger namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coder-dagger-exec
+  namespace: dagger
+subjects:
+- kind: ServiceAccount
+  name: coder-developer
+  namespace: coder
+roleRef:
+  kind: Role
+  name: dagger-pod-exec
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Additional read permissions for Dagger engine pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dagger
+  name: dagger-pod-read
+rules:
+# Read access to Dagger pods
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+# Pod logs access
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+
+---
+# RoleBinding for read access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coder-dagger-read
+  namespace: dagger
+subjects:
+- kind: ServiceAccount
+  name: coder-developer
+  namespace: coder
+roleRef:
+  kind: Role
+  name: dagger-pod-read
+  apiGroup: rbac.authorization.k8s.io
