@@ -11,7 +11,7 @@ GIT_REF="${GIT_REF:-main}"
 ENABLE_CUDA="${ENABLE_CUDA:-true}"
 REGISTRY="${REGISTRY:-registry.ra.se:5002}"
 IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-airiksarkivet/devenv}"
-IMAGE_TAG="${IMAGE_TAG:-v13.6.0}"
+IMAGE_TAG="${IMAGE_TAG:-v14.0.0}"
 
 # Colors for output
 RED='\033[0;31m'
