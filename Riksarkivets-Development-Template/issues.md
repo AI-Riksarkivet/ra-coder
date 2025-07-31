@@ -134,6 +134,49 @@ LAKECTL_SECRET_ACCESS_KEY=$(cat /etc/secrets/lakefs/secret_access_key)
 
 ---
 
+## Security Issues
+
+### 23. Dagger Engine RBAC Permissions Missing - 🔧 SOLUTION IDENTIFIED
+**Component:** Kubernetes RBAC, Dagger Engine Integration  
+**Issue:** Service account `system:serviceaccount:coder:coder-developer` lacks `pods/exec` permissions required for Dagger engine communication.  
+**Symptoms:** 
+- `dagger version` works (basic connection)
+- Container operations timeout with permission errors
+- Debug logs show: `"pods/exec" is forbidden: User "system:serviceaccount:coder:coder-developer" cannot create resource "pods/exec"`
+**Root Cause:** Dagger requires `kubectl exec` access to communicate with engine pods via `buildctl dial-stdio`  
+**Impact:** Prevents Docker-free builds and hybrid Go+Python workflows despite successful engine deployment  
+**Verification:** Admin kubeconfig with full permissions allows Dagger operations to work perfectly  
+**Solution Required:** Add namespace-specific `pods/exec` permissions for dagger namespace only:
+```yaml
+# Option 1: Namespace-specific Role (Recommended)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dagger
+  name: dagger-pod-exec
+rules:
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coder-dagger-exec
+  namespace: dagger
+subjects:
+- kind: ServiceAccount
+  name: coder-developer
+  namespace: coder
+roleRef:
+  kind: Role
+  name: dagger-pod-exec
+  apiGroup: rbac.authorization.k8s.io
+```
+**Priority:** High - Blocks core Dagger functionality for dockerfile-repository-refactor implementation  
+**Files Affected:** `rbac-setup.yaml`, existing ClusterRoleBinding  
+**Implementation:** Update RBAC configuration and recreate service account kubeconfig  
+
 ## Recently Resolved Issues
 
 For reference, the following issues have been resolved:
@@ -142,12 +185,11 @@ For reference, the following issues have been resolved:
 - **Issue #2:** Image Version Inconsistencies - ✅ FIXED  
 - **Issue #3:** Python Package Management Clarity - ✅ RESOLVED
 - **Issue #4:** Hardcoded Registry URLs - ✅ FIXED
-- **Issue #23:** Missing RBAC Permissions for Argo Workflows - ✅ FIXED
 
 ## Issue Summary
 
-**Total Outstanding Issues:** 18  
-**Security Issues:** 3 🔴  
+**Total Outstanding Issues:** 19  
+**Security Issues:** 4 🔴  
 **Configuration Issues:** 3 🟡  
 **Infrastructure Issues:** 3 🟡  
 **Documentation Issues:** 2 🟡  
@@ -156,6 +198,6 @@ For reference, the following issues have been resolved:
 **ML-Specific Issues:** 3 🟡  
 
 **Priority Breakdown:**
-- **High Priority (Security):** Issues 5, 6, 7, 11
+- **High Priority (Security):** Issues 5, 6, 7, 11, 23
 - **Medium Priority (Functionality):** Issues 8, 9, 10, 16, 20, 21, 22
 - **Low Priority (Quality of Life):** Issues 12, 13, 14, 15, 17, 18, 19
