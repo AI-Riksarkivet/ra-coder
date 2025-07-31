@@ -1,0 +1,9 @@
+{
+  "name": "workflow",
+  "sdk": "go",
+  "source": ".",
+  "dependencies": [
+    "../go-infrastructure",
+    "../python-data"
+  ]
+}
