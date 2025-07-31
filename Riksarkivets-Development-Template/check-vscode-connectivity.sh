@@ -100,6 +100,16 @@ declare -a third_party_sites=(
     "registry.npmjs.org|NPM registry"
 )
 
+# Go module sites
+declare -a go_sites=(
+    "proxy.golang.org|Go module proxy"
+    "sum.golang.org|Go checksum database"
+    "index.golang.org|Go module index"
+    "go.googlesource.com|Go source repositories"
+    "gitlab.com|GitLab repositories"
+    "bitbucket.org|Bitbucket repositories"
+)
+
 echo -e "${BLUE}Checking core VS Code functionality...${NC}"
 accessible_count=0
 total_count=0
@@ -153,6 +163,16 @@ for site_info in "${third_party_sites[@]}"; do
 done
 
 echo ""
+echo -e "${BLUE}Checking Go module sites...${NC}"
+for site_info in "${go_sites[@]}"; do
+    IFS='|' read -r url description <<< "$site_info"
+    if check_site "$url" "$description"; then
+        ((accessible_count++))
+    fi
+    ((total_count++))
+done
+
+echo ""
 echo "================================="
 echo -e "Summary: ${GREEN}$accessible_count${NC}/${total_count} sites accessible"
 
@@ -174,6 +194,7 @@ elif [ $accessible_count -gt $((total_count / 2)) ]; then
     echo "  - Extension marketplace may be slow or unavailable"
     echo "  - Settings sync may not work"
     echo "  - Some authentication features may fail"
+    echo "  - Go module downloads may fail"
     echo ""
     echo "  Consider configuring proxy settings or firewall exceptions."
     exit 1
@@ -183,6 +204,7 @@ elif [ $accessible_count -gt 0 ]; then
     echo "  - Extensions may not install or update"
     echo "  - Authentication will likely fail"
     echo "  - Updates may not work"
+    echo "  - Go development will be severely limited"
     echo ""
     echo "  Contact your network administrator to allow VS Code domains."
     exit 1

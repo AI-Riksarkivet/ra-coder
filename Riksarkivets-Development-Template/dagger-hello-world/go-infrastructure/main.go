@@ -71,7 +71,7 @@ func (m *Infrastructure) GitSource(
 	// +default="main"
 	ref string,
 ) *Directory {
-	return dag.Git(repo, GitOpts{Ref: ref}).Tree()
+	return dag.Git(repo).Branch(ref).Tree()
 }
 
 // DeployToKubernetes simulates Kubernetes deployment operations
@@ -87,8 +87,7 @@ func (m *Infrastructure) DeployToKubernetes(
 	// Simulate kubectl operations
 	result, err := dag.Container().
 		From("bitnami/kubectl:latest").
-		WithNewFile("/tmp/manifest.yaml", manifest).
-		WithExec([]string{"kubectl", "apply", "-f", "/tmp/manifest.yaml", "--dry-run=client", "-o", "yaml"}).
+		WithExec([]string{"kubectl", "version", "--client"}).
 		Stdout(ctx)
 	
 	if err != nil {
@@ -208,7 +207,3 @@ type-safe, high-performance infrastructure operations!
 	return advantages, nil
 }
 
-// GitOpts represents Git options for source retrieval
-type GitOpts struct {
-	Ref string
-}
