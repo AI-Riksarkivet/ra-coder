@@ -30,7 +30,8 @@ echo -e "${BLUE}CUDA:${NC}       $ENABLE_CUDA"
 echo ""
 
 # Set up Dagger environment
-export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=default"
+export KUBECONFIG=/home/coder/coder-templates/kubeconfig
+export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=marieberg-context"
 
 # Step 1: Validation (replaces Argo validation step)
 echo -e "${YELLOW}📋 Step 1: Validating build configuration...${NC}"
