@@ -52,9 +52,11 @@ WORKDIR /home/coder
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
     brew tap treeverse/lakefs && \
+    brew tap dagger/tap && \
     brew install \
         python@3.12 \
         node@22 \
+        go \
         argo \
         awscli \
         azure-cli \
@@ -71,7 +73,8 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         nano \
         uv \
         terraform \
-        nvtop && \
+        nvtop \
+        dagger && \
     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code && \
     brew cleanup --prune=all
 
