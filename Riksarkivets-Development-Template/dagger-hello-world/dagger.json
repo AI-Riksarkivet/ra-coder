@@ -1,5 +1,0 @@
-{
-  "name": "hello",
-  "sdk": "go",
-  "source": "./dagger"
-}
