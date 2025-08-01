@@ -201,7 +201,7 @@ The agent startup script performs several key actions:
 ## How to Use
 
 1.  **Import Template:** Add this template to your Coder deployment.
-2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`). Use the provided build system with `make kaniko-build` or modify the image tag in `main.tf` if you use a different one.
+2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`registry.ra.se:5002/airiksarkivet/devenv:v14.0.0`). Use the Dagger build system: `dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"` or modify the image tag in `main.tf` if you use a different one.
 3.  **Create Kubernetes Secret:** Ensure the `lakefs-secrets` secret is created in the target Kubernetes namespace.
 4.  **Create Workspace:**
     * Navigate to Coder and create a new workspace using this template.
@@ -254,23 +254,34 @@ uv add torch numpy matplotlib
 
 ## Build System
 
-This template includes a comprehensive build system using Argo Workflows and Kaniko:
+This template uses a modern Dagger + Kaniko build pipeline that replaces the old Argo Workflows system:
 
-* **Build Commands:**
-  * `make kaniko-build` - Build image using Kaniko in Kubernetes
-  * `make kaniko-build-cuda` - Build CUDA-enabled image  
-  * `make kaniko-build-cpu` - Build CPU-only image
-  * `make docker-release` - Local Docker build and push
+### Quick Start
+```bash
+# CUDA build (production)
+dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"
 
-* **Build Configuration:**
-  * **Registry:** `registry.ra.se:5002` (configurable via Makefile)
-  * **Image Versions:** Separate CUDA and CPU variants
-  * **Workflow Cleanup:** Auto-deletion after 3 hours
-  * **Build Namespace:** `ci` (configurable)
+# CPU build (development)
+dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"
+
+# Custom version
+dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag=v15.0.0
+```
+
+### Documentation
+* **[BUILD.md](BUILD.md)** - Complete build guide with examples
+* **[MIGRATION.md](MIGRATION.md)** - Migration from old Argo system
+* **[BUILD-QUICK-REFERENCE.md](BUILD-QUICK-REFERENCE.md)** - Command reference card
+
+### Key Benefits
+* ✅ **No Argo dependency** - Direct Dagger execution
+* ✅ **No size limits** - Direct Dockerfile reading
+* ✅ **Better debugging** - Real-time build output
+* ✅ **Same results** - Identical images using Kaniko backend
 
 ## Customization
 
-* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Use the build system to rebuild and push images.
+* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Use the Dagger build system to rebuild and push images: `dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"`
 * **LLM Configuration:**
     * Change the `apiBase` and `model` in `/home/coder/.continue/config.yaml` (within the startup script) for the Continue extension.
     * Change `openai-api-base` and `model` in `/home/coder/.aider.conf.yml` (within the startup script) for Aider.
