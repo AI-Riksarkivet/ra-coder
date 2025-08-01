@@ -42,6 +42,8 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
             cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR} \
             cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} && \
         apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    else \
+        echo "CUDA disabled, skipping CUDA installation"; \
     fi
 
 # Stage 3: Homebrew and tools (parallel to CUDA)

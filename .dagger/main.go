@@ -30,6 +30,9 @@ func (m *Build) BuildFromDockerfile(
 	// Service name for tagging
 	// +default="devenv"
 	serviceName string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
 ) (string, error) {
 	// Determine final tag based on CUDA support
 	finalTag := imageTag
@@ -61,7 +64,9 @@ func (m *Build) BuildFromDockerfile(
 			"--cache=true",
 			"--cache-dir=/cache",
 			"--cache-repo=" + fmt.Sprintf("%s/%s/cache", registry, imageRepository),
+			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
+			"--verbosity=" + verbosity,
 		})
 	
 	// Execute the build
@@ -102,6 +107,9 @@ func (m *Build) BuildFromGit(
 	// Image repository name
 	// +default="airiksarkivet/devenv"
 	imageRepository string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
 ) (string, error) {
 	var source *dagger.Directory
 	
@@ -146,7 +154,9 @@ func (m *Build) BuildFromGit(
 			"--cache=true",
 			"--cache-dir=/cache",
 			"--cache-repo=" + fmt.Sprintf("%s/%s/cache", registry, imageRepository),
+			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
+			"--verbosity=" + verbosity,
 		})
 	
 	// Execute build
@@ -211,8 +221,11 @@ func (m *Build) BuildCuda(
 	// SSH private key content (for SSH authentication)
 	// +optional
 	sshPrivateKey string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
 ) (string, error) {
-	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, true, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv")
+	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, true, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
 }
 
 // BuildCpu builds CPU-only image from Git repository
@@ -235,8 +248,11 @@ func (m *Build) BuildCpu(
 	// SSH private key content (for SSH authentication)
 	// +optional
 	sshPrivateKey string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
 ) (string, error) {
-	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, false, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv")
+	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, false, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
 }
 
 // GetBuildCommand returns example dagger commands for different scenarios
