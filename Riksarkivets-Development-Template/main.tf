@@ -800,8 +800,10 @@ resource "kubernetes_deployment" "main" {
             exec {
               command = ["dagger", "core", "version"]
             }
-            initial_delay_seconds = 5
+            initial_delay_seconds = 10
             period_seconds       = 10
+            timeout_seconds      = 5
+            failure_threshold    = 3
           }
           
           volume_mount {
@@ -816,12 +818,12 @@ resource "kubernetes_deployment" "main" {
           
           resources {
             requests = {
-              "cpu"    = "100m"
-              "memory" = "256Mi"
-            }
-            limits = {
               "cpu"    = "500m"
               "memory" = "1Gi"
+            }
+            limits = {
+              "cpu"    = "2"
+              "memory" = "4Gi"
             }
           }
         } # End sidecar container spec
