@@ -51,7 +51,8 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
         echo "CUDA disabled, skipping CUDA installation"; \
     fi
 
-# Ensure coder user exists in this stage (inherited from base)
+# Create coder user in this stage to match base stage
+RUN groupadd -r coder && useradd -r -g coder -m -s /bin/bash coder
 USER coder
 WORKDIR /home/coder
 
