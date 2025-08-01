@@ -1,1 +1,8 @@
-{"name": "test", "sdk": "go", "source": ".dagger", "engineVersion": "latest"}
+{
+  "name": "build",
+  "engineVersion": "v0.18.14",
+  "sdk": {
+    "source": "go"
+  },
+  "source": ".dagger"
+}
