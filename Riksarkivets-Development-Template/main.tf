@@ -397,12 +397,8 @@ CODERCONFIG
     # Set proper ownership
     chown -R coder:coder /home/coder/.config/coderv2
 
-    # --- Configure Dagger for Kubernetes ---
-    echo "Configuring Dagger for Kubernetes engine..."
-    # Set Dagger to use Kubernetes engine in dagger namespace
-    echo 'export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=default"' >> ~/.bashrc
-    echo 'export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger?namespace=dagger&context=default"' >> ~/.profile
-    echo "Dagger configured to use Kubernetes engine in dagger namespace"
+    # --- Dagger Configuration ---
+    echo "Dagger configured to use sidecar proxy at tcp://localhost:2345 via environment variable"
 
     # --- Display External Service Info ---
     echo ""
@@ -416,7 +412,7 @@ CODERCONFIG
     if [ -n "$ARGO_BASE_HREF" ]; then
       echo "Argo Workflow UI: $ARGO_BASE_HREF"
     fi
-    echo "Dagger Engine: kube-pod://dagger (namespace: dagger)"
+    echo "Dagger Engine: tcp://localhost:2345 (via sidecar proxy)"
     echo "-----------------------------------------------------"
     echo ""
     echo "Coder agent setup complete. Workspace is starting."
@@ -696,6 +692,26 @@ resource "kubernetes_deployment" "main" {
             name  = "KUBECONFIG"
             value = "/home/coder/.kube/config"
           }
+          env {
+            name  = "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
+            value = "tcp://dagger-dagger-helm-engine.dagger.svc.cluster.local:2345"
+          }
+          env {
+            name  = "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"
+            value = ""
+          }
+          env {
+            name  = "DAGGER_CLOUD_TOKEN"  
+            value = ""
+          }
+          env {
+            name  = "_EXPERIMENTAL_DAGGER_CLOUD_ENABLED"
+            value = "false"
+          }
+          env {
+            name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
+            value = ""
+          }
 
           dynamic "env" {
             for_each = local.internal_service_env_vars
@@ -749,8 +765,6 @@ resource "kubernetes_deployment" "main" {
           }
           # --- End ADDED Volume Mounts ---
         } # End container spec
-
-        # Removed proxy sidecar containers
 
         volume {
           name = "home"
