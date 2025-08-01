@@ -254,19 +254,25 @@ uv add torch numpy matplotlib
 
 ## Build System
 
-This template uses a modern Dagger + Kaniko build pipeline that replaces the old Argo Workflows system:
+This template uses a modern Git-based Dagger + Kaniko build pipeline with automatic SSH key detection and no caching for maximum reliability:
 
 ### Quick Start
 ```bash
-# CUDA build (production)
-dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"
+# CUDA build (production) - SSH key auto-detected from ~/.ssh/id_rsa
+dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
 # CPU build (development)
-dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"
+dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
-# Custom version
-dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag=v15.0.0
+# Custom version from specific branch/tag
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --git-ref="v14.1.1" --image-tag=v14.1.1
 ```
+
+### Key Features
+- **🔑 Auto SSH Key Detection**: Automatically uses `~/.ssh/id_rsa` for Git authentication
+- **🚫 Caching Disabled**: No cache-related issues, every build is fresh and reliable
+- **📁 Git-Based**: All builds use Git repository as source of truth
+- **⚡ Simplified**: Single `build-from-git` function with shortcuts
 
 ### Documentation
 * **[BUILD.md](BUILD.md)** - Complete build guide with examples

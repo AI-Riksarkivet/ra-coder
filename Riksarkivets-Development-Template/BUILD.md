@@ -1,52 +1,54 @@
 # Build Guide - Dagger + Kaniko Pipeline
 
-This guide explains how to build container images using the new Dagger + Kaniko pipeline that replaces the old Argo Workflows system.
+This guide explains how to build container images using the Git-based Dagger + Kaniko pipeline that replaces the old Argo Workflows system.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Dagger is configured and connected to the Kubernetes engine
-- You're in a directory containing a `Dockerfile`
+- SSH key available at `~/.ssh/id_rsa` for Git authentication (auto-detected)
 - Access to the target registry (`registry.ra.se:5002`)
 
 ### Basic Build Commands
 
 ```bash
 # Build with default settings (CUDA enabled, latest tag)
-dagger call build-image --dockerfile-content="$(cat Dockerfile)"
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
 # Build CPU-only version
-dagger call build-image --dockerfile-content="$(cat Dockerfile)" --enable-cuda=false
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --enable-cuda=false
 
 # Build with custom tag
-dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag=v15.0.0
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --image-tag=v15.0.0
 ```
 
 ## 📋 Build Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `dockerfile-content` | Required | Content of the Dockerfile as string |
+| `git-repo` | Required | Git repository URL (SSH format) |
+| `git-ref` | `main` | Git branch, tag, or commit |
+| `ssh-private-key` | Auto-detected from `~/.ssh/id_rsa` | SSH private key for authentication |
 | `enable-cuda` | `true` | Enable CUDA support (adds `-cpu` suffix if false) |
 | `registry` | `registry.ra.se:5002` | Target registry URL |
 | `image-repository` | `airiksarkivet/devenv` | Image repository name |
 | `image-tag` | `v14.1.1` | Base image tag |
-| `service-name` | `devenv` | Service name for tagging |
+| `verbosity` | `info` | Kaniko build verbosity level |
 
 ## 🛠️ Build Examples
 
 ### Standard Builds
 
 ```bash
-# Current production build (CUDA enabled)
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
+# Current production build (CUDA enabled) - SSH key auto-detected
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
   --enable-cuda=true \
   --image-tag=v14.1.1
 
 # CPU-only build for development
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
   --enable-cuda=false \
   --image-tag=v14.1.1-dev
 ```
@@ -54,32 +56,36 @@ dagger call build-image \
 ### Custom Configurations
 
 ```bash
-# Build for different service
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
-  --service-name=ml-workbench \
-  --image-repository=airiksarkivet/ml-workbench \
-  --image-tag=v2.0.0
+# Build from different branch/tag
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --git-ref="feature/new-feature" \
+  --image-tag=v2.0.0-beta
 
 # Build for different registry
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
   --registry=my-registry.com:5000 \
   --image-repository=myorg/myapp \
   --enable-cuda=false
+
+# Build with explicit SSH key (overrides auto-detection)
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --ssh-private-key="$(cat ~/.ssh/custom_key)" \
+  --image-tag=v15.0.0
 ```
 
 ### Quick Build Functions
 
 ```bash
-# Shortcut for CUDA build
-dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"
+# Shortcut for CUDA build from Git
+dagger call build-cuda \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
-# Shortcut for CPU build  
-dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"
-
-# Get equivalent CLI command
-dagger call get-dagger-build-command --enable-cuda=false --image-tag=v15.0.0
+# Shortcut for CPU build from Git
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 ```
 
 ## 🔄 Migration from build.sh
@@ -200,28 +206,56 @@ curl -k http://registry.ra.se:5002/v2/airiksarkivet/devenv/tags/list
 | **Build Time** | ~8-12 minutes | ~8-10 minutes |
 | **Resource Usage** | Job overhead | Direct execution |
 
+## ⚙️ System Architecture Changes
+
+### 🚫 **Caching Disabled** 
+- **Kaniko caching is disabled** to prevent layer inconsistencies
+- Builds are slower but more reliable and predictable
+- No cache-related debugging needed
+- Every build is fresh and reproducible
+
+### 🔑 **Automatic SSH Key Detection**
+- SSH key is **automatically read from `~/.ssh/id_rsa`**
+- No need to pass SSH keys manually in most cases
+- Supports both auto-detection and explicit key override
+- Works with standard SSH key setup in Coder workspaces
+
+### 📁 **Git-Based Source Only**
+- All builds use Git repository as the source of truth
+- No more passing Dockerfile content as parameters
+- Supports branches, tags, and commit hashes
+- Ensures consistent builds across environments
+
+### 🏗️ **Simplified Build Functions**
+- Removed `build-from-dockerfile` (deprecated)
+- Primary function: `build-from-git`
+- Shortcut functions: `build-cuda`, `build-cpu`
+- All functions use same Git-based approach
+
 ## 🎯 Best Practices
 
 ### 1. **Version Your Builds**
 ```bash
 # Use semantic versioning
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
-  --image-tag=v14.1.0
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --image-tag=v14.1.1
 
-# Include build metadata
-dagger call build-image \
-  --dockerfile-content="$(cat Dockerfile)" \
+# Include build metadata with commit hash
+dagger call build-from-git \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
   --image-tag=v14.1.1-$(git rev-parse --short HEAD)
 ```
 
 ### 2. **Environment-Specific Builds**
 ```bash
 # Development builds (CPU-only, fast)
-dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
 # Production builds (CUDA-enabled, full)
-dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"
+dagger call build-cuda \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 ```
 
 ### 3. **Build Validation**
