@@ -419,9 +419,6 @@ CODERCONFIG
       echo "SSH key already exists at /home/coder/.ssh/id_rsa"
     fi
 
-    # --- Dagger Configuration ---
-    echo "Dagger configured to use sidecar proxy at tcp://localhost:2345 via environment variable"
-
     # --- Display External Service Info ---
     echo ""
     echo "-----------------------------------------------------"
@@ -434,9 +431,6 @@ CODERCONFIG
     if [ -n "$ARGO_BASE_HREF" ]; then
       echo "Argo Workflow UI: $ARGO_BASE_HREF"
     fi
-    echo "Dagger Engine: tcp://localhost:2345 (via sidecar proxy)"
-    echo "-----------------------------------------------------"
-    echo ""
     echo "Coder agent setup complete. Workspace is starting."
   EOT
 
