@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	
 	"dagger/test/internal/dagger"
@@ -10,74 +11,6 @@ import (
 
 type Build struct{}
 
-// BuildFromDockerfile builds a Docker image using Kaniko with explicit Dockerfile content
-func (m *Build) BuildFromDockerfile(
-	ctx context.Context,
-	// Dockerfile content as string
-	dockerfileContent string,
-	// Enable CUDA support
-	// +default="true"  
-	enableCuda bool,
-	// Registry URL
-	// +default="registry.ra.se:5002"
-	registry string,
-	// Image repository name
-	// +default="airiksarkivet/devenv"
-	imageRepository string,
-	// Image tag
-	// +default="v14.1.1"
-	imageTag string,
-	// Service name for tagging
-	// +default="devenv"
-	serviceName string,
-	// Kaniko verbosity level
-	// +default="info"
-	verbosity string,
-) (string, error) {
-	// Determine final tag based on CUDA support
-	finalTag := imageTag
-	if !enableCuda {
-		finalTag = imageTag + "-cpu"
-	}
-	
-	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
-	
-	// Create cache volume for Kaniko
-	kanikoCache := dag.CacheVolume("kaniko-cache")
-	
-	// Create Kaniko executor container using official image with caching
-	kaniko := dag.Container().
-		From("gcr.io/kaniko-project/executor:latest").
-		WithWorkdir("/workspace").
-		WithNewFile("/workspace/Dockerfile", dockerfileContent).
-		WithMountedCache("/cache", kanikoCache).
-		WithExec([]string{
-			"/kaniko/executor",
-			"--context=dir:///workspace",
-			"--dockerfile=/workspace/Dockerfile",
-			"--destination=" + destination,
-			"--insecure",
-			"--insecure-registry=" + registry,
-			"--insecure-pull",
-			"--skip-tls-verify-registry=" + registry,
-			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
-			"--build-arg=REGISTRY=" + registry,
-			"--cache=true",
-			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v4", registry, imageRepository),
-			"--cache-copy-layers",
-			"--cache-ttl=168h", // 7 days cache TTL
-			"--verbosity=" + verbosity,
-		})
-	
-	// Execute the build
-	output, err := kaniko.Stdout(ctx)
-	if err != nil {
-		return "", fmt.Errorf("kaniko build failed: %w", err)
-	}
-	
-	return fmt.Sprintf("Successfully built image: %s\nOutput: %s", destination, output), nil
-}
 
 // BuildFromGit builds using Dockerfile from a Git repository with authentication
 func (m *Build) BuildFromGit(
@@ -114,6 +47,14 @@ func (m *Build) BuildFromGit(
 ) (string, error) {
 	var source *dagger.Directory
 	
+	// Auto-detect SSH key if not provided and SSH URL is used
+	if sshPrivateKey == "" && (strings.HasPrefix(gitRepo, "ssh://") || strings.HasPrefix(gitRepo, "git@")) {
+		// Try to read SSH key from default path
+		if keyContent, err := os.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa"); err == nil {
+			sshPrivateKey = string(keyContent)
+		}
+	}
+	
 	if sshPrivateKey != "" {
 		// Use SSH key authentication
 		source = m.cloneWithSSH(ctx, gitRepo, gitRef, sshPrivateKey)
@@ -134,14 +75,10 @@ func (m *Build) BuildFromGit(
 	
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
 	
-	// Create cache volume for Kaniko
-	kanikoCache := dag.CacheVolume("kaniko-cache")
-	
-	// Create Kaniko executor with Git source and caching
+	// Create Kaniko executor with Git source (no caching)
 	kaniko := dag.Container().
 		From("gcr.io/kaniko-project/executor:latest").
 		WithMountedDirectory("/workspace", source).
-		WithMountedCache("/cache", kanikoCache).
 		WithExec([]string{
 			"/kaniko/executor",
 			"--context=/workspace/Riksarkivets-Development-Template",
@@ -152,11 +89,12 @@ func (m *Build) BuildFromGit(
 			"--skip-tls-verify-registry=" + registry,
 			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
 			"--build-arg=REGISTRY=" + registry,
-			"--cache=true",
-			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v4", registry, imageRepository),
-			"--cache-copy-layers",
-			"--cache-ttl=168h", // 7 days cache TTL
+			"--cache=false",
+			// Caching disabled to avoid layer inconsistencies
+			// "--cache-dir=/cache",
+			// "--cache-repo=" + fmt.Sprintf("%s/%s/cache-v4", registry, imageRepository),
+			// "--cache-copy-layers",
+			// "--cache-ttl=168h", // 7 days cache TTL
 			"--verbosity=" + verbosity,
 		})
 	
