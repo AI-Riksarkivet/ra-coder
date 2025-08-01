@@ -51,7 +51,7 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
         echo "CUDA disabled, skipping CUDA installation"; \
     fi
 
-# Coder user already exists from base stage
+# Coder user already exists from base stage - ensure no duplication
 USER coder
 WORKDIR /home/coder
 
