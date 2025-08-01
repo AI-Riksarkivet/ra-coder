@@ -11,7 +11,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANGUAGE=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew" \
-    VENV_PATH="/opt/venv-py312"
+    VENV_PATH="/opt/venv-py312" \
+    HOMEBREW_NO_ANALYTICS=1 \
+    HOMEBREW_NO_AUTO_UPDATE=1 \
+    HOMEBREW_NO_INSTALL_CLEANUP=1 \
+    HOMEBREW_NO_CLEANUP_FORMULAE=1 \
+    HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=3650
 
 ENV PATH="${VENV_PATH}/bin:${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
 
@@ -45,6 +50,10 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
     else \
         echo "CUDA disabled, skipping CUDA installation"; \
     fi
+
+# Ensure coder user exists in this stage (inherited from base)
+USER coder
+WORKDIR /home/coder
 
 # Stage 3: Homebrew and tools (parallel to CUDA)
 FROM base AS homebrew-stage
@@ -83,8 +92,7 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
 
 # Stage 4: Final assembly
 FROM cuda-stage AS final
-USER coder
-WORKDIR /home/coder
+# USER and WORKDIR already set in cuda-stage
 
 # Copy Homebrew installation from previous stage
 COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew

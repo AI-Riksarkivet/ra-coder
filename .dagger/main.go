@@ -58,6 +58,7 @@ func (m *Build) BuildFromDockerfile(
 			"--destination=" + destination,
 			"--insecure",
 			"--insecure-registry=" + registry,
+			"--insecure-pull",
 			"--skip-tls-verify-registry=" + registry,
 			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
 			"--build-arg=REGISTRY=" + registry,
