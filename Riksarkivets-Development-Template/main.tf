@@ -267,6 +267,16 @@ data "coder_parameter" "hf_token" {
   order       = 13
 }
 
+data "coder_parameter" "ssh_private_key" {
+  type        = "string"
+  name        = "ssh_private_key"
+  display_name = "SSH Private Key"
+  default     = ""
+  description = "SSH private key for Git repository access (Azure DevOps, GitHub, etc.)"
+  mutable     = true
+  order       = 14
+}
+
 provider "kubernetes" {
   config_path = var.use_kubeconfig == true ? "~/.kube/config" : null
 }
@@ -397,11 +407,27 @@ CODERCONFIG
     # Set proper ownership
     chown -R coder:coder /home/coder/.config/coderv2
 
-    # --- SSH Key Generation ---
+    # --- SSH Key Setup ---
     echo "Setting up SSH keys for Git authentication..."
-    if [ ! -f /home/coder/.ssh/id_rsa ]; then
-      mkdir -p /home/coder/.ssh
-      chmod 700 /home/coder/.ssh
+    mkdir -p /home/coder/.ssh
+    chmod 700 /home/coder/.ssh
+    
+    # Check if SSH private key parameter is provided
+    if [ -n "${data.coder_parameter.ssh_private_key.value}" ]; then
+      echo "Using provided SSH private key..."
+      # Write the private key from parameter
+      cat > /home/coder/.ssh/id_rsa <<'SSHKEY'
+${data.coder_parameter.ssh_private_key.value}
+SSHKEY
+      chmod 600 /home/coder/.ssh/id_rsa
+      
+      # Generate public key from private key
+      ssh-keygen -y -f /home/coder/.ssh/id_rsa > /home/coder/.ssh/id_rsa.pub 2>/dev/null || echo "Warning: Could not generate public key from private key"
+      chmod 644 /home/coder/.ssh/id_rsa.pub
+      
+      echo "SSH private key configured from parameter."
+    elif [ ! -f /home/coder/.ssh/id_rsa ]; then
+      echo "Generating new SSH key pair..."
       ssh-keygen -t rsa -b 4096 -f /home/coder/.ssh/id_rsa -N "" -C "${data.coder_workspace_owner.me.email}" >/dev/null 2>&1
       chmod 600 /home/coder/.ssh/id_rsa
       chmod 644 /home/coder/.ssh/id_rsa.pub
@@ -418,6 +444,32 @@ CODERCONFIG
     else
       echo "SSH key already exists at /home/coder/.ssh/id_rsa"
     fi
+    
+    # Configure SSH for common Git hosts
+    cat > /home/coder/.ssh/config <<'SSHCONFIG'
+Host devops.ra.se
+    HostName devops.ra.se
+    Port 22
+    User git
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+Host ssh.dev.azure.com
+    HostName ssh.dev.azure.com
+    User git
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+Host github.com
+    HostName github.com
+    User git
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+SSHCONFIG
+    chmod 600 /home/coder/.ssh/config
+    
+    # Set proper ownership
+    chown -R coder:coder /home/coder/.ssh
 
     # --- Display External Service Info ---
     echo ""
