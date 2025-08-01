@@ -38,7 +38,7 @@ dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab
 |-------------|-------------|
 |`./build.sh true devenv v14.1.1`|`dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"`|
 |`./build.sh false devenv v14.1.1`|`dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"`|
-|`./build.sh false devenv v15.0.0`|`dagger call build-image --dockerfile-content="$(cat Dockerfile)" --enable-cuda=false --image-tag=v15.0.0`|
+|`./build.sh false devenv v15.0.0`|`dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --enable-cuda=false --image-tag=v15.0.0`|
 
 ## 🏷️ Image Naming
 
@@ -67,16 +67,16 @@ curl -k http://registry.ra.se:5002/v2/airiksarkivet/devenv/tags/list
 
 ```bash
 # Save time with shortcuts
-alias dcuda='dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"'
-alias dcpu='dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"'
+alias dcuda='dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"'
+alias dcpu='dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"'
 
 # Version with git hash
 TAG="v14.0.0-$(git rev-parse --short HEAD)"
-dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag="$TAG"
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --image-tag="$TAG"
 
 # Build both variants
-dagger call build-cuda --dockerfile-content="$(cat Dockerfile)" && \
-dagger call build-cpu --dockerfile-content="$(cat Dockerfile)"
+dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" && \
+dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 ```
 
 ---
