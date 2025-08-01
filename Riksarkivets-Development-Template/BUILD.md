@@ -30,7 +30,7 @@ dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag=v15
 | `enable-cuda` | `true` | Enable CUDA support (adds `-cpu` suffix if false) |
 | `registry` | `registry.ra.se:5002` | Target registry URL |
 | `image-repository` | `airiksarkivet/devenv` | Image repository name |
-| `image-tag` | `v14.0.0` | Base image tag |
+| `image-tag` | `v14.1.1` | Base image tag |
 | `service-name` | `devenv` | Service name for tagging |
 
 ## 🛠️ Build Examples
@@ -42,13 +42,13 @@ dagger call build-image --dockerfile-content="$(cat Dockerfile)" --image-tag=v15
 dagger call build-image \
   --dockerfile-content="$(cat Dockerfile)" \
   --enable-cuda=true \
-  --image-tag=v14.0.0
+  --image-tag=v14.1.1
 
 # CPU-only build for development
 dagger call build-image \
   --dockerfile-content="$(cat Dockerfile)" \
   --enable-cuda=false \
-  --image-tag=v14.0.0-dev
+  --image-tag=v14.1.1-dev
 ```
 
 ### Custom Configurations
@@ -97,7 +97,7 @@ dagger call build-image \
   --dockerfile-content="$(cat Dockerfile)" \
   --enable-cuda=false \
   --service-name=devenv \
-  --image-tag=v14.0.0 \
+  --image-tag=v14.1.1 \
   --registry=registry.ra.se:5002
 ```
 
@@ -212,7 +212,7 @@ dagger call build-image \
 # Include build metadata
 dagger call build-image \
   --dockerfile-content="$(cat Dockerfile)" \
-  --image-tag=v14.0.0-$(git rev-parse --short HEAD)
+  --image-tag=v14.1.1-$(git rev-parse --short HEAD)
 ```
 
 ### 2. **Environment-Specific Builds**

@@ -707,7 +707,7 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v14.1.0" : "${var.container_registry}/airiksarkivet/devenv:v14.1.0-cpu"
+          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v14.1.1" : "${var.container_registry}/airiksarkivet/devenv:v14.1.1-cpu"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 

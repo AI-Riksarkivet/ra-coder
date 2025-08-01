@@ -25,7 +25,7 @@ func (m *Build) BuildFromDockerfile(
 	// +default="airiksarkivet/devenv"
 	imageRepository string,
 	// Image tag
-	// +default="v14.0.0"
+	// +default="v14.1.1"
 	imageTag string,
 	// Service name for tagging
 	// +default="devenv"
@@ -64,7 +64,7 @@ func (m *Build) BuildFromDockerfile(
 			"--build-arg=REGISTRY=" + registry,
 			"--cache=true",
 			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v3", registry, imageRepository),
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v4", registry, imageRepository),
 			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
 			"--verbosity=" + verbosity,
@@ -100,7 +100,7 @@ func (m *Build) BuildFromGit(
 	// +default="true"  
 	enableCuda bool,
 	// Image tag
-	// +default="v14.0.0"
+	// +default="v14.1.1"
 	imageTag string,
 	// Registry URL
 	// +default="registry.ra.se:5002"
@@ -154,7 +154,7 @@ func (m *Build) BuildFromGit(
 			"--build-arg=REGISTRY=" + registry,
 			"--cache=true",
 			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v3", registry, imageRepository),
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v4", registry, imageRepository),
 			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
 			"--verbosity=" + verbosity,
@@ -208,7 +208,7 @@ func (m *Build) BuildCuda(
 	// Git repository URL
 	gitRepo string,
 	// Image tag  
-	// +default="v14.0.0"
+	// +default="v14.1.1"
 	imageTag string,
 	// Git reference
 	// +default="main"
@@ -235,7 +235,7 @@ func (m *Build) BuildCpu(
 	// Git repository URL
 	gitRepo string,
 	// Image tag
-	// +default="v14.0.0"
+	// +default="v14.1.1"
 	imageTag string,
 	// Git reference
 	// +default="main"
@@ -265,7 +265,7 @@ func (m *Build) GetBuildCommand(
 	// +default="devenv"
 	serviceName string,
 	// Image tag
-	// +default="v14.0.0"
+	// +default="v14.1.1"
 	imageTag string,
 ) string {
 	cudaFlag := "true"
