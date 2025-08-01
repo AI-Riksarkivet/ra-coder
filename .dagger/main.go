@@ -64,7 +64,7 @@ func (m *Build) BuildFromDockerfile(
 			"--build-arg=REGISTRY=" + registry,
 			"--cache=true",
 			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v2", registry, imageRepository),
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v3", registry, imageRepository),
 			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
 			"--verbosity=" + verbosity,
@@ -154,7 +154,7 @@ func (m *Build) BuildFromGit(
 			"--build-arg=REGISTRY=" + registry,
 			"--cache=true",
 			"--cache-dir=/cache",
-			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v2", registry, imageRepository),
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache-v3", registry, imageRepository),
 			"--cache-copy-layers",
 			"--cache-ttl=168h", // 7 days cache TTL
 			"--verbosity=" + verbosity,

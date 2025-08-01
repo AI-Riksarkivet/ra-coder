@@ -1,0 +1,874 @@
+[32m▶[0m connect [2m0.0s[0m
+[32m▶[0m load module: . [2m2.0s[0m
+[32m●[0m parsing command line arguments [2m0.0s[0m
+
+[32m●[0m [1mbuild[0m[2m: Build![0m [2m0.0s[0m
+[32m▶[0m .[1mbuildFromGit[0m([36mgitRepo: [0m[33m"https://devops.ra.se/DataLab/Datalab/_git/coder-templates"[0m, [36msshPrivateKey: [0m[33m"-----BEGIN RSA PRIVATE KEY-----\nMIIJKQIBAAKCAgEAlB1smYOlNgZYgAXAGzp2gRIhxXUQTl6Pc0GYXRGIAKT/xXMV\nXNHKWI4luTawGCfLMYWPW+d4lBv3/k8rCnuOJaoGsnk6w1qEYXjj21+7I+wn4cAO\nqkVxY8WKyCEMLcunz28aC0evNWofkCMPSzk3esnMO2b5ofe4H9050CiHsPcjfivP\nTHrj94HoUGdwSm8ZkIv7BJblqccsDFFa+/fLFwyVaXL5qq10ApsPJ+uu8Dxk+Oed\nf3imP8WFFDRznL7jTjtcaqLjwZxd5pFSVHHJMDIzUXiE/yOAbwSG+FlPHmCHPYOM\nxONtNy3aBMRnQuKMRX/GKyiL1SZhH6ZaFEdQS60o7xR4VFM8pOVmrZ/DcO6IuehX\ngls/Ttq/1gmggMS03SLvwYVRyBUbmWq+6M56oD1KU6/DUUopCER4vl+ArqoEwLYM\nimNucIhvjgxtZxBk0/bWdYGILDlGx4bnvGucCXYRQdKT6D3xuLJSHMQ9G02vHs0h\nX+YISYaEn2JDFdSeiLXZQnOY4qs0cJfsFJ1m+hafH8hYyNk2x1IIkjT3VV50B99h\n0FpS8qbMmvxjo505OlzwKDA3o6ubbuw9PnpaVfkB9OQ3HBe+1NwdtCWs7kaR/1r7\nHmFMa5qON0/W1Ss31humr5GHl+9RkhoiKVn/lUz7PlJcCnmPqWQbzPoMm7cCAwEA\nAQKCAgAJde57lcZfpe/qnLNrHQTE9MpvouBIqTVirsdtKaAB+1TgOoKCtcT5FODn\nxjL6sAJq5nWRClippgNLdqh9cgWGQvVMWn4vstOIdSDUxw+2Jf3Cjf9BzmkfCHCq\nnNXHnRENQmYrxa3obJ/MfjjNXL++JskJTrTWRozq8bk67xCcjWsMDzKECshB66w4\naosB7iIrZfP0+v1IQJ6zJx7EWZna0VgMofMjMEYcBOYaB8daTl+pHtFw4XasO+qz\ne8nNf5hKsg1fcFa5uLB7K3NSgOjrAuHdRXEog0HoyKWLlAszADmgBIv6zYeqqFHO\naSWRYG6GR+v5nyYWlm3j7ou/BnKxJRYtC6EYrdg5Bu4A8O+k0AIvoIRvVqkFSjPz\ndag2UQzkQKs2202SEjeHioxnNz+pymzu62urlI4t+3qiP6jlyaX+wIhi6xDE1iKw\n5QioKydiWTeOv1DQ3KFbcXv6W6pLB3C34UZemqbAtOooeEgkZKwSDrf+BwsA/XlM\nlhmfIIflcNx/XciAB7cD0NDhLzQRR4ThIQn4ctbrKQ+x/RhIiGRUUxFyFDWWGM0s\n+I5Utl/M2LB06n/M4lwDn54WEsphDteRSLDTO0a8N87pqhzZuQZsQ3Mekxpb9cck\nl/wGmESPD6wgcqviKIgkcJcvgCw1O13XCET9DuU4cXTZQAmZnQKCAQEAxYUoGhlz\ndqMN1o7UsFPjkxq244twEaFpxjHrgppBe2O5ZZ6nzHpno+O/DQy2ptvSyzr/4rid\nsXNQdVyrBnTasl5Xne4Wef6A12ShoyQ7NQI1ZayhbfJWeR2/NUqF8uhn0U0Mm5pS\nUjOKWPwMQSq5/XCnKx/j1E/cgS3yXZGMu1McPWkvWad1CJzxPYrOc+weRIUREM62\n5m/xlh6Ikg1m08XN9rMt56wz3VdQRaqEJS3gCTNeZXpS4TxD0ZBz2xEjf94WQ+Hl\neCn79iZNGQi+JDvJVKF4HFtbToda7xPskuDp8ubmq255tln5UzUTwyUbktbDgsch\nOIFoZ3bjtbDbowKCAQEAv/emKXtQmFhSQXJktt5WUh2uzWMbq0Pdp5enfTRlblCp\nlEP/46LBLwrlAh7FtLGFA7eDL714GPQvb7gvBVD9u7greqSfjHoG1qBwXplTpMPB\n66jsJg5ouijq/Ic2eygvyJs6EJKlJBmDHInL2FCQVzGDTtUPGfsCWAU+nZxLed5q\nxE9nb1kHnaXRa736g72+pQPQA4riXPrm7pb69CdMhqDZxIReHDLvo1xE3YzZSyM7\nhipdc+3ncQ+5Jw7nFDXsoIWw881uGMYdKBdYaEl4B3f7PQeb3yKeoFc4T23M/X4M\nK/qXBveGH6F2RxMLK8oK/VdRWOv7S7dc3/geNBUA3QKCAQEAsOJYUVctgbbvs49h\nhS77BEfONOQwTnmgwe7+m40MyzU5WHnGh2Wu3qQb+dHC2JbPpVSGx0DRZ5J/ITsF\npdiL6WR3TmVjF4kFVN83qWPO6d+6df0s68s0CW7MRysf3bKnFlbLzaVbx2WEpb/C\nMbHTsdVqv0Hlw8JpE/5Tp9uqji8VgSFrV/yQ4E+78oMV89YmHPKVn9mfDap+TRO2\n9iSuS0Q++IjpuSkLoVKJ/nl/sdPtaA/qnzH2euJ/UXLtbedhRSdcBRqNZxkiHQOb\n06lyrfwkhne7mpltoVux4ZyUJczpda+2LxvWP6k/kHZd5kqa8NsHZ1xwsauiFdXw\ngkuJxQKCAQAPwADZDG4LYcu15O3QdyN770WFQmllvtazxmSOiDr+Nw4CxSV8hsD0\n3B738pBkB+CS8n6H7zKoUXiG4QSymfeHbE/c6x7QBr8C4vz1Nf0/2nPRovVlFe+P\nvoWxHGLi7eQlwF6eN3nnIVS5hbC82bdOABj24dIwXoDNufhuNAGZSR9XZfBlmVdf\nntg0z8x6/JlkrpBligKSgF9sGeUTHRpRPWdAkV+rTp6Mt6hKySCW4pgipN0wAsfn\nZdPaGYXqCZaVgQKIrkUnMTH5NRkizUxUyIpLcpFeWFfNbfqHwcl8zteu0AuOHcba\nV4P9xtk2yYfnSz+4XPwsNSogkhngSgzdAoIBAQCbH07rG4mMP0bC54TadtoIWWg+\nbf4qNCnB4ASzaMduTo3+FpqRc2rHirxdIrwHi0E+wPxwsdtzj8bYaf1KuO18L992\n41HFyPsMunT/ctPzgwS+jGUe/DZvAxR2lNlp76M0hlZzDEbDn4nBCYV67cDetv7r\nc3QfQ0q26fh3eEOC/ah/GF+UXlYD3mUvw1clxEwy9CklZJkM7L0Mfjkr8weStCdS\nDABApK03nosMzF0c9WvIqZN9tFlm2qosE2u2DCtw3e+XSRslj+dlLkOC+6siZ9FU\nwHDZn7dPEPJ69S2uv0jvlCwv3qiVSMStoEVoFzUR1IoZmUDnOxH9RsVawHej\n-----END RSA PRIVATE KEY-----"[0m, [36menableCuda: [0m[31mfalse[0m, [36mimageTag: [0m[33m"homebrew-test-git-1"[0m)[2m: String![0m [2m7m32s[0m
+
+Successfully built image: registry.ra.se:5002/airiksarkivet/devenv:homebrew-test-git-1-cpu
+Source: https://devops.ra.se/DataLab/Datalab/_git/coder-templates@main
+Output: ==> Running in non-interactive mode because `$NONINTERACTIVE` is set.
+==> Checking for `sudo` access (which may request your password)...
+==> This script will install:
+/home/linuxbrew/.linuxbrew/bin/brew
+/home/linuxbrew/.linuxbrew/share/doc/homebrew
+/home/linuxbrew/.linuxbrew/share/man/man1/brew.1
+/home/linuxbrew/.linuxbrew/share/zsh/site-functions/_brew
+/home/linuxbrew/.linuxbrew/etc/bash_completion.d/brew
+/home/linuxbrew/.linuxbrew/Homebrew
+==> The following new directories will be created:
+/home/linuxbrew/.linuxbrew/bin
+/home/linuxbrew/.linuxbrew/etc
+/home/linuxbrew/.linuxbrew/include
+/home/linuxbrew/.linuxbrew/lib
+/home/linuxbrew/.linuxbrew/sbin
+/home/linuxbrew/.linuxbrew/share
+/home/linuxbrew/.linuxbrew/var
+/home/linuxbrew/.linuxbrew/opt
+/home/linuxbrew/.linuxbrew/share/zsh
+/home/linuxbrew/.linuxbrew/share/zsh/site-functions
+/home/linuxbrew/.linuxbrew/var/homebrew
+/home/linuxbrew/.linuxbrew/var/homebrew/linked
+/home/linuxbrew/.linuxbrew/Cellar
+/home/linuxbrew/.linuxbrew/Caskroom
+/home/linuxbrew/.linuxbrew/Frameworks
+==> /usr/bin/sudo /usr/bin/install -d -o coder -g coder -m 0755 /home/linuxbrew/.linuxbrew
+==> /usr/bin/sudo /bin/mkdir -p /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/etc /home/linuxbrew/.linuxbrew/include /home/linuxbrew/.linuxbrew/lib /home/linuxbrew/.linuxbrew/sbin /home/linuxbrew/.linuxbrew/share /home/linuxbrew/.linuxbrew/var /home/linuxbrew/.linuxbrew/opt /home/linuxbrew/.linuxbrew/share/zsh /home/linuxbrew/.linuxbrew/share/zsh/site-functions /home/linuxbrew/.linuxbrew/var/homebrew /home/linuxbrew/.linuxbrew/var/homebrew/linked /home/linuxbrew/.linuxbrew/Cellar /home/linuxbrew/.linuxbrew/Caskroom /home/linuxbrew/.linuxbrew/Frameworks
+==> /usr/bin/sudo /bin/chmod ug=rwx /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/etc /home/linuxbrew/.linuxbrew/include /home/linuxbrew/.linuxbrew/lib /home/linuxbrew/.linuxbrew/sbin /home/linuxbrew/.linuxbrew/share /home/linuxbrew/.linuxbrew/var /home/linuxbrew/.linuxbrew/opt /home/linuxbrew/.linuxbrew/share/zsh /home/linuxbrew/.linuxbrew/share/zsh/site-functions /home/linuxbrew/.linuxbrew/var/homebrew /home/linuxbrew/.linuxbrew/var/homebrew/linked /home/linuxbrew/.linuxbrew/Cellar /home/linuxbrew/.linuxbrew/Caskroom /home/linuxbrew/.linuxbrew/Frameworks
+==> /usr/bin/sudo /bin/chmod go-w /home/linuxbrew/.linuxbrew/share/zsh /home/linuxbrew/.linuxbrew/share/zsh/site-functions
+==> /usr/bin/sudo /bin/chown coder /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/etc /home/linuxbrew/.linuxbrew/include /home/linuxbrew/.linuxbrew/lib /home/linuxbrew/.linuxbrew/sbin /home/linuxbrew/.linuxbrew/share /home/linuxbrew/.linuxbrew/var /home/linuxbrew/.linuxbrew/opt /home/linuxbrew/.linuxbrew/share/zsh /home/linuxbrew/.linuxbrew/share/zsh/site-functions /home/linuxbrew/.linuxbrew/var/homebrew /home/linuxbrew/.linuxbrew/var/homebrew/linked /home/linuxbrew/.linuxbrew/Cellar /home/linuxbrew/.linuxbrew/Caskroom /home/linuxbrew/.linuxbrew/Frameworks
+==> /usr/bin/sudo /bin/chgrp coder /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/etc /home/linuxbrew/.linuxbrew/include /home/linuxbrew/.linuxbrew/lib /home/linuxbrew/.linuxbrew/sbin /home/linuxbrew/.linuxbrew/share /home/linuxbrew/.linuxbrew/var /home/linuxbrew/.linuxbrew/opt /home/linuxbrew/.linuxbrew/share/zsh /home/linuxbrew/.linuxbrew/share/zsh/site-functions /home/linuxbrew/.linuxbrew/var/homebrew /home/linuxbrew/.linuxbrew/var/homebrew/linked /home/linuxbrew/.linuxbrew/Cellar /home/linuxbrew/.linuxbrew/Caskroom /home/linuxbrew/.linuxbrew/Frameworks
+==> /usr/bin/sudo /bin/mkdir -p /home/linuxbrew/.linuxbrew/Homebrew
+==> /usr/bin/sudo /bin/chown -R coder:coder /home/linuxbrew/.linuxbrew/Homebrew
+==> Downloading and installing Homebrew...
+==> Installation successful!
+
+==> Homebrew has enabled anonymous aggregate formulae and cask analytics.
+Read the analytics documentation (and how to opt-out) here:
+  https://docs.brew.sh/Analytics
+No analytics data has been sent yet (nor will any be during this install run).
+
+==> Homebrew is run entirely by unpaid volunteers. Please consider donating:
+  https://github.com/Homebrew/brew#donations
+
+==> Next steps:
+- Run these commands in your terminal to add Homebrew to your PATH:
+    echo >> /home/coder/.bashrc
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/coder/.bashrc
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+- Install Homebrew's dependencies if you have sudo access:
+    sudo apt-get install build-essential
+  For more information, see:
+    https://docs.brew.sh/Homebrew-on-Linux
+- We recommend that you install GCC:
+    brew install gcc
+- Run brew help to get started
+- Further documentation:
+    https://docs.brew.sh
+
+==> Fetching downloads for: python@3.12, node@22, go, argo, awscli, azure-cli, helm, kubernetes-cli, k9s, lakefs, pre-commit, duckdb, huggingface-cli, ruff, vim, gh, nano, uv, terraform, nvtop and dagger
+==> Downloading https://ghcr.io/v2/homebrew/core/python/3.12/manifests/3.12.11
+==> Downloading https://ghcr.io/v2/homebrew/core/node/22/manifests/22.18.0
+==> Downloading https://ghcr.io/v2/homebrew/core/go/manifests/1.24.5
+==> Downloading https://ghcr.io/v2/homebrew/core/argo/manifests/3.7.0
+==> Downloading https://ghcr.io/v2/homebrew/core/awscli/manifests/2.28.0
+==> Downloading https://ghcr.io/v2/homebrew/core/azure-cli/manifests/2.75.0
+==> Downloading https://ghcr.io/v2/homebrew/core/helm/manifests/3.18.4
+==> Downloading https://ghcr.io/v2/homebrew/core/kubernetes-cli/manifests/1.33.3
+==> Downloading https://ghcr.io/v2/homebrew/core/k9s/manifests/0.50.9
+==> Downloading https://ghcr.io/v2/homebrew/core/pre-commit/manifests/4.2.0
+==> Downloading https://ghcr.io/v2/homebrew/core/duckdb/manifests/1.3.2
+==> Downloading https://ghcr.io/v2/homebrew/core/huggingface-cli/manifests/0.34.3
+==> Downloading https://ghcr.io/v2/homebrew/core/ruff/manifests/0.12.7
+==> Downloading https://ghcr.io/v2/homebrew/core/vim/manifests/9.1.1550
+==> Downloading https://ghcr.io/v2/homebrew/core/gh/manifests/2.76.2
+==> Downloading https://ghcr.io/v2/homebrew/core/nano/manifests/8.5
+==> Downloading https://ghcr.io/v2/homebrew/core/uv/manifests/0.8.4
+==> Downloading https://ghcr.io/v2/homebrew/core/terraform/manifests/1.5.7-1
+==> Downloading https://ghcr.io/v2/homebrew/core/nvtop/manifests/3.2.0
+==> Downloading https://ghcr.io/v2/homebrew/core/dagger/manifests/0.18.14
+==> Fetching dependencies for python@3.12: mpdecimal, ca-certificates, openssl@3, ncurses, readline, zlib, sqlite, xz, berkeley-db@5, libedit, krb5, libtirpc, libnsl, bzip2, expat, libffi, libxcrypt and unzip
+==> Downloading https://ghcr.io/v2/homebrew/core/mpdecimal/manifests/4.0.1
+==> Fetching mpdecimal
+==> Downloading https://ghcr.io/v2/homebrew/core/mpdecimal/blobs/sha256:f540928b0baae439b6b7bbbb54aa0b0d8fda3631a2fb46c1d1ccd6bf9c2b5389
+==> Downloading https://ghcr.io/v2/homebrew/core/ca-certificates/manifests/2025-07-15
+==> Fetching ca-certificates
+==> Downloading https://ghcr.io/v2/homebrew/core/ca-certificates/blobs/sha256:84e089e758e75d61228f97d54b3eb1918737a2272c747206cc4d9d75d8a3cb52
+==> Downloading https://ghcr.io/v2/homebrew/core/openssl/3/manifests/3.5.1
+==> Fetching openssl@3
+==> Downloading https://ghcr.io/v2/homebrew/core/openssl/3/blobs/sha256:5736259135f916214319c80cbbd5c0da0d36aade805bbd804c86aff6c0b4ecb8
+==> Downloading https://ghcr.io/v2/homebrew/core/ncurses/manifests/6.5
+==> Fetching ncurses
+==> Downloading https://ghcr.io/v2/homebrew/core/ncurses/blobs/sha256:7c49662d0f319baec24475d38210b2f9c754b2ec1d21a4a3ff39ce81d8605f03
+==> Downloading https://ghcr.io/v2/homebrew/core/readline/manifests/8.3.1
+==> Fetching readline
+==> Downloading https://ghcr.io/v2/homebrew/core/readline/blobs/sha256:148c40946804e22da82f0864b458d1eb01f23b9cf30c7b9f10501853b92ad33a
+==> Downloading https://ghcr.io/v2/homebrew/core/zlib/manifests/1.3.1
+==> Fetching zlib
+==> Downloading https://ghcr.io/v2/homebrew/core/zlib/blobs/sha256:38f2469db2ce63b70855a98e5ee27b5b5a92874e52542cbdc0b230bba1e7195f
+==> Downloading https://ghcr.io/v2/homebrew/core/sqlite/manifests/3.50.4
+==> Fetching sqlite
+==> Downloading https://ghcr.io/v2/homebrew/core/sqlite/blobs/sha256:dfedb542431d934037847ab42457983f715fa83619f8fe7cffeb67f049f3c718
+==> Downloading https://ghcr.io/v2/homebrew/core/xz/manifests/5.8.1
+==> Fetching xz
+==> Downloading https://ghcr.io/v2/homebrew/core/xz/blobs/sha256:9ee1ff38fcc213fdefd262be65a06669f3e0118a2bd5fb387147ebe884f94413
+==> Downloading https://ghcr.io/v2/homebrew/core/berkeley-db/5/manifests/5.3.28_1
+==> Fetching berkeley-db@5
+==> Downloading https://ghcr.io/v2/homebrew/core/berkeley-db/5/blobs/sha256:c0e2906cc6657dc497fec75629560b0a404b81cebadf5e10c1f70616a14fa886
+==> Downloading https://ghcr.io/v2/homebrew/core/libedit/manifests/20250104-3.1
+==> Fetching libedit
+==> Downloading https://ghcr.io/v2/homebrew/core/libedit/blobs/sha256:3de065ef66904f7758361d623fc96cbc5226663d919b3d6524f9b46bf3153692
+==> Downloading https://ghcr.io/v2/homebrew/core/krb5/manifests/1.21.3
+==> Fetching krb5
+==> Downloading https://ghcr.io/v2/homebrew/core/krb5/blobs/sha256:f5b4cafedb315e92a31a0a5d87e33f7826952bcc5c093ba65817c61247799601
+==> Downloading https://ghcr.io/v2/homebrew/core/libtirpc/manifests/1.3.6-1
+==> Fetching libtirpc
+==> Downloading https://ghcr.io/v2/homebrew/core/libtirpc/blobs/sha256:93daf0554770cfcd883a74d9bcbb208702c23b8d90d0c1daa9b040be52b9657c
+==> Downloading https://ghcr.io/v2/homebrew/core/libnsl/manifests/2.0.1-1
+==> Fetching libnsl
+==> Downloading https://ghcr.io/v2/homebrew/core/libnsl/blobs/sha256:fa7613b30e9bfe15166339d119c19115ec21f13cea259280182e0c083502ff40
+==> Downloading https://ghcr.io/v2/homebrew/core/bzip2/manifests/1.0.8-2
+==> Fetching bzip2
+==> Downloading https://ghcr.io/v2/homebrew/core/bzip2/blobs/sha256:a731afa70daaafec28359b4f10f1c68455c1955ae66cdbb6b6d52eee277bbd3e
+==> Downloading https://ghcr.io/v2/homebrew/core/expat/manifests/2.7.1
+==> Fetching expat
+==> Downloading https://ghcr.io/v2/homebrew/core/expat/blobs/sha256:58ff2ade2b1d0b3de72558f92507b8bfc9bdcdc2fce5c5e33e080dfffff9b83c
+==> Downloading https://ghcr.io/v2/homebrew/core/libffi/manifests/3.5.1
+==> Fetching libffi
+==> Downloading https://ghcr.io/v2/homebrew/core/libffi/blobs/sha256:2109450cd961d89edfdf8b0fce916dd9c5c63a15f52a97c443412a62b2ca8264
+==> Downloading https://ghcr.io/v2/homebrew/core/libxcrypt/manifests/4.4.38
+==> Fetching libxcrypt
+==> Downloading https://ghcr.io/v2/homebrew/core/libxcrypt/blobs/sha256:d1835a4d7d45333637814fbd4d0184d6ebdb81b2e7e4a09e2d803202a497cf8a
+==> Downloading https://ghcr.io/v2/homebrew/core/unzip/manifests/6.0_8
+==> Fetching unzip
+==> Downloading https://ghcr.io/v2/homebrew/core/unzip/blobs/sha256:baf15e19852a0f9756e3302fa6f3866eaeccc06730c9907bffc19f32861d64bf
+==> Fetching python@3.12
+==> Downloading https://ghcr.io/v2/homebrew/core/python/3.12/blobs/sha256:161a041d512aa7cfdbf3217eeb638e7514e77df2d5264285c19ee1baec16dfa8
+==> Fetching dependencies for node@22: brotli, c-ares, icu4c@77, libnghttp2, libnghttp3, libngtcp2, libuv, simdjson, simdutf, lz4, zstd and python@3.13
+==> Downloading https://ghcr.io/v2/homebrew/core/brotli/manifests/1.1.0-2
+==> Fetching brotli
+==> Downloading https://ghcr.io/v2/homebrew/core/brotli/blobs/sha256:e1502cc6efe4e7b2835b1a8cb34536acee19d3c48ea3a440b57d88e5cab2ca81
+==> Downloading https://ghcr.io/v2/homebrew/core/c-ares/manifests/1.34.5-1
+==> Fetching c-ares
+==> Downloading https://ghcr.io/v2/homebrew/core/c-ares/blobs/sha256:222c77a232de91b511238cf81f3290b5e5f7d788f7011a447ad92ae38089fa72
+==> Downloading https://ghcr.io/v2/homebrew/core/icu4c/77/manifests/77.1
+==> Fetching icu4c@77
+==> Downloading https://ghcr.io/v2/homebrew/core/icu4c/77/blobs/sha256:f82d4ca07fbdcf99cb5553ae9cf298bbff475a465f13e1c5d934dcbcb1e14741
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp2/manifests/1.66.0
+==> Fetching libnghttp2
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp2/blobs/sha256:1ffa3bde661552df4e257400ac387aee06b9e2ef4d9ad4822c6b8ad571e2d488
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp3/manifests/1.11.0
+==> Fetching libnghttp3
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp3/blobs/sha256:5bc24ee540174ccaae7458e82f5b7d61affbb4b2cb0a927efcbe8d206e3ca8ec
+==> Downloading https://ghcr.io/v2/homebrew/core/libngtcp2/manifests/1.14.0
+==> Fetching libngtcp2
+==> Downloading https://ghcr.io/v2/homebrew/core/libngtcp2/blobs/sha256:f2d35544fb7f58fcf3a7edd9c359c9a8377f2f592deb5f4b8e9bc5be9b153664
+==> Downloading https://ghcr.io/v2/homebrew/core/libuv/manifests/1.51.0
+==> Fetching libuv
+==> Downloading https://ghcr.io/v2/homebrew/core/libuv/blobs/sha256:dd1d243f009617c2ff2d97c5cd08a93512f93accf7d7c1987a649db2b91ac03e
+==> Downloading https://ghcr.io/v2/homebrew/core/simdjson/manifests/3.13.0
+==> Fetching simdjson
+==> Downloading https://ghcr.io/v2/homebrew/core/simdjson/blobs/sha256:2ee079674bcc8c6c27dd8b812845eb9cacf84e0a8d406a068bed56a50b9dc0e6
+==> Downloading https://ghcr.io/v2/homebrew/core/simdutf/manifests/7.3.4
+==> Fetching simdutf
+==> Downloading https://ghcr.io/v2/homebrew/core/simdutf/blobs/sha256:1098773e9b719568a2a6b2fa6a8b3d93d776615ba8b34ba86538013d2f5b1f89
+==> Downloading https://ghcr.io/v2/homebrew/core/lz4/manifests/1.10.0-1
+==> Fetching lz4
+==> Downloading https://ghcr.io/v2/homebrew/core/lz4/blobs/sha256:a8082c2e40dc6d63850f43ea8fa095e55adf18fb0f25ec66bcaee2c4b4438205
+==> Downloading https://ghcr.io/v2/homebrew/core/zstd/manifests/1.5.7
+==> Fetching zstd
+==> Downloading https://ghcr.io/v2/homebrew/core/zstd/blobs/sha256:4748929efb3666f0fd60451479cb306991c75fc6a84253e81828354185f4a23b
+==> Downloading https://ghcr.io/v2/homebrew/core/python/3.13/manifests/3.13.5-1
+==> Fetching python@3.13
+==> Downloading https://ghcr.io/v2/homebrew/core/python/3.13/blobs/sha256:23885628da95ae6a51e56e231216927982b35e2a228fae8d1a64be93b7c231b8
+==> Fetching node@22
+==> Downloading https://ghcr.io/v2/homebrew/core/node/22/blobs/sha256:5be30123843d98c76069749eb4cd0cb44cccdfbbba8bb549d57dc40aa00a528c
+==> Fetching go
+==> Downloading https://ghcr.io/v2/homebrew/core/go/blobs/sha256:2e75858a5db5209f32a30972f79bc51c4e1e792b074d1dcdfdea57c1f278880f
+==> Fetching argo
+==> Downloading https://ghcr.io/v2/homebrew/core/argo/blobs/sha256:76bf65f34d3c0b6dddaf598bfd6620d450c54a3cee9baff166362ffaca947147
+==> Fetching dependencies for awscli: mandoc
+==> Downloading https://ghcr.io/v2/homebrew/core/mandoc/manifests/1.14.6_1
+==> Fetching mandoc
+==> Downloading https://ghcr.io/v2/homebrew/core/mandoc/blobs/sha256:048e9149279a52292a203c6e6b4fd688b7b32501b8e05d806a5708587526a83c
+==> Fetching awscli
+==> Downloading https://ghcr.io/v2/homebrew/core/awscli/blobs/sha256:640dcaceb3a99909f495be12dafae32a8d4d769ca810137e0a5a3afb1986a858
+==> Fetching dependencies for azure-cli: libsodium and libyaml
+==> Downloading https://ghcr.io/v2/homebrew/core/libsodium/manifests/1.0.20
+==> Fetching libsodium
+==> Downloading https://ghcr.io/v2/homebrew/core/libsodium/blobs/sha256:94394d217dc5a833492a702a8a9e914573a945da13f3b4f42b59f2513835f439
+==> Downloading https://ghcr.io/v2/homebrew/core/libyaml/manifests/0.2.5
+==> Fetching libyaml
+==> Downloading https://ghcr.io/v2/homebrew/core/libyaml/blobs/sha256:354677a745b6c62109e792ddbd0cbdaf9e6a471d84fdbde3a7d9bae36d832da8
+==> Fetching azure-cli
+==> Downloading https://ghcr.io/v2/homebrew/core/azure-cli/blobs/sha256:c89926401da1256f51df363ef2501fa286b9b3b18cf7bb369ab113852e5761f1
+==> Fetching helm
+==> Downloading https://ghcr.io/v2/homebrew/core/helm/blobs/sha256:01a72704182a4bdb1530581a4f1cc43d815049ea36e8738b6613e6411c833735
+==> Fetching kubernetes-cli
+==> Downloading https://ghcr.io/v2/homebrew/core/kubernetes-cli/blobs/sha256:4dcadf206f3f796a44c451c970dc5827aa15e18bf347a8600c4d0de670c72e8b
+==> Fetching k9s
+==> Downloading https://ghcr.io/v2/homebrew/core/k9s/blobs/sha256:b682f2ece6e37f7771be0a650da01299ebec51ff162d23babfdfb2c3923cd48c
+==> Fetching treeverse/lakefs/lakefs
+==> Downloading https://github.com/treeverse/lakeFS/releases/download/v1.64.1/lakeFS_1.64.1_Linux_x86_64.tar.gz
+==> Downloading from https://release-assets.githubusercontent.com/github-production-release-asset/208038454/da29c6c7-b7c4-404c-8fc2-e679b889ba58?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-08-01T11%3A51%3A53Z&rscd=attachment%3B+filename%3DlakeFS_1.64.1_Linux_x86_64.tar.gz&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-08-01T10%3A51%3A17Z&ske=2025-08-01T11%3A51%3A53Z&sks=b&skv=2018-11-09&sig=Cz3Gngcojrt8%2FJ3UnC7KjxN%2BRHRdBiXlc1Y7WOdqbVw%3D&jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc1NDA0NzM2MywibmJmIjoxNzU0MDQ3MDYzLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.msSzMQeEgfDexI1BgaDRiyavJGYf17KgGRFkkW4X4ZM&response-content-disposition=attachment%3B%20filename%3DlakeFS_1.64.1_Linux_x86_64.tar.gz&response-content-type=application%2Foctet-stream
+==> Fetching pre-commit
+==> Downloading https://ghcr.io/v2/homebrew/core/pre-commit/blobs/sha256:16ee6fbd4e0131a38e2db8c9fb69d76bf9438ec269080f1cd61d4bd4c8aecc3d
+==> Fetching duckdb
+==> Downloading https://ghcr.io/v2/homebrew/core/duckdb/blobs/sha256:797a43be18afd83479b4d97589b68a32307da540de046cf5edb675c328266b5d
+==> Fetching dependencies for huggingface-cli: certifi and git-lfs
+==> Downloading https://ghcr.io/v2/homebrew/core/certifi/manifests/2025.7.14
+==> Fetching certifi
+==> Downloading https://ghcr.io/v2/homebrew/core/certifi/blobs/sha256:60d74fc004de91f9b716a207b81a00a6404fa78f820087c5fcb4d3f9363224e7
+==> Downloading https://ghcr.io/v2/homebrew/core/git-lfs/manifests/3.7.0
+==> Fetching git-lfs
+==> Downloading https://ghcr.io/v2/homebrew/core/git-lfs/blobs/sha256:6926c738974ed58fb5dec2bf00cbb4f759db8d7e8554c347d7d039a7135ba4da
+==> Fetching huggingface-cli
+==> Downloading https://ghcr.io/v2/homebrew/core/huggingface-cli/blobs/sha256:ac4a10373b31ab501734c51250154f0ef9a87b61007588e84d980fe556ee7bef
+==> Fetching ruff
+==> Downloading https://ghcr.io/v2/homebrew/core/ruff/blobs/sha256:dac0766978f20245e2419b1789209f92fe9929c955e3db82f80dc2365dfd07f6
+==> Fetching dependencies for vim: libunistring, acl, libxml2, gettext, lua, gperf, ruby, gdbm and perl
+==> Downloading https://ghcr.io/v2/homebrew/core/libunistring/manifests/1.3
+==> Fetching libunistring
+==> Downloading https://ghcr.io/v2/homebrew/core/libunistring/blobs/sha256:25ff65379463fe4a51008a36c45a963ebc8d13d054ce606e3fbb6635ea634311
+==> Downloading https://ghcr.io/v2/homebrew/core/acl/manifests/2.3.2-2
+==> Fetching acl
+==> Downloading https://ghcr.io/v2/homebrew/core/acl/blobs/sha256:65c9042358cb23a7510fb0a52f938e5b4e48d32c1a19c756165c6c814dd5146e
+==> Downloading https://ghcr.io/v2/homebrew/core/libxml2/manifests/2.13.8
+==> Fetching libxml2
+==> Downloading https://ghcr.io/v2/homebrew/core/libxml2/blobs/sha256:03831d3b679e963d9be90a748746b447cc52a2398dc516dfd0ed7c26f9b431cf
+==> Downloading https://ghcr.io/v2/homebrew/core/gettext/manifests/0.26
+==> Fetching gettext
+==> Downloading https://ghcr.io/v2/homebrew/core/gettext/blobs/sha256:fce5e0fea8441a729599191161a94a03ce4328e5c7a276df4ec322ff5e92958f
+==> Downloading https://ghcr.io/v2/homebrew/core/lua/manifests/5.4.8
+==> Fetching lua
+==> Downloading https://ghcr.io/v2/homebrew/core/lua/blobs/sha256:f4edfa03fd344d303def0992a7e02fe5e614c3e9c256e44b84348bb0fe108a13
+==> Downloading https://ghcr.io/v2/homebrew/core/gperf/manifests/3.3
+==> Fetching gperf
+==> Downloading https://ghcr.io/v2/homebrew/core/gperf/blobs/sha256:b89551d7e9b6af83d8ff495b7ec376cbf0b73c37b39ee90a4164a115496cd11e
+==> Downloading https://ghcr.io/v2/homebrew/core/ruby/manifests/3.4.5
+==> Fetching ruby
+==> Downloading https://ghcr.io/v2/homebrew/core/ruby/blobs/sha256:b280f0425f4d7a70d05eabbfe5305b6ceb9eb4bc929b04e21b8ab9910db0c5f4
+==> Downloading https://ghcr.io/v2/homebrew/core/gdbm/manifests/1.26
+==> Fetching gdbm
+==> Downloading https://ghcr.io/v2/homebrew/core/gdbm/blobs/sha256:4c4edca03ef3c629d9849d37084eb16afa5aaaf4b76d004f89c6f43e78af5adb
+==> Downloading https://ghcr.io/v2/homebrew/core/perl/manifests/5.40.2
+==> Fetching perl
+==> Downloading https://ghcr.io/v2/homebrew/core/perl/blobs/sha256:018804347f6d231ea705e0b43c0d9ef6f996d9432697146dcce7fb65a8c3787f
+==> Fetching vim
+==> Downloading https://ghcr.io/v2/homebrew/core/vim/blobs/sha256:4ad108c62fe29c9ee7bc2fa52a7c01b6a6bd84578e50d220727f4630bdd6527a
+==> Fetching gh
+==> Downloading https://ghcr.io/v2/homebrew/core/gh/blobs/sha256:580872233df14f7e1fad5489df249c1fcbd64d315cd46a004df39d3dcdcb16fb
+==> Fetching dependencies for nano: libmagic
+==> Downloading https://ghcr.io/v2/homebrew/core/libmagic/manifests/5.46
+==> Fetching libmagic
+==> Downloading https://ghcr.io/v2/homebrew/core/libmagic/blobs/sha256:ad618acdc2587bb3d3e5d0c6022fff1c37c6c91b1c818ade50a026bf79469c73
+==> Fetching nano
+==> Downloading https://ghcr.io/v2/homebrew/core/nano/blobs/sha256:3182fc3818321fe0b974a25b53684f4209fb8711498ebbda81bd9739affce571
+==> Fetching uv
+==> Downloading https://ghcr.io/v2/homebrew/core/uv/blobs/sha256:d09f82950218e54548949b0550127b21f81ac967193c631eb10171485135844c
+==> Fetching terraform
+==> Downloading https://ghcr.io/v2/homebrew/core/terraform/blobs/sha256:390afc2492fa4ea2fc7dce55efa25b9ae09e060639e1dc3d9c160718893881b3
+==> Fetching dependencies for nvtop: libpciaccess, libdrm, pcre2, dbus, util-linux, glib, libcap and systemd
+==> Downloading https://ghcr.io/v2/homebrew/core/libpciaccess/manifests/0.18.1
+==> Fetching libpciaccess
+==> Downloading https://ghcr.io/v2/homebrew/core/libpciaccess/blobs/sha256:3433b90a4f960f70e9203327f632387b5ada5017be2500ab8098f9142406a075
+==> Downloading https://ghcr.io/v2/homebrew/core/libdrm/manifests/2.4.125
+==> Fetching libdrm
+==> Downloading https://ghcr.io/v2/homebrew/core/libdrm/blobs/sha256:6f430748bd77dac085026f729d4ac4e95485402c0a7aefedd484c82cab94fb57
+==> Downloading https://ghcr.io/v2/homebrew/core/pcre2/manifests/10.45
+==> Fetching pcre2
+==> Downloading https://ghcr.io/v2/homebrew/core/pcre2/blobs/sha256:8a5727c5e1b6d0aa922bc2d30ae6510dca32f1b738a7501bcdf18823c59e120e
+==> Downloading https://ghcr.io/v2/homebrew/core/dbus/manifests/1.16.2
+==> Fetching dbus
+==> Downloading https://ghcr.io/v2/homebrew/core/dbus/blobs/sha256:32d15b5c8ddfdbd62a0a232aed447ebc0311ab3812d6f08c6fde4af08dcb3af3
+==> Downloading https://ghcr.io/v2/homebrew/core/util-linux/manifests/2.41.1_1
+==> Fetching util-linux
+==> Downloading https://ghcr.io/v2/homebrew/core/util-linux/blobs/sha256:62c1095923e34635ab90c5029cac6876ea55e3c8ba089893679038179fbda3c4
+==> Downloading https://ghcr.io/v2/homebrew/core/glib/manifests/2.84.3
+==> Fetching glib
+==> Downloading https://ghcr.io/v2/homebrew/core/glib/blobs/sha256:9a07d5e8833e7424b2641ac6056f7a91ada81b152292d6b21914cef0e20e0ae7
+==> Downloading https://ghcr.io/v2/homebrew/core/libcap/manifests/2.76
+==> Fetching libcap
+==> Downloading https://ghcr.io/v2/homebrew/core/libcap/blobs/sha256:f1b39367526d90d20f2456fa3a443f12b2b80f325dcd0c7d755d2136ce824541
+==> Downloading https://ghcr.io/v2/homebrew/core/systemd/manifests/257.7
+==> Fetching systemd
+==> Downloading https://ghcr.io/v2/homebrew/core/systemd/blobs/sha256:55d66046687cab38171ddedb72d5a505208f8d440def4d3f3e15edeace3337eb
+==> Fetching nvtop
+==> Downloading https://ghcr.io/v2/homebrew/core/nvtop/blobs/sha256:2f75c62d6bc039a39e81eb04dbb4b0ba8f95ec6d4f2ba3c6dd1fc3a105cca847
+==> Fetching dagger
+==> Downloading https://ghcr.io/v2/homebrew/core/dagger/blobs/sha256:58ec08be5df8571360758ff3e3a3ec9bfab3fd42c0c66995c697230aa2b3d309
+==> Installing dependencies for python@3.12: mpdecimal, ca-certificates, openssl@3, ncurses, readline, zlib, sqlite, xz, berkeley-db@5, libedit, krb5, libtirpc, libnsl, bzip2, expat, libffi, libxcrypt and unzip
+==> Installing python@3.12 dependency: mpdecimal
+==> Downloading https://ghcr.io/v2/homebrew/core/mpdecimal/manifests/4.0.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/dbbf60721dc54b6215f6c0988496331d4110a2a358da867a1129cd84b8166b31--mpdecimal-4.0.1.bottle_manifest.json
+==> Pouring mpdecimal--4.0.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/mpdecimal/4.0.1: 22 files, 802.4KB
+==> Installing python@3.12 dependency: ca-certificates
+==> Downloading https://ghcr.io/v2/homebrew/core/ca-certificates/manifests/2025-07-15
+Already downloaded: /home/coder/.cache/Homebrew/downloads/1b8ec93adfe410583ff46788783b030707eec1898c7ded356e25694e4c29aa32--ca-certificates-2025-07-15.bottle_manifest.json
+==> Pouring ca-certificates--2025-07-15.all.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/ca-certificates/2025-07-15: 4 files, 241.3KB
+==> Installing python@3.12 dependency: openssl@3
+==> Downloading https://ghcr.io/v2/homebrew/core/openssl/3/manifests/3.5.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/9d8c8da104539ae29f198f366fe5794ac377d96a92458ae62557e3f83b03a351--openssl@3-3.5.1.bottle_manifest.json
+==> Pouring openssl@3--3.5.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/openssl@3/3.5.1: 7,573 files, 42.5MB
+==> Installing python@3.12 dependency: ncurses
+==> Downloading https://ghcr.io/v2/homebrew/core/ncurses/manifests/6.5
+Already downloaded: /home/coder/.cache/Homebrew/downloads/b2f8ce4e08b15832435170efd265346225ee388d5baab3d5c50e3a77c5673b5a--ncurses-6.5.bottle_manifest.json
+==> Pouring ncurses--6.5.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/ncurses/6.5: 4,037 files, 10.9MB
+==> Installing python@3.12 dependency: readline
+==> Downloading https://ghcr.io/v2/homebrew/core/readline/manifests/8.3.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/52cb2bb3f0d9e66789968b865501c41ed80dc303eb488939476b309f1d350dc5--readline-8.3.1.bottle_manifest.json
+==> Pouring readline--8.3.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/readline/8.3.1: 56 files, 2.9MB
+==> Installing python@3.12 dependency: zlib
+==> Downloading https://ghcr.io/v2/homebrew/core/zlib/manifests/1.3.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/f68d0caf232d52f2aa586abefbbfd7e958e384d84f3967008fa83de94b5f10ae--zlib-1.3.1.bottle_manifest.json
+==> Pouring zlib--1.3.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/zlib/1.3.1: 14 files, 476.0KB
+==> Installing python@3.12 dependency: sqlite
+==> Downloading https://ghcr.io/v2/homebrew/core/sqlite/manifests/3.50.4
+Already downloaded: /home/coder/.cache/Homebrew/downloads/f0760e6010149d3ea5bf9e64ddada251d25038daf612eb1c55fb18a9c6d6d53a--sqlite-3.50.4.bottle_manifest.json
+==> Pouring sqlite--3.50.4.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/sqlite/3.50.4: 13 files, 6.2MB
+==> Installing python@3.12 dependency: xz
+==> Downloading https://ghcr.io/v2/homebrew/core/xz/manifests/5.8.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/86a115cc1d43ff8a480fd907f812e70a403e1675d8a7223f61bbb08cbd2adc27--xz-5.8.1.bottle_manifest.json
+==> Pouring xz--5.8.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/xz/5.8.1: 97 files, 2.6MB
+==> Installing python@3.12 dependency: berkeley-db@5
+==> Downloading https://ghcr.io/v2/homebrew/core/berkeley-db/5/manifests/5.3.28_1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/17e4e0def00184b561c8a490b5c0813a7c4f5e1365eb2e927570786eb4e05e09--berkeley-db@5-5.3.28_1.bottle_manifest.json
+==> Pouring berkeley-db@5--5.3.28_1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/berkeley-db@5/5.3.28_1: 5,272 files, 87.7MB
+==> Installing python@3.12 dependency: libedit
+==> Downloading https://ghcr.io/v2/homebrew/core/libedit/manifests/20250104-3.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/c47389791b85fce1d3f55d8913ff7a87524d458cd8a4bc1cf6f9c0093da6783a--libedit-20250104-3.1.bottle_manifest.json
+==> Pouring libedit--20250104-3.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libedit/20250104-3.1: 55 files, 795.6KB
+==> Installing python@3.12 dependency: krb5
+==> Downloading https://ghcr.io/v2/homebrew/core/krb5/manifests/1.21.3
+Already downloaded: /home/coder/.cache/Homebrew/downloads/c5793441ca90aa09420dddd84f19d4aaf86da4f0b3f60c84940d77b1cb4c6863--krb5-1.21.3.bottle_manifest.json
+==> Pouring krb5--1.21.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/krb5/1.21.3: 164 files, 5.3MB
+==> Installing python@3.12 dependency: libtirpc
+==> Downloading https://ghcr.io/v2/homebrew/core/libtirpc/manifests/1.3.6-1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/6d2d218a3d60ab9a21a9265e011dfab91f9a1bc9f9ab0029b7cdcceed4c2e77f--libtirpc-1.3.6-1.bottle_manifest.json
+==> Pouring libtirpc--1.3.6.x86_64_linux.bottle.1.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libtirpc/1.3.6: 86 files, 1MB
+==> Installing python@3.12 dependency: libnsl
+==> Downloading https://ghcr.io/v2/homebrew/core/libnsl/manifests/2.0.1-1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/acb99d1f2d66c043ffb37b99aafd629564bd4c173a307d10b9b6c5bfa360130d--libnsl-2.0.1-1.bottle_manifest.json
+==> Pouring libnsl--2.0.1.x86_64_linux.bottle.1.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libnsl/2.0.1: 18 files, 196.0KB
+==> Installing python@3.12 dependency: bzip2
+==> Downloading https://ghcr.io/v2/homebrew/core/bzip2/manifests/1.0.8-2
+Already downloaded: /home/coder/.cache/Homebrew/downloads/c1a79a32cc9082c99fc318e6b2596b8b1f6e99abacb32bcbe88f979e4be5e4ea--bzip2-1.0.8-2.bottle_manifest.json
+==> Pouring bzip2--1.0.8.x86_64_linux.bottle.2.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/bzip2/1.0.8: 32 files, 607.5KB
+==> Installing python@3.12 dependency: expat
+==> Downloading https://ghcr.io/v2/homebrew/core/expat/manifests/2.7.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/09efb27f4cd66decc2e0f393e7f9292c729064e5c939cd8191f81fc000c3947a--expat-2.7.1.bottle_manifest.json
+==> Pouring expat--2.7.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/expat/2.7.1: 23 files, 921KB
+==> Installing python@3.12 dependency: libffi
+==> Downloading https://ghcr.io/v2/homebrew/core/libffi/manifests/3.5.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/2a0a00cd44d587830113cc55dfda470280f6667255105214e0e6941d4c8b3802--libffi-3.5.1.bottle_manifest.json
+==> Pouring libffi--3.5.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libffi/3.5.1: 19 files, 811.5KB
+==> Installing python@3.12 dependency: libxcrypt
+==> Downloading https://ghcr.io/v2/homebrew/core/libxcrypt/manifests/4.4.38
+Already downloaded: /home/coder/.cache/Homebrew/downloads/dd32c4ad3dd310fa48e28a08ef353c651cfb65a327303d7684835f21a85a7a34--libxcrypt-4.4.38.bottle_manifest.json
+==> Pouring libxcrypt--4.4.38.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libxcrypt/4.4.38: 25 files, 373.3KB
+==> Installing python@3.12 dependency: unzip
+==> Downloading https://ghcr.io/v2/homebrew/core/unzip/manifests/6.0_8
+Already downloaded: /home/coder/.cache/Homebrew/downloads/b9a98c1a65dea38eb0bb5d9106a5758ed0ff17635811bd7f7cd6be5908c2961b--unzip-6.0_8.bottle_manifest.json
+==> Pouring unzip--6.0_8.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/unzip/6.0_8: 17 files, 437.8KB
+==> Installing python@3.12
+==> Pouring python@3.12--3.12.11.x86_64_linux.bottle.tar.gz
+==> Caveats
+Python is installed as
+  /home/linuxbrew/.linuxbrew/bin/python3.12
+
+Unversioned and major-versioned symlinks `python`, `python3`, `python-config`, `python3-config`, `pip`, `pip3`, etc. pointing to
+`python3.12`, `python3.12-config`, `pip3.12` etc., respectively, are installed into
+  /home/linuxbrew/.linuxbrew/opt/python@3.12/libexec/bin
+
+If you do not need a specific version of Python, and always want Homebrew's `python3` in your PATH:
+  brew install python3
+
+See: https://docs.brew.sh/Homebrew-and-Python
+==> Summary
+🍺  /home/linuxbrew/.linuxbrew/Cellar/python@3.12/3.12.11: 3,203 files, 73.5MB
+==> Running `brew cleanup python@3.12`...
+Disable this behaviour by setting HOMEBREW_NO_INSTALL_CLEANUP.
+Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+==> Installing dependencies for node@22: brotli, c-ares, icu4c@77, libnghttp2, libnghttp3, libngtcp2, libuv, simdjson, simdutf, lz4, zstd and python@3.13
+==> Installing node@22 dependency: brotli
+==> Downloading https://ghcr.io/v2/homebrew/core/brotli/manifests/1.1.0-2
+Already downloaded: /home/coder/.cache/Homebrew/downloads/72b36368116298518fd66e638dfbe8cb541d8db2d33e279683bbdb4b79c73e0d--brotli-1.1.0-2.bottle_manifest.json
+==> Pouring brotli--1.1.0.x86_64_linux.bottle.2.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/brotli/1.1.0: 28 files, 1.8MB
+==> Installing node@22 dependency: c-ares
+==> Downloading https://ghcr.io/v2/homebrew/core/c-ares/manifests/1.34.5-1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/c52b1c91460667312755a235f78ac192a45bff39befbba6da9aa72a17263c559--c-ares-1.34.5-1.bottle_manifest.json
+==> Pouring c-ares--1.34.5.x86_64_linux.bottle.1.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/c-ares/1.34.5: 176 files, 1.3MB
+==> Installing node@22 dependency: icu4c@77
+==> Downloading https://ghcr.io/v2/homebrew/core/icu4c/77/manifests/77.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/35ec2c3adb94255ba47424a4334da9616d97e1ec6d59ed907b368535018bed0a--icu4c@77-77.1.bottle_manifest.json
+==> Pouring icu4c@77--77.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/icu4c@77/77.1: 277 files, 89.0MB
+==> Installing node@22 dependency: libnghttp2
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp2/manifests/1.66.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/be9e0fef84716f95c06b3d1b3574fca38069df3aae334c7818b5591d6a24df5b--libnghttp2-1.66.0.bottle_manifest.json
+==> Pouring libnghttp2--1.66.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libnghttp2/1.66.0: 15 files, 959.8KB
+==> Installing node@22 dependency: libnghttp3
+==> Downloading https://ghcr.io/v2/homebrew/core/libnghttp3/manifests/1.11.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/3efff4f68e2c19db2315e48ca4b115b707b8aaea4c1f6c1576c8df2bb796cb61--libnghttp3-1.11.0.bottle_manifest.json
+==> Pouring libnghttp3--1.11.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libnghttp3/1.11.0: 20 files, 696KB
+==> Installing node@22 dependency: libngtcp2
+==> Downloading https://ghcr.io/v2/homebrew/core/libngtcp2/manifests/1.14.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/fb3258b72e4cdf4e2292d46ab1b20b7c83fbdf6bb5d32ba986388d0c5fc91005--libngtcp2-1.14.0.bottle_manifest.json
+==> Pouring libngtcp2--1.14.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libngtcp2/1.14.0: 23 files, 1.4MB
+==> Installing node@22 dependency: libuv
+==> Downloading https://ghcr.io/v2/homebrew/core/libuv/manifests/1.51.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/25bd9f2f86d047011dc8ca247bea2e4e3e5a150e29648418d48dfca4c8c136ea--libuv-1.51.0.bottle_manifest.json
+==> Pouring libuv--1.51.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libuv/1.51.0: 21 files, 1.4MB
+==> Installing node@22 dependency: simdjson
+==> Downloading https://ghcr.io/v2/homebrew/core/simdjson/manifests/3.13.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/02c41c3dcd1d6d8e7fa71de0dbc30f47556872481178358c68a85bf79f14457d--simdjson-3.13.0.bottle_manifest.json
+==> Pouring simdjson--3.13.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/simdjson/3.13.0: 17 files, 5.6MB
+==> Installing node@22 dependency: simdutf
+==> Downloading https://ghcr.io/v2/homebrew/core/simdutf/manifests/7.3.4
+Already downloaded: /home/coder/.cache/Homebrew/downloads/5146cfebe50e0042b6430b57d9b535d099a8336dd9bf04eabd2eff001ff45d76--simdutf-7.3.4.bottle_manifest.json
+==> Pouring simdutf--7.3.4.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/simdutf/7.3.4: 36 files, 6MB
+==> Installing node@22 dependency: lz4
+==> Downloading https://ghcr.io/v2/homebrew/core/lz4/manifests/1.10.0-1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/8e11e90eb21a06e0f199af9d80e011e3693c77dd353b2477579d95c8471a5802--lz4-1.10.0-1.bottle_manifest.json
+==> Pouring lz4--1.10.0.x86_64_linux.bottle.1.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/lz4/1.10.0: 24 files, 798.6KB
+==> Installing node@22 dependency: zstd
+==> Downloading https://ghcr.io/v2/homebrew/core/zstd/manifests/1.5.7
+Already downloaded: /home/coder/.cache/Homebrew/downloads/596a67b1677f62a8e24e6fdfa7c879891221cb8261242f4355fb4deff1a2ec39--zstd-1.5.7.bottle_manifest.json
+==> Pouring zstd--1.5.7.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/zstd/1.5.7: 32 files, 2.9MB
+==> Installing node@22 dependency: python@3.13
+==> Downloading https://ghcr.io/v2/homebrew/core/python/3.13/manifests/3.13.5-1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/6f054ddb0b7ceefefd45be898b4aee4dd0b8e38c8e43c6d5370347f18bf28259--python@3.13-3.13.5-1.bottle_manifest.json
+==> Pouring python@3.13--3.13.5.x86_64_linux.bottle.1.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/python@3.13/3.13.5: 3,164 files, 71.7MB
+==> Installing node@22
+==> Pouring node@22--22.18.0.x86_64_linux.bottle.tar.gz
+==> Caveats
+node@22 is keg-only, which means it was not symlinked into /home/linuxbrew/.linuxbrew,
+because this is an alternate version of another formula.
+
+If you need to have node@22 first in your PATH, run:
+  echo 'export PATH="/home/linuxbrew/.linuxbrew/opt/node@22/bin:$PATH"' >> ~/.profile
+
+For compilers to find node@22 you may need to set:
+  export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/node@22/lib"
+  export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/node@22/include"
+==> Summary
+🍺  /home/linuxbrew/.linuxbrew/Cellar/node@22/22.18.0: 2,420 files, 91.5MB
+==> Running `brew cleanup node@22`...
+==> Pouring go--1.24.5.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/go/1.24.5: 14,120 files, 252.5MB
+==> Running `brew cleanup go`...
+==> Pouring argo--3.7.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/argo/3.7.0: 10 files, 183MB
+==> Running `brew cleanup argo`...
+==> Installing awscli dependency: mandoc
+==> Downloading https://ghcr.io/v2/homebrew/core/mandoc/manifests/1.14.6_1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/fe1cd1ffc09917f956ad3e80a475b968c1dd36dae9cc472d31da89b6baa39573--mandoc-1.14.6_1.bottle_manifest.json
+==> Pouring mandoc--1.14.6_1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/mandoc/1.14.6_1: 30 files, 2.5MB
+==> Pouring awscli--2.28.0.x86_64_linux.bottle.tar.gz
+==> Caveats
+The "examples" directory has been installed to:
+  /home/linuxbrew/.linuxbrew/share/awscli/examples
+==> Summary
+🍺  /home/linuxbrew/.linuxbrew/Cellar/awscli/2.28.0: 14,493 files, 142.4MB
+==> Running `brew cleanup awscli`...
+==> Installing dependencies for azure-cli: libsodium and libyaml
+==> Installing azure-cli dependency: libsodium
+==> Downloading https://ghcr.io/v2/homebrew/core/libsodium/manifests/1.0.20
+Already downloaded: /home/coder/.cache/Homebrew/downloads/a9a9a2e1207e214070682a14f6470fb686cbb6ba7c24c2c747c0ca0663f42557--libsodium-1.0.20.bottle_manifest.json
+==> Pouring libsodium--1.0.20.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libsodium/1.0.20: 79 files, 1.3MB
+==> Installing azure-cli dependency: libyaml
+==> Downloading https://ghcr.io/v2/homebrew/core/libyaml/manifests/0.2.5
+Already downloaded: /home/coder/.cache/Homebrew/downloads/5f6b0af1730aa1bc02f8021c90ed7ffe988eeba95eec83e6c828f77332ba6406--libyaml-0.2.5.bottle_manifest.json
+==> Pouring libyaml--0.2.5.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libyaml/0.2.5: 12 files, 394.2KB
+==> Installing azure-cli
+==> Pouring azure-cli--2.75.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/azure-cli/2.75.0: 18,408 files, 426MB
+==> Running `brew cleanup azure-cli`...
+==> Pouring helm--3.18.4.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/helm/3.18.4: 66 files, 57.2MB
+==> Running `brew cleanup helm`...
+==> Pouring kubernetes-cli--1.33.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/kubernetes-cli/1.33.3: 255 files, 58.3MB
+==> Running `brew cleanup kubernetes-cli`...
+==> Pouring k9s--0.50.9.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/k9s/0.50.9: 10 files, 157MB
+==> Running `brew cleanup k9s`...
+==> Installing lakefs from treeverse/lakefs
+🍺  /home/linuxbrew/.linuxbrew/Cellar/lakefs/1.64.1: 8 files, 186.6MB, built in 2 seconds
+==> Running `brew cleanup lakefs`...
+==> Pouring pre-commit--4.2.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/pre-commit/4.2.0: 325 files, 7.2MB
+==> Running `brew cleanup pre-commit`...
+==> Pouring duckdb--1.3.2.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/duckdb/1.3.2: 1,236 files, 113.9MB
+==> Running `brew cleanup duckdb`...
+==> Installing dependencies for huggingface-cli: certifi and git-lfs
+==> Installing huggingface-cli dependency: certifi
+==> Downloading https://ghcr.io/v2/homebrew/core/certifi/manifests/2025.7.14
+Already downloaded: /home/coder/.cache/Homebrew/downloads/71296bf475b1beb00c4b58396b9ce7f96b4219a8d18f0ed8ac721f6e6a0d0878--certifi-2025.7.14.bottle_manifest.json
+==> Pouring certifi--2025.7.14.all.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/certifi/2025.7.14: 27 files, 74.9KB
+==> Installing huggingface-cli dependency: git-lfs
+==> Downloading https://ghcr.io/v2/homebrew/core/git-lfs/manifests/3.7.0
+Already downloaded: /home/coder/.cache/Homebrew/downloads/49c88786ca9dc41c81297e4f917ec878762b0308aae0e0bea2d111c6a55c5094--git-lfs-3.7.0.bottle_manifest.json
+==> Pouring git-lfs--3.7.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/git-lfs/3.7.0: 82 files, 14.0MB
+==> Installing huggingface-cli
+==> Pouring huggingface-cli--0.34.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/huggingface-cli/0.34.3: 675 files, 14.9MB
+==> Running `brew cleanup huggingface-cli`...
+==> Pouring ruff--0.12.7.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/ruff/0.12.7: 12 files, 42MB
+==> Running `brew cleanup ruff`...
+==> Installing dependencies for vim: libunistring, acl, libxml2, gettext, lua, gperf, ruby, gdbm and perl
+==> Installing vim dependency: libunistring
+==> Downloading https://ghcr.io/v2/homebrew/core/libunistring/manifests/1.3
+Already downloaded: /home/coder/.cache/Homebrew/downloads/a570da63bc1839c7e217f203abd54d4d873ebd6b99f6e88994d0e79e2ebe987c--libunistring-1.3.bottle_manifest.json
+==> Pouring libunistring--1.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libunistring/1.3: 60 files, 6.0MB
+==> Installing vim dependency: acl
+==> Downloading https://ghcr.io/v2/homebrew/core/acl/manifests/2.3.2-2
+Already downloaded: /home/coder/.cache/Homebrew/downloads/e2f6a812e1ba69fc81acd3fa2801d7b46e8af60ba8b946f3e78d861b8b515c9f--acl-2.3.2-2.bottle_manifest.json
+==> Pouring acl--2.3.2.x86_64_linux.bottle.2.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/acl/2.3.2: 71 files, 727.4KB
+==> Installing vim dependency: libxml2
+==> Downloading https://ghcr.io/v2/homebrew/core/libxml2/manifests/2.13.8
+Already downloaded: /home/coder/.cache/Homebrew/downloads/d6198f86304a304387068a0dbb8f6b1ffc5fe79575c89fb1d3225089237baedf--libxml2-2.13.8.bottle_manifest.json
+==> Pouring libxml2--2.13.8.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libxml2/2.13.8: 136 files, 7MB
+==> Installing vim dependency: gettext
+==> Downloading https://ghcr.io/v2/homebrew/core/gettext/manifests/0.26
+Already downloaded: /home/coder/.cache/Homebrew/downloads/d28158ffec04fae757cdbeb46750e8e2ed43b7b17ada49d72a5bda2cff4cd6ed--gettext-0.26.bottle_manifest.json
+==> Pouring gettext--0.26.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/gettext/0.26: 2,515 files, 33.5MB
+==> Installing vim dependency: lua
+==> Downloading https://ghcr.io/v2/homebrew/core/lua/manifests/5.4.8
+Already downloaded: /home/coder/.cache/Homebrew/downloads/cb2b54ca62f0ea5746e4075848ef00a6e9c7d36089fc7be0e188266aeb61a077--lua-5.4.8.bottle_manifest.json
+==> Pouring lua--5.4.8.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/lua/5.4.8: 30 files, 1.4MB
+==> Installing vim dependency: gperf
+==> Downloading https://ghcr.io/v2/homebrew/core/gperf/manifests/3.3
+Already downloaded: /home/coder/.cache/Homebrew/downloads/6807042de11f05893fa38ad0a2975b4157931d9919ed78ee5b4cb0054d780dd2--gperf-3.3.bottle_manifest.json
+==> Pouring gperf--3.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/gperf/3.3: 12 files, 617KB
+==> Installing vim dependency: ruby
+==> Downloading https://ghcr.io/v2/homebrew/core/ruby/manifests/3.4.5
+Already downloaded: /home/coder/.cache/Homebrew/downloads/cda57721b4da392958f1c2d1a47676bf52adf5c0ffbace1fbc55e13bf0276281--ruby-3.4.5.bottle_manifest.json
+==> Pouring ruby--3.4.5.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/ruby/3.4.5: 20,206 files, 64.5MB
+==> Installing vim dependency: gdbm
+==> Downloading https://ghcr.io/v2/homebrew/core/gdbm/manifests/1.26
+Already downloaded: /home/coder/.cache/Homebrew/downloads/35ff1d9b15ba5c57e64b9d7f5e18d12ddda40b5ecdc8ecf2f136c49928265f9d--gdbm-1.26.bottle_manifest.json
+==> Pouring gdbm--1.26.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/gdbm/1.26: 43 files, 1.6MB
+==> Installing vim dependency: perl
+==> Downloading https://ghcr.io/v2/homebrew/core/perl/manifests/5.40.2
+Already downloaded: /home/coder/.cache/Homebrew/downloads/a520d519d4450ead392eb1a07673c5147af1d7fbc5977a0acf622bddeb1ecbd5--perl-5.40.2.bottle_manifest.json
+==> Pouring perl--5.40.2.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/perl/5.40.2: 2,788 files, 77MB
+==> Installing vim
+==> Pouring vim--9.1.1550.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/vim/9.1.1550: 2,461 files, 49.2MB
+==> Running `brew cleanup vim`...
+==> Pouring gh--2.76.2.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/gh/2.76.2: 214 files, 52.3MB
+==> Running `brew cleanup gh`...
+==> Installing nano dependency: libmagic
+==> Downloading https://ghcr.io/v2/homebrew/core/libmagic/manifests/5.46
+Already downloaded: /home/coder/.cache/Homebrew/downloads/34af914880ea2c81f1f81ada45fcbeb76ebbf3ed811882631ec704a49f55484f--libmagic-5.46.bottle_manifest.json
+==> Pouring libmagic--5.46.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libmagic/5.46: 361 files, 12.3MB
+==> Pouring nano--8.5.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/nano/8.5: 102 files, 3.3MB
+==> Running `brew cleanup nano`...
+==> Pouring uv--0.8.4.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/uv/0.8.4: 17 files, 44.9MB
+==> Running `brew cleanup uv`...
+==> Pouring terraform--1.5.7.x86_64_linux.bottle.1.tar.gz
+==> Caveats
+We will not accept any new Terraform releases in homebrew/core (with the BUSL license).
+The next release changed to a non-open-source license:
+https://www.hashicorp.com/blog/hashicorp-adopts-business-source-license
+See our documentation for acceptable licences:
+  https://docs.brew.sh/License-Guidelines
+==> Summary
+🍺  /home/linuxbrew/.linuxbrew/Cellar/terraform/1.5.7: 7 files, 64.3MB
+==> Running `brew cleanup terraform`...
+==> Installing dependencies for nvtop: libpciaccess, libdrm, pcre2, dbus, util-linux, glib, libcap and systemd
+==> Installing nvtop dependency: libpciaccess
+==> Downloading https://ghcr.io/v2/homebrew/core/libpciaccess/manifests/0.18.1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/973edb5398410e7c002aa56d47e871d019bade54cde5bf4d972521b7290ede47--libpciaccess-0.18.1.bottle_manifest.json
+==> Pouring libpciaccess--0.18.1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libpciaccess/0.18.1: 11 files, 101.6KB
+==> Installing nvtop dependency: libdrm
+==> Downloading https://ghcr.io/v2/homebrew/core/libdrm/manifests/2.4.125
+Already downloaded: /home/coder/.cache/Homebrew/downloads/bd7a2b73ca101cee0267f73d5e09213aebbde497f6e21ab2ae671f39891393fc--libdrm-2.4.125.bottle_manifest.json
+==> Pouring libdrm--2.4.125.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libdrm/2.4.125: 74 files, 1.3MB
+==> Installing nvtop dependency: pcre2
+==> Downloading https://ghcr.io/v2/homebrew/core/pcre2/manifests/10.45
+Already downloaded: /home/coder/.cache/Homebrew/downloads/bbac938545583185faba88567f1a952d7cc0b825820a2980533f7b3550dc31ad--pcre2-10.45.bottle_manifest.json
+==> Pouring pcre2--10.45.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/pcre2/10.45: 246 files, 7.7MB
+==> Installing nvtop dependency: dbus
+==> Downloading https://ghcr.io/v2/homebrew/core/dbus/manifests/1.16.2
+Already downloaded: /home/coder/.cache/Homebrew/downloads/4d7addc05476f068c217c8e9d9c3a43fd366359d34bd4ad056d0de7568cd8847--dbus-1.16.2.bottle_manifest.json
+==> Pouring dbus--1.16.2.x86_64_linux.bottle.tar.gz
+==> /home/linuxbrew/.linuxbrew/Cellar/dbus/1.16.2/bin/dbus-uuidgen --ensure=/home/linuxbrew/.linuxbrew/var/lib/dbus/machine-id
+🍺  /home/linuxbrew/.linuxbrew/Cellar/dbus/1.16.2: 78 files, 2.2MB
+==> Installing nvtop dependency: util-linux
+==> Downloading https://ghcr.io/v2/homebrew/core/util-linux/manifests/2.41.1_1
+Already downloaded: /home/coder/.cache/Homebrew/downloads/941e3140311fc557caf188caff231718736e76fc67f59d29e133018b8b866437--util-linux-2.41.1_1.bottle_manifest.json
+==> Pouring util-linux--2.41.1_1.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/util-linux/2.41.1_1: 447 files, 27MB
+==> Installing nvtop dependency: glib
+==> Downloading https://ghcr.io/v2/homebrew/core/glib/manifests/2.84.3
+Already downloaded: /home/coder/.cache/Homebrew/downloads/88d63b55ddeb4b28ab9c7944cbfcc7dc19d04bd0effc32c2e9623ce50a6cd51f--glib-2.84.3.bottle_manifest.json
+==> Pouring glib--2.84.3.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/glib/2.84.3: 512 files, 41.0MB
+==> Installing nvtop dependency: libcap
+==> Downloading https://ghcr.io/v2/homebrew/core/libcap/manifests/2.76
+Already downloaded: /home/coder/.cache/Homebrew/downloads/9bc4c505c6115935ee34b4fbc714eed18dd89a6f94ccce36c0a1895d371ee772--libcap-2.76.bottle_manifest.json
+==> Pouring libcap--2.76.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/libcap/2.76: 103 files, 480.8KB
+==> Installing nvtop dependency: systemd
+==> Downloading https://ghcr.io/v2/homebrew/core/systemd/manifests/257.7
+Already downloaded: /home/coder/.cache/Homebrew/downloads/0ab99d3c0efcaabe6179073dd81286075f9fde4dfb7cf8702149c839ce6e63b8--systemd-257.7.bottle_manifest.json
+==> Pouring systemd--257.7.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/systemd/257.7: 1,813 files, 33.2MB
+==> Installing nvtop
+==> Pouring nvtop--3.2.0.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/nvtop/3.2.0: 10 files, 357KB
+==> Running `brew cleanup nvtop`...
+==> Pouring dagger--0.18.14.x86_64_linux.bottle.tar.gz
+🍺  /home/linuxbrew/.linuxbrew/Cellar/dagger/0.18.14: 11 files, 69.8MB
+==> Running `brew cleanup dagger`...
+==> No outdated dependents to upgrade!
+==> Caveats
+Bash completion has been installed to:
+  /home/linuxbrew/.linuxbrew/etc/bash_completion.d
+==> python@3.12
+Python is installed as
+  /home/linuxbrew/.linuxbrew/bin/python3.12
+
+Unversioned and major-versioned symlinks `python`, `python3`, `python-config`, `python3-config`, `pip`, `pip3`, etc. pointing to
+`python3.12`, `python3.12-config`, `pip3.12` etc., respectively, are installed into
+  /home/linuxbrew/.linuxbrew/opt/python@3.12/libexec/bin
+
+If you do not need a specific version of Python, and always want Homebrew's `python3` in your PATH:
+  brew install python3
+
+See: https://docs.brew.sh/Homebrew-and-Python
+==> node@22
+node@22 is keg-only, which means it was not symlinked into /home/linuxbrew/.linuxbrew,
+because this is an alternate version of another formula.
+
+If you need to have node@22 first in your PATH, run:
+  echo 'export PATH="/home/linuxbrew/.linuxbrew/opt/node@22/bin:$PATH"' >> ~/.profile
+
+For compilers to find node@22 you may need to set:
+  export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/node@22/lib"
+  export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/node@22/include"
+==> awscli
+The "examples" directory has been installed to:
+  /home/linuxbrew/.linuxbrew/share/awscli/examples
+==> terraform
+We will not accept any new Terraform releases in homebrew/core (with the BUSL license).
+The next release changed to a non-open-source license:
+https://www.hashicorp.com/blog/hashicorp-adopts-business-source-license
+See our documentation for acceptable licences:
+  https://docs.brew.sh/License-Guidelines
+
+added 3 packages in 3s
+
+2 packages are looking for funding
+  run `npm fund` for details
+Removing: /home/coder/.cache/Homebrew/acl_bottle_manifest--2.3.2-2... (3.3KB)
+Removing: /home/coder/.cache/Homebrew/acl--2.3.2... (134.9KB)
+Removing: /home/coder/.cache/Homebrew/argo_bottle_manifest--3.7.0... (7.2KB)
+Removing: /home/coder/.cache/Homebrew/argo--3.7.0... (67.4MB)
+Removing: /home/coder/.cache/Homebrew/awscli_bottle_manifest--2.28.0... (22.0KB)
+Removing: /home/coder/.cache/Homebrew/awscli--2.28.0... (20.7MB)
+Removing: /home/coder/.cache/Homebrew/azure-cli_bottle_manifest--2.75.0... (28.3KB)
+Removing: /home/coder/.cache/Homebrew/azure-cli--2.75.0... (40.8MB)
+Removing: /home/coder/.cache/Homebrew/berkeley-db@5_bottle_manifest--5.3.28_1... (12.3KB)
+Removing: /home/coder/.cache/Homebrew/berkeley-db@5--5.3.28_1... (23.0MB)
+Removing: /home/coder/.cache/Homebrew/brotli_bottle_manifest--1.1.0-2... (9.0KB)
+Removing: /home/coder/.cache/Homebrew/brotli--1.1.0... (762.3KB)
+Removing: /home/coder/.cache/Homebrew/bzip2_bottle_manifest--1.0.8-2... (11.3KB)
+Removing: /home/coder/.cache/Homebrew/bzip2--1.0.8... (223KB)
+Removing: /home/coder/.cache/Homebrew/c-ares_bottle_manifest--1.34.5-1... (8.5KB)
+Removing: /home/coder/.cache/Homebrew/c-ares--1.34.5... (368.3KB)
+Removing: /home/coder/.cache/Homebrew/ca-certificates_bottle_manifest--2025-07-15... (2.0KB)
+Removing: /home/coder/.cache/Homebrew/ca-certificates--2025-07-15... (126.4KB)
+Removing: /home/coder/.cache/Homebrew/certifi_bottle_manifest--2025.7.14... (2.2KB)
+Removing: /home/coder/.cache/Homebrew/certifi--2025.7.14... (4.8KB)
+Removing: /home/coder/.cache/Homebrew/dagger_bottle_manifest--0.18.14... (7.2KB)
+Removing: /home/coder/.cache/Homebrew/dagger--0.18.14... (24MB)
+Removing: /home/coder/.cache/Homebrew/dbus_bottle_manifest--1.16.2... (12.5KB)
+Removing: /home/coder/.cache/Homebrew/dbus--1.16.2... (653.3KB)
+Removing: /home/coder/.cache/Homebrew/duckdb_bottle_manifest--1.3.2... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/duckdb--1.3.2... (34MB)
+Removing: /home/coder/.cache/Homebrew/expat_bottle_manifest--2.7.1... (8.4KB)
+Removing: /home/coder/.cache/Homebrew/expat--2.7.1... (272.0KB)
+Removing: /home/coder/.cache/Homebrew/gdbm_bottle_manifest--1.26... (8.5KB)
+Removing: /home/coder/.cache/Homebrew/gdbm--1.26... (426.6KB)
+Removing: /home/coder/.cache/Homebrew/gettext_bottle_manifest--0.26... (15.7KB)
+Removing: /home/coder/.cache/Homebrew/gettext--0.26... (10.6MB)
+Removing: /home/coder/.cache/Homebrew/gh_bottle_manifest--2.76.2... (7.2KB)
+Removing: /home/coder/.cache/Homebrew/gh--2.76.2... (16.8MB)
+Removing: /home/coder/.cache/Homebrew/git-lfs_bottle_manifest--3.7.0... (7.1KB)
+Removing: /home/coder/.cache/Homebrew/git-lfs--3.7.0... (5.2MB)
+Removing: /home/coder/.cache/Homebrew/glib_bottle_manifest--2.84.3... (21.6KB)
+Removing: /home/coder/.cache/Homebrew/glib--2.84.3... (9.3MB)
+Removing: /home/coder/.cache/Homebrew/go_bottle_manifest--1.24.5... (9.9KB)
+Removing: /home/coder/.cache/Homebrew/go--1.24.5... (76.6MB)
+Removing: /home/coder/.cache/Homebrew/gperf_bottle_manifest--3.3... (8.4KB)
+Removing: /home/coder/.cache/Homebrew/gperf--3.3... (178.2KB)
+Removing: /home/coder/.cache/Homebrew/helm_bottle_manifest--3.18.4... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/helm--3.18.4... (17MB)
+Removing: /home/coder/.cache/Homebrew/huggingface-cli_bottle_manifest--0.34.3... (18.7KB)
+Removing: /home/coder/.cache/Homebrew/huggingface-cli--0.34.3... (4.5MB)
+Removing: /home/coder/.cache/Homebrew/icu4c@77_bottle_manifest--77.1... (10.9KB)
+Removing: /home/coder/.cache/Homebrew/icu4c@77--77.1... (31.3MB)
+Removing: /home/coder/.cache/Homebrew/k9s_bottle_manifest--0.50.9... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/k9s--0.50.9... (49.2MB)
+Removing: /home/coder/.cache/Homebrew/krb5_bottle_manifest--1.21.3... (19KB)
+Removing: /home/coder/.cache/Homebrew/krb5--1.21.3... (1.6MB)
+Removing: /home/coder/.cache/Homebrew/kubernetes-cli_bottle_manifest--1.33.3... (8.4KB)
+Removing: /home/coder/.cache/Homebrew/kubernetes-cli--1.33.3... (16.9MB)
+Removing: /home/coder/.cache/Homebrew/lakefs--1.64.1.tar.gz... (55.8MB)
+Removing: /home/coder/.cache/Homebrew/libcap_bottle_manifest--2.76... (3.4KB)
+Removing: /home/coder/.cache/Homebrew/libcap--2.76... (119.4KB)
+Removing: /home/coder/.cache/Homebrew/libdrm_bottle_manifest--2.4.125... (4.0KB)
+Removing: /home/coder/.cache/Homebrew/libdrm--2.4.125... (368.9KB)
+Removing: /home/coder/.cache/Homebrew/libedit_bottle_manifest--20250104-3.1... (8.4KB)
+Removing: /home/coder/.cache/Homebrew/libedit--20250104-3.1... (245.5KB)
+Removing: /home/coder/.cache/Homebrew/libffi_bottle_manifest--3.5.1... (8KB)
+Removing: /home/coder/.cache/Homebrew/libffi--3.5.1... (247.6KB)
+Removing: /home/coder/.cache/Homebrew/libmagic_bottle_manifest--5.46... (9.6KB)
+Removing: /home/coder/.cache/Homebrew/libmagic--5.46... (1.2MB)
+Removing: /home/coder/.cache/Homebrew/libnghttp2_bottle_manifest--1.66.0... (8KB)
+Removing: /home/coder/.cache/Homebrew/libnghttp2--1.66.0... (261.2KB)
+Removing: /home/coder/.cache/Homebrew/libnghttp3_bottle_manifest--1.11.0... (8.1KB)
+Removing: /home/coder/.cache/Homebrew/libnghttp3--1.11.0... (207.5KB)
+Removing: /home/coder/.cache/Homebrew/libngtcp2_bottle_manifest--1.14.0... (10.5KB)
+Removing: /home/coder/.cache/Homebrew/libngtcp2--1.14.0... (428.6KB)
+Removing: /home/coder/.cache/Homebrew/libnsl_bottle_manifest--2.0.1-1... (4.4KB)
+Removing: /home/coder/.cache/Homebrew/libnsl--2.0.1... (45KB)
+Removing: /home/coder/.cache/Homebrew/libpciaccess_bottle_manifest--0.18.1... (3.2KB)
+Removing: /home/coder/.cache/Homebrew/libpciaccess--0.18.1... (25.1KB)
+Removing: /home/coder/.cache/Homebrew/libsodium_bottle_manifest--1.0.20... (9.5KB)
+Removing: /home/coder/.cache/Homebrew/libsodium--1.0.20... (433.6KB)
+Removing: /home/coder/.cache/Homebrew/libtirpc_bottle_manifest--1.3.6-1... (11.3KB)
+Removing: /home/coder/.cache/Homebrew/libtirpc--1.3.6... (288.7KB)
+Removing: /home/coder/.cache/Homebrew/libunistring_bottle_manifest--1.3... (8.1KB)
+Removing: /home/coder/.cache/Homebrew/libunistring--1.3... (1.8MB)
+Removing: /home/coder/.cache/Homebrew/libuv_bottle_manifest--1.51.0... (8.1KB)
+Removing: /home/coder/.cache/Homebrew/libuv--1.51.0... (417.0KB)
+Removing: /home/coder/.cache/Homebrew/libxcrypt_bottle_manifest--4.4.38... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/libxcrypt--4.4.38... (127.6KB)
+Removing: /home/coder/.cache/Homebrew/libxml2_bottle_manifest--2.13.8... (11.2KB)
+Removing: /home/coder/.cache/Homebrew/libxml2--2.13.8... (1.5MB)
+Removing: /home/coder/.cache/Homebrew/libyaml_bottle_manifest--0.2.5... (13.2KB)
+Removing: /home/coder/.cache/Homebrew/libyaml--0.2.5... (122.9KB)
+Removing: /home/coder/.cache/Homebrew/lua_bottle_manifest--5.4.8... (9.5KB)
+Removing: /home/coder/.cache/Homebrew/lua--5.4.8... (557.4KB)
+Removing: /home/coder/.cache/Homebrew/lz4_bottle_manifest--1.10.0-1... (11.3KB)
+Removing: /home/coder/.cache/Homebrew/lz4--1.10.0... (313.3KB)
+Removing: /home/coder/.cache/Homebrew/mandoc_bottle_manifest--1.14.6_1... (12.8KB)
+Removing: /home/coder/.cache/Homebrew/mandoc--1.14.6_1... (1MB)
+Removing: /home/coder/.cache/Homebrew/mpdecimal_bottle_manifest--4.0.1... (9.5KB)
+Removing: /home/coder/.cache/Homebrew/mpdecimal--4.0.1... (225.3KB)
+Removing: /home/coder/.cache/Homebrew/nano_bottle_manifest--8.5... (13KB)
+Removing: /home/coder/.cache/Homebrew/nano--8.5... (1MB)
+Removing: /home/coder/.cache/Homebrew/ncurses_bottle_manifest--6.5... (14.7KB)
+Removing: /home/coder/.cache/Homebrew/ncurses--6.5... (2.6MB)
+Removing: /home/coder/.cache/Homebrew/node@22_bottle_manifest--22.18.0... (28.4KB)
+Removing: /home/coder/.cache/Homebrew/node@22--22.18.0... (24.5MB)
+Removing: /home/coder/.cache/Homebrew/nvtop_bottle_manifest--3.2.0... (15.5KB)
+Removing: /home/coder/.cache/Homebrew/nvtop--3.2.0... (106.6KB)
+Removing: /home/coder/.cache/Homebrew/openssl@3_bottle_manifest--3.5.1... (11.9KB)
+Removing: /home/coder/.cache/Homebrew/openssl@3--3.5.1... (10.5MB)
+Removing: /home/coder/.cache/Homebrew/pcre2_bottle_manifest--10.45... (10.3KB)
+Removing: /home/coder/.cache/Homebrew/pcre2--10.45... (2.6MB)
+Removing: /home/coder/.cache/Homebrew/perl_bottle_manifest--5.40.2... (20.8KB)
+Removing: /home/coder/.cache/Homebrew/perl--5.40.2... (19MB)
+Removing: /home/coder/.cache/Homebrew/pre-commit_bottle_manifest--4.2.0... (19.3KB)
+Removing: /home/coder/.cache/Homebrew/pre-commit--4.2.0... (5.0MB)
+Removing: /home/coder/.cache/Homebrew/python@3.12_bottle_manifest--3.12.11... (32KB)
+Removing: /home/coder/.cache/Homebrew/python@3.12--3.12.11... (19.7MB)
+Removing: /home/coder/.cache/Homebrew/python@3.13_bottle_manifest--3.13.5-1... (31KB)
+Removing: /home/coder/.cache/Homebrew/python@3.13--3.13.5... (19.5MB)
+Removing: /home/coder/.cache/Homebrew/readline_bottle_manifest--8.3.1... (9.9KB)
+Removing: /home/coder/.cache/Homebrew/readline--8.3.1... (809.9KB)
+Removing: /home/coder/.cache/Homebrew/ruby_bottle_manifest--3.4.5... (19.4KB)
+Removing: /home/coder/.cache/Homebrew/ruby--3.4.5... (17.7MB)
+Removing: /home/coder/.cache/Homebrew/ruff_bottle_manifest--0.12.7... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/ruff--0.12.7... (14.4MB)
+Removing: /home/coder/.cache/Homebrew/simdjson_bottle_manifest--3.13.0... (8.2KB)
+Removing: /home/coder/.cache/Homebrew/simdjson--3.13.0... (1MB)
+Removing: /home/coder/.cache/Homebrew/simdutf_bottle_manifest--7.3.4... (9.8KB)
+Removing: /home/coder/.cache/Homebrew/simdutf--7.3.4... (1.5MB)
+Removing: /home/coder/.cache/Homebrew/sqlite_bottle_manifest--3.50.4... (11.2KB)
+Removing: /home/coder/.cache/Homebrew/sqlite--3.50.4... (2.8MB)
+Removing: /home/coder/.cache/Homebrew/systemd_bottle_manifest--257.7... (19KB)
+Removing: /home/coder/.cache/Homebrew/systemd--257.7... (9.8MB)
+Removing: /home/coder/.cache/Homebrew/terraform_bottle_manifest--1.5.7-1... (8.3KB)
+Removing: /home/coder/.cache/Homebrew/terraform--1.5.7... (19.8MB)
+Removing: /home/coder/.cache/Homebrew/unzip_bottle_manifest--6.0_8... (12KB)
+Removing: /home/coder/.cache/Homebrew/unzip--6.0_8... (173.6KB)
+Removing: /home/coder/.cache/Homebrew/util-linux_bottle_manifest--2.41.1_1... (18KB)
+Removing: /home/coder/.cache/Homebrew/util-linux--2.41.1_1... (8.8MB)
+Removing: /home/coder/.cache/Homebrew/uv_bottle_manifest--0.8.4... (8.9KB)
+Removing: /home/coder/.cache/Homebrew/uv--0.8.4... (17.6MB)
+Removing: /home/coder/.cache/Homebrew/vim_bottle_manifest--9.1.1550... (38.1KB)
+Removing: /home/coder/.cache/Homebrew/vim--9.1.1550... (16.1MB)
+Removing: /home/coder/.cache/Homebrew/xz_bottle_manifest--5.8.1... (11.5KB)
+Removing: /home/coder/.cache/Homebrew/xz--5.8.1... (797.6KB)
+Removing: /home/coder/.cache/Homebrew/zlib_bottle_manifest--1.3.1... (9.5KB)
+Removing: /home/coder/.cache/Homebrew/zlib--1.3.1... (171KB)
+Removing: /home/coder/.cache/Homebrew/zstd_bottle_manifest--1.5.7... (12.6KB)
+Removing: /home/coder/.cache/Homebrew/zstd--1.5.7... (1MB)
+Removing: /home/coder/.cache/Homebrew/external_commands_list.txt... (1B)
+Removing: /home/coder/.cache/Homebrew/all_commands_list.txt... (1.2KB)
+Removing: /home/coder/.cache/Homebrew/portable-ruby-3.4.5.x86_64_linux.bottle.tar.gz... (13.1MB)
+Removing: /home/coder/.cache/Homebrew/Logs/lakefs... (4KB)
+Removing: /home/coder/.cache/Homebrew/Logs/dbus... (4.1KB)
+Pruned 0 symbolic links and 19 directories from /home/linuxbrew/.linuxbrew
+Removing: /home/linuxbrew/.linuxbrew/Homebrew/Library/Homebrew/vendor/portable-ruby/3.4.5... (1,574 files, 41.7MB)
+==> This operation has freed approximately 790.8MB of disk space.
+
+Setup tracing at https://dagger.cloud/traces/setup. To hide set DAGGER_NO_NAG=1

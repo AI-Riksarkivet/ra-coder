@@ -1,0 +1,179 @@
+[32m▶[0m connect [2m0.0s[0m
+[32m▶[0m load module: . [2m2.0s[0m
+[32m●[0m parsing command line arguments [2m0.0s[0m
+
+[32m●[0m [1mbuild[0m[2m: Build![0m [2m0.0s[0m
+[31m▼[0m .[1mbuildFromGit[0m([36mgitRepo: [0m[33m"https://devops.ra.se/DataLab/Datalab/_git/coder-templates"[0m, [36msshPrivateKey: [0m[33m"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----"[0m, [36menableCuda: [0m[31mfalse[0m, [36mimageTag: [0m[33m"user-fix-final"[0m)[2m: String![0m [2m1m5s[0m [31mERROR[0m
+[31;2m├─[0m[32m●[0m [1mcontainer[0m[2m: Container![0m [2m0.0s[0m
+[31;2m├─[0m[34m$[0m .[1mfrom[0m([36maddress: [0m[33m"alpine/git:latest"[0m)[2m: Container![0m [2m0.9s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithExec[0m([36margs: [0m[[33m"apk"[0m, [33m"add"[0m, [33m"--no-cache"[0m, [33m"openssh-client"[0m])[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithExec[0m([36margs: [0m[[33m"mkdir"[0m, [33m"-p"[0m, [33m"/root/.ssh"[0m])[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithNewFile[0m([36mpath: [0m[33m"/root/.ssh/id_rsa"[0m, [36mcontents: [0m[33m"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----"[0m)[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithExec[0m([36margs: [0m[[33m"chmod"[0m, [33m"600"[0m, [33m"/root/.ssh/id_rsa"[0m])[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithNewFile[0m([36mpath: [0m[33m"/root/.ssh/config"[0m, [36mcontents: [0m[33m"Host devops.ra.se\n    HostName devops.ra.se\n    Port 22\n    User git\n    IdentityFile /root/.ssh/id_rsa\n    StrictHostKeyChecking no\n    UserKnownHostsFile /dev/null\n\nHost ssh.dev.azure.com\n    HostName ssh.dev.azure.com\n    User git\n    IdentityFile /root/.ssh/id_rsa\n    StrictHostKeyChecking no\n    UserKnownHostsFile /dev/null\n"[0m)[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithExec[0m([36margs: [0m[[33m"git"[0m, [33m"clone"[0m, [33m"--depth=1"[0m, [33m"--branch=main"[0m, [33m"ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"[0m, [33m"/workspace"[0m])[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[32m●[0m .[1mdirectory[0m([36mpath: [0m[33m"/workspace"[0m)[2m: Directory![0m [2m0.0s[0m
+[31;2m│ [0m
+[31;2m├─[0m[34m$[0m Container.[1mfrom[0m([36maddress: [0m[33m"gcr.io/kaniko-project/executor:latest"[0m)[2m: Container![0m [2m0.4s[0m [34mCACHED[0m
+[31;2m├─[0m[34m$[0m .[1mwithMountedDirectory[0m(
+[31;2m│ [0m[90;2m  [0m[90;2m┆ [0m[36mpath:[0m [33m"/workspace"[0m
+[31;2m│ [0m[90;2m  [0m[90;2m┆ [0m[36msource:[0m Container.[1mdirectory[0m([36mpath: [0m[33m"/workspace"[0m)[2m: Directory![0m
+[31;2m│ [0m[90;2m  [0m[90;2m[0m)[2m: Container![0m [2m0.0s[0m [34mCACHED[0m
+[31;2m├─[0m[32m●[0m .[1mwithMountedCache[0m(
+[31;2m│ [0m[90;2m  [0m[90;2m┆ [0m[36mpath:[0m [33m"/cache"[0m
+[31;2m│ [0m[90;2m  [0m[90;2m┆ [0m[36mcache:[0m [1mcacheVolume[0m([36mkey: [0m[33m"kaniko-cache"[0m)[2m: CacheVolume![0m
+[31;2m│ [0m[90;2m  [0m[90;2m[0m)[2m: Container![0m [2m0.0s[0m
+[31;2m├─[0m[31m▼[0m .[1mwithExec[0m([36margs: [0m[[33m"/kaniko/executor"[0m, [33m"--context=/workspace/Riksarkivets-Development-Template"[0m, [33m"--dockerfile=/workspace/Riksarkivets-Development-Template/Dockerfile"[0m, [33m"--destination=registry.ra.se:5002/airiksarkivet/devenv:user-fix-final-cpu"[0m, [33m"--insecure"[0m, [33m"--insecure-registry=registry.ra.se:5002"[0m, [33m"--skip-tls-verify-registry=registry.ra.se:5002"[0m, [33m"--build-arg=ENABLE_CUDA=false"[0m, [33m"--build-arg=REGISTRY=registry.ra.se:5002"[0m, [33m"--cache=true"[0m, [33m"--cache-dir=/cache"[0m, [33m"--cache-repo=registry.ra.se:5002/airiksarkivet/devenv/cache"[0m, [33m"--cache-copy-layers"[0m, [33m"--cache-ttl=168h"[0m, [33m"--verbosity=info"[0m])[2m: Container![0m [2m1m4s[0m [31mERROR[0m
+[31;2m│ [0m[31m┃[0m [36mINFO[0m[0000] Resolved base name registry.ra.se:5002/ubuntu:jammy to base [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Resolved base name base to cuda-stage        [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Resolved base name base to homebrew-stage    [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Resolved base name cuda-stage to final       [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Retrieving image registry.ra.se:5002/ubuntu:jammy from registry registry.ra.se:5002 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Built cross stage deps: map[2:[/home/linuxbrew]] [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Executing 0 build triggers                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Building stage 'registry.ra.se:5002/ubuntu:jammy' [idx: '0', base-idx: '-1'] [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:a1ac07e17e9ac7a5861f86d4a5a5d2085628fb4a937a3a47a0cae1aad2f1fabe... [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Using caching version of cmd: RUN apt-get update &&     apt-get install -y --no-install-recommends         bash ca-certificates curl git jq locales sudo wget         build-essential gfortran pkg-config libopenblas-dev         libasound2-dev htop tree unzip &&     locale-gen en_US.UTF-8 &&     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group &&     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd &&     chmod 440 /etc/sudoers.d/nopasswd &&     mkdir -p ${VENV_PATH} && chown coder:coder ${VENV_PATH} &&     mkdir -p /home/linuxbrew && chown coder:coder /home/linuxbrew &&     rm -rf /var/lib/apt/lists/* [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Skipping unpacking as no commands require it. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] ARG ENABLE_CUDA=true                         [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] ARG CUDA_VERSION_MAJOR_MINOR=12.2            [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] ENV DEBIAN_FRONTEND=noninteractive     LANG=en_US.UTF-8     LANGUAGE=en_US.UTF-8     LC_ALL=en_US.UTF-8     HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"     VENV_PATH="/opt/venv-py312" [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] ENV PATH="${VENV_PATH}/bin:${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}" [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] RUN apt-get update &&     apt-get install -y --no-install-recommends         bash ca-certificates curl git jq locales sudo wget         build-essential gfortran pkg-config libopenblas-dev         libasound2-dev htop tree unzip &&     locale-gen en_US.UTF-8 &&     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group &&     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd &&     chmod 440 /etc/sudoers.d/nopasswd &&     mkdir -p ${VENV_PATH} && chown coder:coder ${VENV_PATH} &&     mkdir -p /home/linuxbrew && chown coder:coder /home/linuxbrew &&     rm -rf /var/lib/apt/lists/* [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0000] Found cached layer, extracting to filesystem [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0004] Storing source image from stage 0 at path /kaniko/stages/0 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Deleting filesystem...                       [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Base image from previous stage 0 found, using saved tar at path /kaniko/stages/0 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Executing 0 build triggers                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Building stage 'base' [idx: '1', base-idx: '0'] [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:5b0960e42e064b46172f9b3e1a24067fb467f407432a35e3fec4cb603bb46ac5... [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Using caching version of cmd: RUN if [ "$ENABLE_CUDA" = "true" ]; then         apt-get update &&         apt-get install -y --no-install-recommends gnupg2 &&         wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&         dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb &&         apt-get update &&         apt-get install -y --no-install-recommends             cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR}             cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR}             cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} &&         apt-get clean && rm -rf /var/lib/apt/lists/*;     fi [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Skipping unpacking as no commands require it. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] RUN if [ "$ENABLE_CUDA" = "true" ]; then         apt-get update &&         apt-get install -y --no-install-recommends gnupg2 &&         wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&         dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb &&         apt-get update &&         apt-get install -y --no-install-recommends             cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR}             cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR}             cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} &&         apt-get clean && rm -rf /var/lib/apt/lists/*;     fi [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Found cached layer, extracting to filesystem [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Storing source image from stage 1 at path /kaniko/stages/1 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Deleting filesystem...                       [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Base image from previous stage 0 found, using saved tar at path /kaniko/stages/0 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0006] Executing 0 build triggers                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0007] Building stage 'base' [idx: '2', base-idx: '0'] [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0007] Cmd: USER                                    [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0007] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:0291b34ff1b018922ed3e011aeab08dd8c8f13e65c10bc72966e73563fe24eac... [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0007] Using caching version of cmd: RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" &&     brew tap treeverse/lakefs &&     brew tap dagger/tap &&     brew install         python@3.12         node@22         go         argo         awscli         azure-cli         helm         kubectl         k9s         lakefs         pre-commit         duckdb         huggingface-cli         ruff         vim         gh         nano         uv         terraform         nvtop         dagger &&     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code &&     brew cleanup --prune=all [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] USER coder                                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] Cmd: USER                                    [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] WORKDIR /home/coder                          [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] Cmd: workdir                                 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] Changed working directory to /home/coder     [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" &&     brew tap treeverse/lakefs &&     brew tap dagger/tap &&     brew install         python@3.12         node@22         go         argo         awscli         azure-cli         helm         kubectl         k9s         lakefs         pre-commit         duckdb         huggingface-cli         ruff         vim         gh         nano         uv         terraform         nvtop         dagger &&     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code &&     brew cleanup --prune=all [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0011] Found cached layer, extracting to filesystem [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0041] Saving file home/linuxbrew for later use     [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0051] Deleting filesystem...                       [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0054] Base image from previous stage 1 found, using saved tar at path /kaniko/stages/1 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0054] Executing 0 build triggers                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0054] Building stage 'cuda-stage' [idx: '3', base-idx: '1'] [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0054] Cmd: USER                                    [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:910cd18ae51519360d79a9782c2536bece29d2ed06b7f12b5c2ba826fba7a65b... [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Using caching version of cmd: COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:7fd00db44404a6c1f1309934376ec46b2534efe1510ab624241871d421bc9246... [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Using caching version of cmd: RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile &&     echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Skipping unpacking as no commands require it. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] USER coder                                   [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Cmd: USER                                    [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] No files changed in this command, skipping snapshotting. [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] WORKDIR /home/coder                          [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Cmd: workdir                                 [0m
+[31;2m│ [0m[31m┃[0m [0m[36mINFO[0m[0061] Changed working directory to /home/coder     [0m
+[31;2m│ [0m[31m┃[0m [0merror building image: error building stage: failed to execute command: identifying uid and gid for user coder: user coder is not a uid and does not exist on the system[0m
+[31;2m│ [0m[31m! process "/kaniko/executor --context=/workspace/Riksarkivets-Development-Template --dockerfile=/workspace/Riksarkivets-Development-Template/Dockerfile --destination=registry.ra.se:5002/airiksarkivet/devenv:user-fix-final-cpu --insecure --insecure-registry=registry.ra.se:5002 --skip-tls-verify-registry=registry.ra.se:5002 --build-arg=ENABLE_CUDA=false --build-arg=REGISTRY=registry.ra.se:5002 --cache=true --cache-dir=/cache --cache-repo=registry.ra.se:5002/airiksarkivet/devenv/cache --cache-copy-layers --cache-ttl=168h --verbosity=info" did not complete successfully: exit code: 1[0m
+[31;2m╰─[0m[31m✘[0m .[1mstdout[0m[2m: String![0m [2m1m4s[0m [31mERROR[0m
+
+[1mError logs:[0m
+
+[31m▼[0m .[1mwithExec[0m([36margs: [0m[[33m"/kaniko/executor"[0m, [33m"--context=/workspace/Riksarkivets-Development-Template"[0m, [33m"--dockerfile=/workspace/Riksarkivets-Development-Template/Dockerfile"[0m, [33m"--destination=registry.ra.se:5002/airiksarkivet/devenv:user-fix-final-cpu"[0m, [33m"--insecure"[0m, [33m"--insecure-registry=registry.ra.se:5002"[0m, [33m"--skip-tls-verify-registry=registry.ra.se:5002"[0m, [33m"--build-arg=ENABLE_CUDA=false"[0m, [33m"--build-arg=REGISTRY=registry.ra.se:5002"[0m, [33m"--cache=true"[0m, [33m"--cache-dir=/cache"[0m, [33m"--cache-repo=registry.ra.se:5002/airiksarkivet/devenv/cache"[0m, [33m"--cache-copy-layers"[0m, [33m"--cache-ttl=168h"[0m, [33m"--verbosity=info"[0m])[2m: Container![0m [2m1m4s[0m [31mERROR[0m
+[36mINFO[0m[0000] Resolved base name registry.ra.se:5002/ubuntu:jammy to base [0m
+[0m[36mINFO[0m[0000] Resolved base name base to cuda-stage        [0m
+[0m[36mINFO[0m[0000] Resolved base name base to homebrew-stage    [0m
+[0m[36mINFO[0m[0000] Resolved base name cuda-stage to final       [0m
+[0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[0m[36mINFO[0m[0000] Retrieving image registry.ra.se:5002/ubuntu:jammy from registry registry.ra.se:5002 [0m
+[0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[0m[36mINFO[0m[0000] Built cross stage deps: map[2:[/home/linuxbrew]] [0m
+[0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[0m[36mINFO[0m[0000] Retrieving image manifest registry.ra.se:5002/ubuntu:jammy [0m
+[0m[36mINFO[0m[0000] Returning cached image manifest              [0m
+[0m[36mINFO[0m[0000] Executing 0 build triggers                   [0m
+[0m[36mINFO[0m[0000] Building stage 'registry.ra.se:5002/ubuntu:jammy' [idx: '0', base-idx: '-1'] [0m
+[0m[36mINFO[0m[0000] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:a1ac07e17e9ac7a5861f86d4a5a5d2085628fb4a937a3a47a0cae1aad2f1fabe... [0m
+[0m[36mINFO[0m[0000] Using caching version of cmd: RUN apt-get update &&     apt-get install -y --no-install-recommends         bash ca-certificates curl git jq locales sudo wget         build-essential gfortran pkg-config libopenblas-dev         libasound2-dev htop tree unzip &&     locale-gen en_US.UTF-8 &&     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group &&     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd &&     chmod 440 /etc/sudoers.d/nopasswd &&     mkdir -p ${VENV_PATH} && chown coder:coder ${VENV_PATH} &&     mkdir -p /home/linuxbrew && chown coder:coder /home/linuxbrew &&     rm -rf /var/lib/apt/lists/* [0m
+[0m[36mINFO[0m[0000] Skipping unpacking as no commands require it. [0m
+[0m[36mINFO[0m[0000] ARG ENABLE_CUDA=true                         [0m
+[0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0000] ARG CUDA_VERSION_MAJOR_MINOR=12.2            [0m
+[0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0000] ENV DEBIAN_FRONTEND=noninteractive     LANG=en_US.UTF-8     LANGUAGE=en_US.UTF-8     LC_ALL=en_US.UTF-8     HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"     VENV_PATH="/opt/venv-py312" [0m
+[0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0000] ENV PATH="${VENV_PATH}/bin:${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}" [0m
+[0m[36mINFO[0m[0000] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0000] RUN apt-get update &&     apt-get install -y --no-install-recommends         bash ca-certificates curl git jq locales sudo wget         build-essential gfortran pkg-config libopenblas-dev         libasound2-dev htop tree unzip &&     locale-gen en_US.UTF-8 &&     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group &&     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd &&     chmod 440 /etc/sudoers.d/nopasswd &&     mkdir -p ${VENV_PATH} && chown coder:coder ${VENV_PATH} &&     mkdir -p /home/linuxbrew && chown coder:coder /home/linuxbrew &&     rm -rf /var/lib/apt/lists/* [0m
+[0m[36mINFO[0m[0000] Found cached layer, extracting to filesystem [0m
+[0m[36mINFO[0m[0004] Storing source image from stage 0 at path /kaniko/stages/0 [0m
+[0m[36mINFO[0m[0006] Deleting filesystem...                       [0m
+[0m[36mINFO[0m[0006] Base image from previous stage 0 found, using saved tar at path /kaniko/stages/0 [0m
+[0m[36mINFO[0m[0006] Executing 0 build triggers                   [0m
+[0m[36mINFO[0m[0006] Building stage 'base' [idx: '1', base-idx: '0'] [0m
+[0m[36mINFO[0m[0006] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:5b0960e42e064b46172f9b3e1a24067fb467f407432a35e3fec4cb603bb46ac5... [0m
+[0m[36mINFO[0m[0006] Using caching version of cmd: RUN if [ "$ENABLE_CUDA" = "true" ]; then         apt-get update &&         apt-get install -y --no-install-recommends gnupg2 &&         wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&         dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb &&         apt-get update &&         apt-get install -y --no-install-recommends             cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR}             cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR}             cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} &&         apt-get clean && rm -rf /var/lib/apt/lists/*;     fi [0m
+[0m[36mINFO[0m[0006] Skipping unpacking as no commands require it. [0m
+[0m[36mINFO[0m[0006] RUN if [ "$ENABLE_CUDA" = "true" ]; then         apt-get update &&         apt-get install -y --no-install-recommends gnupg2 &&         wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb &&         dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb &&         apt-get update &&         apt-get install -y --no-install-recommends             cuda-nvcc-${CUDA_VERSION_MAJOR_MINOR}             cuda-cudart-dev-${CUDA_VERSION_MAJOR_MINOR}             cuda-libraries-dev-${CUDA_VERSION_MAJOR_MINOR} &&         apt-get clean && rm -rf /var/lib/apt/lists/*;     fi [0m
+[0m[36mINFO[0m[0006] Found cached layer, extracting to filesystem [0m
+[0m[36mINFO[0m[0006] Storing source image from stage 1 at path /kaniko/stages/1 [0m
+[0m[36mINFO[0m[0006] Deleting filesystem...                       [0m
+[0m[36mINFO[0m[0006] Base image from previous stage 0 found, using saved tar at path /kaniko/stages/0 [0m
+[0m[36mINFO[0m[0006] Executing 0 build triggers                   [0m
+[0m[36mINFO[0m[0007] Building stage 'base' [idx: '2', base-idx: '0'] [0m
+[0m[36mINFO[0m[0007] Cmd: USER                                    [0m
+[0m[36mINFO[0m[0007] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:0291b34ff1b018922ed3e011aeab08dd8c8f13e65c10bc72966e73563fe24eac... [0m
+[0m[36mINFO[0m[0007] Using caching version of cmd: RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" &&     brew tap treeverse/lakefs &&     brew tap dagger/tap &&     brew install         python@3.12         node@22         go         argo         awscli         azure-cli         helm         kubectl         k9s         lakefs         pre-commit         duckdb         huggingface-cli         ruff         vim         gh         nano         uv         terraform         nvtop         dagger &&     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code &&     brew cleanup --prune=all [0m
+[0m[36mINFO[0m[0011] USER coder                                   [0m
+[0m[36mINFO[0m[0011] Cmd: USER                                    [0m
+[0m[36mINFO[0m[0011] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0011] WORKDIR /home/coder                          [0m
+[0m[36mINFO[0m[0011] Cmd: workdir                                 [0m
+[0m[36mINFO[0m[0011] Changed working directory to /home/coder     [0m
+[0m[36mINFO[0m[0011] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0011] RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" &&     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" &&     brew tap treeverse/lakefs &&     brew tap dagger/tap &&     brew install         python@3.12         node@22         go         argo         awscli         azure-cli         helm         kubectl         k9s         lakefs         pre-commit         duckdb         huggingface-cli         ruff         vim         gh         nano         uv         terraform         nvtop         dagger &&     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code &&     brew cleanup --prune=all [0m
+[0m[36mINFO[0m[0011] Found cached layer, extracting to filesystem [0m
+[0m[36mINFO[0m[0041] Saving file home/linuxbrew for later use     [0m
+[0m[36mINFO[0m[0051] Deleting filesystem...                       [0m
+[0m[36mINFO[0m[0054] Base image from previous stage 1 found, using saved tar at path /kaniko/stages/1 [0m
+[0m[36mINFO[0m[0054] Executing 0 build triggers                   [0m
+[0m[36mINFO[0m[0054] Building stage 'cuda-stage' [idx: '3', base-idx: '1'] [0m
+[0m[36mINFO[0m[0054] Cmd: USER                                    [0m
+[0m[36mINFO[0m[0061] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:910cd18ae51519360d79a9782c2536bece29d2ed06b7f12b5c2ba826fba7a65b... [0m
+[0m[36mINFO[0m[0061] Using caching version of cmd: COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew [0m
+[0m[36mINFO[0m[0061] Checking for cached layer registry.ra.se:5002/airiksarkivet/devenv/cache:7fd00db44404a6c1f1309934376ec46b2534efe1510ab624241871d421bc9246... [0m
+[0m[36mINFO[0m[0061] Using caching version of cmd: RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile &&     echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc [0m
+[0m[36mINFO[0m[0061] Skipping unpacking as no commands require it. [0m
+[0m[36mINFO[0m[0061] USER coder                                   [0m
+[0m[36mINFO[0m[0061] Cmd: USER                                    [0m
+[0m[36mINFO[0m[0061] No files changed in this command, skipping snapshotting. [0m
+[0m[36mINFO[0m[0061] WORKDIR /home/coder                          [0m
+[0m[36mINFO[0m[0061] Cmd: workdir                                 [0m
+[0m[36mINFO[0m[0061] Changed working directory to /home/coder     [0m
+[0merror building image: error building stage: failed to execute command: identifying uid and gid for user coder: user coder is not a uid and does not exist on the system[0m
+[31m! process "/kaniko/executor --context=/workspace/Riksarkivets-Development-Template --dockerfile=/workspace/Riksarkivets-Development-Template/Dockerfile --destination=registry.ra.se:5002/airiksarkivet/devenv:user-fix-final-cpu --insecure --insecure-registry=registry.ra.se:5002 --skip-tls-verify-registry=registry.ra.se:5002 --build-arg=ENABLE_CUDA=false --build-arg=REGISTRY=registry.ra.se:5002 --cache=true --cache-dir=/cache --cache-repo=registry.ra.se:5002/airiksarkivet/devenv/cache --cache-copy-layers --cache-ttl=168h --verbosity=info" did not complete successfully: exit code: 1[0m
