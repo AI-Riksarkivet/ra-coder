@@ -402,7 +402,7 @@ CODERCONFIG
     if [ ! -f /home/coder/.ssh/id_rsa ]; then
       mkdir -p /home/coder/.ssh
       chmod 700 /home/coder/.ssh
-      ssh-keygen -t rsa -b 4096 -f /home/coder/.ssh/id_rsa -N "" -C "${data.coder_workspace.me.owner_email}" >/dev/null 2>&1
+      ssh-keygen -t rsa -b 4096 -f /home/coder/.ssh/id_rsa -N "" -C "${data.coder_workspace_owner.me.email}" >/dev/null 2>&1
       chmod 600 /home/coder/.ssh/id_rsa
       chmod 644 /home/coder/.ssh/id_rsa.pub
       echo "SSH key generated successfully."
@@ -710,22 +710,10 @@ resource "kubernetes_deployment" "main" {
           }
           env {
             name  = "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
-            value = "tcp://dagger-dagger-helm-engine.dagger.svc.cluster.local:2345"
-          }
-          env {
-            name  = "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"
-            value = ""
+            value = "unix:///run/dagger/engine.sock"
           }
           env {
             name  = "DAGGER_CLOUD_TOKEN"  
-            value = ""
-          }
-          env {
-            name  = "_EXPERIMENTAL_DAGGER_CLOUD_ENABLED"
-            value = "false"
-          }
-          env {
-            name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
             value = ""
           }
 
@@ -779,8 +767,64 @@ resource "kubernetes_deployment" "main" {
             name       = "default-kubeconfig"
             read_only  = true
           }
+          
+          # Dagger engine communication
+          volume_mount {
+            mount_path = "/run/dagger"
+            name       = "dagger-socket"
+            read_only  = false
+          }
           # --- End ADDED Volume Mounts ---
-        } # End container spec
+        } # End main container spec
+
+        # Dagger Engine Sidecar
+        container {
+          name  = "dagger-engine"
+          image = "registry.dagger.io/engine:v0.18.14"
+          
+          # Add command to bypass cgroup issues
+          command = ["/usr/local/bin/dagger-engine"]
+          args    = ["--config", "/etc/dagger/engine.toml"]
+          
+          security_context {
+            privileged                = true
+            run_as_user              = 0
+            run_as_non_root          = false
+            allow_privilege_escalation = true
+            capabilities {
+              add = ["ALL"]
+            }
+          }
+          
+          readiness_probe {
+            exec {
+              command = ["dagger", "core", "version"]
+            }
+            initial_delay_seconds = 5
+            period_seconds       = 10
+          }
+          
+          volume_mount {
+            mount_path = "/run/dagger"
+            name       = "dagger-socket"
+          }
+          
+          volume_mount {
+            mount_path = "/var/lib/dagger"
+            name       = "dagger-storage"
+          }
+          
+          resources {
+            requests = {
+              "cpu"    = "100m"
+              "memory" = "256Mi"
+            }
+            limits = {
+              "cpu"    = "500m"
+              "memory" = "1Gi"
+            }
+          }
+        } # End sidecar container spec
 
         volume {
           name = "home"
@@ -838,6 +882,18 @@ resource "kubernetes_deployment" "main" {
               mode = "0400"  # Read-only for owner only
             }
           }
+        }
+
+        # Dagger engine communication socket
+        volume {
+          name = "dagger-socket"
+          empty_dir {}
+        }
+
+        # Dagger engine storage
+        volume {
+          name = "dagger-storage"
+          empty_dir {}
         }
 
         affinity {
