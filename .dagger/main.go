@@ -39,11 +39,15 @@ func (m *Build) BuildFromDockerfile(
 	
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
 	
-	// Create Kaniko executor container using official image
+	// Create cache volume for Kaniko
+	kanikoCache := dag.CacheVolume("kaniko-cache")
+	
+	// Create Kaniko executor container using official image with caching
 	kaniko := dag.Container().
 		From("gcr.io/kaniko-project/executor:latest").
 		WithWorkdir("/workspace").
 		WithNewFile("/workspace/Dockerfile", dockerfileContent).
+		WithMountedCache("/cache", kanikoCache).
 		WithExec([]string{
 			"/kaniko/executor",
 			"--context=dir:///workspace",
@@ -54,6 +58,10 @@ func (m *Build) BuildFromDockerfile(
 			"--skip-tls-verify-registry=" + registry,
 			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
 			"--build-arg=REGISTRY=" + registry,
+			"--cache=true",
+			"--cache-dir=/cache",
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache", registry, imageRepository),
+			"--cache-ttl=168h", // 7 days cache TTL
 		})
 	
 	// Execute the build
@@ -117,10 +125,14 @@ func (m *Build) BuildFromGit(
 	
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
 	
-	// Create Kaniko executor with Git source
+	// Create cache volume for Kaniko
+	kanikoCache := dag.CacheVolume("kaniko-cache")
+	
+	// Create Kaniko executor with Git source and caching
 	kaniko := dag.Container().
 		From("gcr.io/kaniko-project/executor:latest").
 		WithMountedDirectory("/workspace", source).
+		WithMountedCache("/cache", kanikoCache).
 		WithExec([]string{
 			"/kaniko/executor",
 			"--context=/workspace/Riksarkivets-Development-Template",
@@ -131,6 +143,10 @@ func (m *Build) BuildFromGit(
 			"--skip-tls-verify-registry=" + registry,
 			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
 			"--build-arg=REGISTRY=" + registry,
+			"--cache=true",
+			"--cache-dir=/cache",
+			"--cache-repo=" + fmt.Sprintf("%s/%s/cache", registry, imageRepository),
+			"--cache-ttl=168h", // 7 days cache TTL
 		})
 	
 	// Execute build
