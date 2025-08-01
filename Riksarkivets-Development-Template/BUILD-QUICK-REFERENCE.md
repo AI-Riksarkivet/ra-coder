@@ -17,8 +17,24 @@ dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab
 
 - **🚫 No Caching**: Kaniko caching disabled for reliability
 - **📁 Git-Based**: All builds use Git repository as source
-- **🔐 Auto SSH**: SSH key automatically detected from `~/.ssh/id_rsa`
+- **🔐 SSH Authentication**: Auto-detects SSH key from `~/.ssh/id_rsa` with fallback options
 - **⚡ Simplified**: Primary function `build-from-git` with shortcuts
+
+## 🔐 SSH Authentication
+
+**Method 1: Auto SSH Agent (Preferred)**
+```bash
+# Works with SSH agent running
+dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
+```
+
+**Method 2: Explicit SSH Key**
+```bash
+# Works without SSH agent (containerized environments)
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --ssh-private-key="$(cat ~/.ssh/id_rsa)"
+```
 
 ## 📋 Parameter Quick Reference
 
@@ -56,8 +72,13 @@ dagger version
 # Test basic functionality  
 dagger call hello
 
+# SSH socket error? Use explicit key
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --ssh-private-key="$(cat ~/.ssh/id_rsa)"
+
 # Generate command without running
-dagger call get-dagger-build-command --enable-cuda=false
+dagger call get-build-command --enable-cuda=false
 
 # Check registry
 curl -k http://registry.ra.se:5002/v2/airiksarkivet/devenv/tags/list

@@ -172,10 +172,19 @@ ls -la Dockerfile  # Verify file exists
 # Solution: Check registry permissions and network access
 ```
 
-#### 4. Build Timeouts
+#### 4. SSH Authentication Issues
+```bash
+# Error: SSH URLs are not supported without an SSH socket
+# Solution: Use explicit SSH key method
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --ssh-private-key="$(cat ~/.ssh/id_rsa)"
+```
+
+#### 5. Build Timeouts
 ```bash
 # Large builds may take time, monitor progress:
-dagger call build-image --dockerfile-content="$(cat Dockerfile)" | tee build.log
+dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" | tee build.log
 ```
 
 ### Debugging Commands
@@ -214,11 +223,32 @@ curl -k http://registry.ra.se:5002/v2/airiksarkivet/devenv/tags/list
 - No cache-related debugging needed
 - Every build is fresh and reproducible
 
-### 🔑 **Automatic SSH Key Detection**
+### 🔑 **SSH Authentication**
 - SSH key is **automatically read from `~/.ssh/id_rsa`**
-- No need to pass SSH keys manually in most cases
-- Supports both auto-detection and explicit key override
-- Works with standard SSH key setup in Coder workspaces
+- Supports both SSH agent forwarding and explicit key methods
+- Auto-detection works in most environments
+- Fallback to explicit key in containerized environments
+
+#### SSH Authentication Methods
+
+**Method 1: SSH Agent (Preferred)**
+```bash
+# Works when SSH agent is available
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
+```
+
+**Method 2: Explicit SSH Key**
+```bash
+# Works in containerized environments without SSH agent
+dagger call build-cpu \
+  --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" \
+  --ssh-private-key="$(cat ~/.ssh/id_rsa)"
+```
+
+**When to use each method:**
+- ✅ **SSH Agent**: Local development, CI/CD with agent, workspaces with forwarding
+- 🔧 **Explicit Key**: Containerized Dagger, automated scripts, no SSH agent available
 
 ### 📁 **Git-Based Source Only**
 - All builds use Git repository as the source of truth
