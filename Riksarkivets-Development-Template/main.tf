@@ -397,6 +397,28 @@ CODERCONFIG
     # Set proper ownership
     chown -R coder:coder /home/coder/.config/coderv2
 
+    # --- SSH Key Generation ---
+    echo "Setting up SSH keys for Git authentication..."
+    if [ ! -f /home/coder/.ssh/id_rsa ]; then
+      mkdir -p /home/coder/.ssh
+      chmod 700 /home/coder/.ssh
+      ssh-keygen -t rsa -b 4096 -f /home/coder/.ssh/id_rsa -N "" -C "${data.coder_workspace.me.owner_email}" >/dev/null 2>&1
+      chmod 600 /home/coder/.ssh/id_rsa
+      chmod 644 /home/coder/.ssh/id_rsa.pub
+      echo "SSH key generated successfully."
+      echo ""
+      echo "-----------------------------------------------------"
+      echo "SSH PUBLIC KEY FOR GIT AUTHENTICATION:"
+      echo "-----------------------------------------------------"
+      cat /home/coder/.ssh/id_rsa.pub
+      echo "-----------------------------------------------------"
+      echo "Add this key to your Git provider (Azure DevOps, GitHub, etc.)"
+      echo "-----------------------------------------------------"
+      echo ""
+    else
+      echo "SSH key already exists at /home/coder/.ssh/id_rsa"
+    fi
+
     # --- Dagger Configuration ---
     echo "Dagger configured to use sidecar proxy at tcp://localhost:2345 via environment variable"
 
