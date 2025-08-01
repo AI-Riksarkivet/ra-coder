@@ -345,13 +345,20 @@ Host ssh.dev.azure.com
     UserKnownHostsFile /dev/null
 `
 	
-	// Convert HTTPS URL to SSH URL if needed
-	sshRepo := gitRepo
-	if strings.HasPrefix(gitRepo, "https://devops.ra.se/") {
-		// Convert https://devops.ra.se/DataLab/Datalab/_git/coder-templates
-		// to SSH format used by ArgoCD: devops.ra.se:22/DataLab/Datalab/_git/coder-templates
-		sshRepo = strings.Replace(gitRepo, "https://", "", 1)
-		sshRepo = strings.Replace(sshRepo, "devops.ra.se/", "devops.ra.se:22/", 1)
+	// Handle different Git URL formats
+	var cloneURL string
+	if strings.HasPrefix(gitRepo, "ssh://") {
+		// Already SSH URL, use as-is
+		cloneURL = gitRepo
+	} else if strings.HasPrefix(gitRepo, "https://devops.ra.se/") {
+		// Convert HTTPS URL to SSH URL
+		// https://devops.ra.se/DataLab/Datalab/_git/coder-templates
+		// to ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates
+		path := strings.Replace(gitRepo, "https://devops.ra.se/", "", 1)
+		cloneURL = fmt.Sprintf("ssh://git@devops.ra.se:22/%s", path)
+	} else {
+		// Default to original URL
+		cloneURL = gitRepo
 	}
 	
 	// Create a container with Git and SSH setup
@@ -362,7 +369,7 @@ Host ssh.dev.azure.com
 		WithNewFile("/root/.ssh/id_rsa", sshPrivateKey).
 		WithExec([]string{"chmod", "600", "/root/.ssh/id_rsa"}).
 		WithNewFile("/root/.ssh/config", sshConfig).
-		WithExec([]string{"git", "clone", "--depth=1", "--branch=" + gitRef, fmt.Sprintf("ssh://git@%s", sshRepo), "/workspace"})
+		WithExec([]string{"git", "clone", "--depth=1", "--branch=" + gitRef, cloneURL, "/workspace"})
 	
 	// Return the cloned directory
 	return cloneContainer.Directory("/workspace")
