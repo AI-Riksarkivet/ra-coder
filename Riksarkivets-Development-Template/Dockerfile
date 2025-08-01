@@ -52,7 +52,9 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
     fi
 
 # Create coder user in this stage if it doesn't exist (for CPU builds)
-RUN id -u coder &>/dev/null || (groupadd -r coder && useradd -r -g coder -m -s /bin/bash coder)
+# Use getent instead of id for better portability
+RUN getent group coder >/dev/null 2>&1 || groupadd -r coder && \
+    getent passwd coder >/dev/null 2>&1 || useradd -r -g coder -m -s /bin/bash coder
 USER coder
 WORKDIR /home/coder
 
