@@ -789,6 +789,8 @@ resource "kubernetes_deployment" "main" {
           security_context {
             privileged                = true
             run_as_user              = 0
+            run_as_group             = 1000  # coder group
+            fs_group                 = 1000  # Ensure shared files are accessible to coder group
             run_as_non_root          = false
             allow_privilege_escalation = true
             capabilities {
