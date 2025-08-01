@@ -51,10 +51,7 @@ RUN if [ "$ENABLE_CUDA" = "true" ]; then \
         echo "CUDA disabled, skipping CUDA installation"; \
     fi
 
-# Create coder user in this stage if it doesn't exist (for CPU builds)
-# Use getent instead of id for better portability
-RUN getent group coder >/dev/null 2>&1 || groupadd -r coder && \
-    getent passwd coder >/dev/null 2>&1 || useradd -r -g coder -m -s /bin/bash coder
+# Coder user already exists from base stage
 USER coder
 WORKDIR /home/coder
 
