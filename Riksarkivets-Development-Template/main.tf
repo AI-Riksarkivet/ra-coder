@@ -768,6 +768,10 @@ resource "kubernetes_deployment" "main" {
             name  = "DAGGER_CLOUD_TOKEN"  
             value = ""
           }
+          env {
+            name  = "DAGGER_NO_NAG"
+            value = "1"
+          }
 
           dynamic "env" {
             for_each = local.internal_service_env_vars
