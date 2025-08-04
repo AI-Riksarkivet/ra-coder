@@ -312,3 +312,17 @@ Host ssh.dev.azure.com
 	// Return the cloned directory
 	return cloneContainer.Directory("/workspace")
 }
+// TestEngine tests if Dagger engine is accessible
+func (m *Build) TestEngine(ctx context.Context) (string, error) {
+	// Create a simple container and run echo
+	container := dag.Container().
+		From("alpine:latest").
+		WithExec([]string{"echo", "Dagger engine is working!"})
+	
+	output, err := container.Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+	
+	return output, nil
+}
