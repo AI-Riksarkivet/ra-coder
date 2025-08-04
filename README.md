@@ -6,10 +6,12 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
 
 ## Recent Updates
 
--  **SSH Auto-Configuration**: New containers automatically start SSH agent and load keys
--  **Modern Build System**: Go-based Dagger build script replaces complex bash scripts
--  **Offline Development**: Working Dagger examples for restricted network environments
--  **Streamlined Structure**: Cleaned up documentation and improved project organization
+-  **SSH Auto-Configuration**: New containers automatically start SSH agent and load keys
+-  **Modern Build System**: Dagger-based build with support for Git repositories and local directories
+-  **Enhanced SSH Support**: Improved SSH authentication with automatic key format conversion
+-  **Local Build Support**: Build directly from current directory without Git
+-  **Offline Development**: Working Dagger examples for restricted network environments
+-  **Streamlined Structure**: Cleaned up documentation and improved project organization
 
 ## Features
 
@@ -29,21 +31,24 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
     * Homebrew for package management.
     * Git, `pre-commit`, `ruff`, `huggingface-cli`, `duckdb`.
     * Kubernetes tools: `kubectl`, `helm`.
-    * Modern build system with `dagger` and Go-based build scripts.
+    * Modern build system with `dagger` module support.
 
 ## Quick Start
 
-### Building Images
+### Building Images with Dagger
 
 ```bash
-# CPU build v14.1.2 (latest)
-go run build-dagger.go -cuda=false
+# CPU build from current directory
+dagger call build-from-current-dir --enable-cuda=false
 
-# GPU build v14.1.2 (latest)  
-go run build-dagger.go -cuda=true
+# GPU build from current directory
+dagger call build-from-current-dir --enable-cuda=true
 
-# Custom version
-go run build-dagger.go -cuda=false -tag=v14.2.0
+# Build from Git repository with SSH
+dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
+
+# Build with custom tag
+dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --image-tag="v14.1.3"
 ```
 
 ### Offline Development
@@ -61,38 +66,55 @@ dagger call simple-test -m ./offline-example
 
 ## Build System
 
-This template uses a modern **Go-based Dagger build system** that builds from SSH Git repositories:
+This template uses a modern **Dagger-based build system** with support for both Git repositories and local directories:
 
 ### Key Features
-- = **SSH Auto-Detection**: Automatically uses SSH keys for Git authentication
-- =€ **Go-Based**: Clean Go implementation instead of complex bash scripts  
-- =æ **Git Source**: Builds directly from `ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates`
-- ¡ **Fast Builds**: Efficient Kaniko-based container builds
-- =à **Offline Examples**: Test Dagger without external dependencies
+- **Flexible Sources**: Build from SSH/HTTPS Git repositories or local directories
+- **SSH Support**: Enhanced SSH authentication with automatic key format conversion
+- **Local Builds**: Build directly from current directory without Git
+- **Fast Builds**: Efficient Kaniko-based container builds
+- **Offline Examples**: Test Dagger without external dependencies
 
-### Usage Examples
+### Dagger Functions
 
+#### Build from Git Repository
 ```bash
-# CPU build (default v14.1.2)
-go run build-dagger.go -cuda=false
+# SSH authentication with auto-detected key
+dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
 
-# GPU build with custom tag
-go run build-dagger.go -cuda=true -tag=v14.2.0
-
-# Different git branch
-go run build-dagger.go -cuda=false -ref=develop
-
-# Custom registry
-go run build-dagger.go -cuda=false -registry=my-registry.com:5000
+# HTTPS with Azure DevOps PAT
+dagger call build-from-git \
+  --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
+  --git-username="your-username" \
+  --git-token="your-pat" \
+  --enable-cuda=false
 ```
+
+#### Build from Local Directory
+```bash
+# Build from current directory
+dagger call build-from-current-dir --enable-cuda=false --image-tag="v14.1.3"
+
+# Build from specific directory
+dagger call build-local --source="./" --enable-cuda=true
+```
+
+### Available Dagger Functions
+
+- `build-from-git`: Full control build from Git with authentication support
+- `build-cuda`: CUDA-enabled build shortcut from Git
+- `build-cpu`: CPU-only build shortcut from Git
+- `build-from-current-dir`: Build from current directory
+- `build-local`: Build from specified local directory
+- `get-build-command`: Show example build commands
 
 ## SSH Configuration
 
 New workspaces automatically include SSH configuration:
 
--  **SSH Agent**: Auto-starts and loads `~/.ssh/id_rsa` if present
--  **DevOps Integration**: Pre-configured for `devops.ra.se:22` Git access
--  **No Manual Setup**: Works immediately for Git operations
+-  **SSH Agent**: Auto-starts and loads `~/.ssh/id_rsa` if present
+-  **DevOps Integration**: Pre-configured for `devops.ra.se:22` Git access
+-  **No Manual Setup**: Works immediately for Git operations
 
 ## Prerequisites
 
@@ -137,9 +159,9 @@ uv add numpy pandas scikit-learn matplotlib
 ## Version Information
 
 **Current Versions:**
-- **Template:** v14.1.2 (latest)
-- **Container Images:** `registry.ra.se:5002/airiksarkivet/devenv:v14.1.2` (GPU), `v14.1.2-cpu` (CPU)
-- **Build System:** Go-based Dagger with SSH Git integration
+- **Template:** v14.1.3 (latest)
+- **Container Images:** `registry.ra.se:5002/airiksarkivet/devenv:v14.1.3` (GPU), `v14.1.3-cpu` (CPU)
+- **Build System:** Dagger module with SSH/HTTPS Git and local directory support
 
 ## Support
 

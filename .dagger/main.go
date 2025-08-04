@@ -12,6 +12,62 @@ import (
 type Build struct{}
 
 
+// BuildLocal builds using Dockerfile from a local directory
+func (m *Build) BuildLocal(
+	ctx context.Context,
+	// Local directory to build from
+	source *dagger.Directory,
+	// Enable CUDA support
+	// +default="true"
+	enableCuda bool,
+	// Image tag
+	// +default="v14.1.3"
+	imageTag string,
+	// Registry URL
+	// +default="registry.ra.se:5002"
+	registry string,
+	// Image repository name
+	// +default="airiksarkivet/devenv"
+	imageRepository string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
+) (string, error) {
+	// Determine final tag
+	finalTag := imageTag
+	if !enableCuda {
+		finalTag = imageTag + "-cpu"
+	}
+	
+	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
+	
+	// Create Kaniko executor with local source
+	kaniko := dag.Container().
+		From("gcr.io/kaniko-project/executor:latest").
+		WithMountedDirectory("/workspace", source).
+		WithExec([]string{
+			"/kaniko/executor",
+			"--context=/workspace/Riksarkivets-Development-Template",
+			"--dockerfile=/workspace/Riksarkivets-Development-Template/Dockerfile",
+			"--destination=" + destination,
+			"--insecure",
+			"--insecure-registry=" + registry,
+			"--skip-tls-verify-registry=" + registry,
+			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
+			"--build-arg=REGISTRY=" + registry,
+			"--cache=false",
+			"--verbosity=" + verbosity,
+		})
+	
+	// Execute build
+	output, err := kaniko.Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("kaniko build failed: %w", err)
+	}
+	
+	return fmt.Sprintf("Successfully built image: %s\nSource: local directory\nOutput: %s", destination, output), nil
+}
+
 // BuildFromGit builds using Dockerfile from a Git repository with authentication
 func (m *Build) BuildFromGit(
 	ctx context.Context,
@@ -33,7 +89,7 @@ func (m *Build) BuildFromGit(
 	// +default="true"  
 	enableCuda bool,
 	// Image tag
-	// +default="v14.1.1"
+	// +default="v14.1.3"
 	imageTag string,
 	// Registry URL
 	// +default="registry.ra.se:5002"
@@ -131,7 +187,9 @@ func (m *Build) cloneWithCredentials(ctx context.Context, gitRepo, gitRef, gitTo
 	
 	// Create a container with Git and clone the repository using credentials helper
 	cloneContainer := dag.Container().
-		From("alpine/git:latest").
+		From("mcr.microsoft.com/devcontainers/base:ubuntu").
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "git"}).
 		WithNewFile("/root/.gitconfig", gitConfig).
 		WithNewFile("/root/.git-credentials", credentialsContent).
 		WithExec([]string{"git", "clone", "--depth=1", "--branch=" + gitRef, gitRepo, "/workspace"})
@@ -146,7 +204,7 @@ func (m *Build) BuildCuda(
 	// Git repository URL
 	gitRepo string,
 	// Image tag  
-	// +default="v14.1.1"
+	// +default="v14.1.3"
 	imageTag string,
 	// Git reference
 	// +default="main"
@@ -173,7 +231,7 @@ func (m *Build) BuildCpu(
 	// Git repository URL
 	gitRepo string,
 	// Image tag
-	// +default="v14.1.1"
+	// +default="v14.1.3"
 	imageTag string,
 	// Git reference
 	// +default="main"
@@ -194,6 +252,30 @@ func (m *Build) BuildCpu(
 	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, false, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
 }
 
+// BuildFromCurrentDir builds from the current working directory
+func (m *Build) BuildFromCurrentDir(
+	ctx context.Context,
+	// Enable CUDA support
+	// +default="true"
+	enableCuda bool,
+	// Image tag
+	// +default="v14.1.3"
+	imageTag string,
+	// Registry URL
+	// +default="registry.ra.se:5002"
+	registry string,
+	// Image repository name
+	// +default="airiksarkivet/devenv"
+	imageRepository string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
+) (string, error) {
+	// Use parent directory as build context (go up from .dagger to project root)
+	source := dag.CurrentModule().Source().Directory("..")
+	return m.BuildLocal(ctx, source, enableCuda, imageTag, registry, imageRepository, verbosity)
+}
+
 // GetBuildCommand returns example dagger commands for different scenarios
 func (m *Build) GetBuildCommand(
 	// Enable CUDA support
@@ -203,7 +285,7 @@ func (m *Build) GetBuildCommand(
 	// +default="devenv"
 	serviceName string,
 	// Image tag
-	// +default="v14.1.1"
+	// +default="v14.1.3"
 	imageTag string,
 ) string {
 	cudaFlag := "true"
@@ -274,6 +356,7 @@ func (m *Build) cloneWithSSH(ctx context.Context, gitRepo, gitRef, sshPrivateKey
     IdentityFile /root/.ssh/id_rsa
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
+    PubkeyAcceptedKeyTypes +ssh-rsa
 
 Host ssh.dev.azure.com
     HostName ssh.dev.azure.com
@@ -281,6 +364,7 @@ Host ssh.dev.azure.com
     IdentityFile /root/.ssh/id_rsa
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
+    PubkeyAcceptedKeyTypes +ssh-rsa
 `
 	
 	// Handle different Git URL formats
@@ -301,12 +385,14 @@ Host ssh.dev.azure.com
 	
 	// Create a container with Git and SSH setup
 	cloneContainer := dag.Container().
-		From("alpine/git:latest").
-		WithExec([]string{"apk", "add", "--no-cache", "openssh-client"}).
+		From("mcr.microsoft.com/devcontainers/base:ubuntu").
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y", "git", "openssh-client"}).
 		WithExec([]string{"mkdir", "-p", "/root/.ssh"}).
 		WithNewFile("/root/.ssh/id_rsa", sshPrivateKey).
 		WithExec([]string{"chmod", "600", "/root/.ssh/id_rsa"}).
 		WithNewFile("/root/.ssh/config", sshConfig).
+		WithExec([]string{"ssh-keygen", "-p", "-f", "/root/.ssh/id_rsa", "-m", "PEM", "-N", ""}).
 		WithExec([]string{"git", "clone", "--depth=1", "--branch=" + gitRef, cloneURL, "/workspace"})
 	
 	// Return the cloned directory
