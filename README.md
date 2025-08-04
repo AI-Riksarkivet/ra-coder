@@ -38,17 +38,14 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
 ### Building Images with Dagger
 
 ```bash
-# CPU build from current directory
-dagger call build-from-current-dir --enable-cuda=false
-
-# GPU build from current directory
-dagger call build-from-current-dir --enable-cuda=true
-
 # CPU build
-dagger call build-cpu
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false
+
+# GPU build
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true
 
 # CUDA build with custom tag
-dagger call build-cuda --image-tag="v14.1.3"
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag="v14.1.3"
 ```
 
 ### Offline Development
@@ -78,26 +75,21 @@ This template uses a modern **Dagger-based build system** for local directory bu
 ### Dagger Functions
 
 ```bash
-# Build from current directory
-dagger call build-from-current-dir --enable-cuda=false --image-tag="v14.1.3"
+# CPU build
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false --image-tag="v14.1.3"
 
-# CPU build shortcut
-dagger call build-cpu --image-tag="v14.1.3"
+# CUDA build
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag="v14.1.3"
 
-# CUDA build shortcut
-dagger call build-cuda --image-tag="v14.1.3"
-
-# Build from specific directory
-dagger call build-local --source="./" --enable-cuda=true
+# Build with different registry
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --registry="custom.registry.com"
 ```
 
 ### Available Dagger Functions
 
-- `build-from-current-dir`: Build from project root directory
-- `build-cpu`: CPU-only build shortcut
-- `build-cuda`: CUDA-enabled build shortcut
-- `build-local`: Build from specified local directory
+- `build-local`: Build from specified local directory (use `./Riksarkivets-Development-Template` as source)
 - `get-build-command`: Show example build commands
+- `hello`: Display usage information
 
 ## SSH Configuration
 
