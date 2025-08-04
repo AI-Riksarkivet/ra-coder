@@ -7,9 +7,9 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
 ## Recent Updates
 
 -  **SSH Auto-Configuration**: New containers automatically start SSH agent and load keys
--  **Modern Build System**: Dagger-based build with support for Git repositories and local directories
--  **Local Build Support**: Build directly from current directory without Git
--  **HTTPS Authentication**: Support for Azure DevOps PAT authentication
+-  **Modern Build System**: Simplified Dagger-based build for local directories only
+-  **Local Build Support**: Build directly from current directory
+-  **Streamlined Process**: No Git or authentication complexity
 -  **Offline Development**: Working Dagger examples for restricted network environments
 -  **Streamlined Structure**: Cleaned up documentation and improved project organization
 
@@ -44,11 +44,11 @@ dagger call build-from-current-dir --enable-cuda=false
 # GPU build from current directory
 dagger call build-from-current-dir --enable-cuda=true
 
-# Build from Git repository with HTTPS
-dagger call build-cpu --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" --git-username="user" --git-token="token"
+# CPU build
+dagger call build-cpu
 
-# Build with custom tag
-dagger call build-cuda --git-repo="https://github.com/user/repo" --image-tag="v14.1.3"
+# CUDA build with custom tag
+dagger call build-cuda --image-tag="v14.1.3"
 ```
 
 ### Offline Development
@@ -66,34 +66,26 @@ dagger call simple-test -m ./offline-example
 
 ## Build System
 
-This template uses a modern **Dagger-based build system** with support for both Git repositories and local directories:
+This template uses a modern **Dagger-based build system** for local directory builds:
 
 ### Key Features
-- **Flexible Sources**: Build from HTTPS Git repositories or local directories
-- **Local Builds**: Build directly from current directory without Git
-- **HTTPS Authentication**: Support for Azure DevOps PAT authentication
+- **Local Builds**: Build directly from current directory
+- **Simple Setup**: No Git or authentication required
 - **Fast Builds**: Efficient Kaniko-based container builds
+- **CPU/GPU Support**: Easy switching between CPU and CUDA builds
 - **Offline Examples**: Test Dagger without external dependencies
 
 ### Dagger Functions
 
-#### Build from Git Repository
-```bash
-# HTTPS with Azure DevOps PAT
-dagger call build-from-git \
-  --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
-  --git-username="your-username" \
-  --git-token="your-pat" \
-  --enable-cuda=false
-
-# Public repository (no auth needed)
-dagger call build-cuda --git-repo="https://github.com/user/repo"
-```
-
-#### Build from Local Directory
 ```bash
 # Build from current directory
 dagger call build-from-current-dir --enable-cuda=false --image-tag="v14.1.3"
+
+# CPU build shortcut
+dagger call build-cpu --image-tag="v14.1.3"
+
+# CUDA build shortcut
+dagger call build-cuda --image-tag="v14.1.3"
 
 # Build from specific directory
 dagger call build-local --source="./" --enable-cuda=true
@@ -101,10 +93,9 @@ dagger call build-local --source="./" --enable-cuda=true
 
 ### Available Dagger Functions
 
-- `build-from-git`: Full control build from Git with authentication support
-- `build-cuda`: CUDA-enabled build shortcut from Git
-- `build-cpu`: CPU-only build shortcut from Git
-- `build-from-current-dir`: Build from current directory
+- `build-from-current-dir`: Build from project root directory
+- `build-cpu`: CPU-only build shortcut
+- `build-cuda`: CUDA-enabled build shortcut
 - `build-local`: Build from specified local directory
 - `get-build-command`: Show example build commands
 
@@ -123,7 +114,7 @@ Before using this template, ensure you have:
 1. **Coder Server:** A Coder v2 instance deployed and accessible.
 2. **Kubernetes Cluster:** With appropriate GPU support if using GPUs.
 3. **Container Registry:** Access to `registry.ra.se:5002` or configure custom registry.
-4. **Git Access:** Personal Access Token for Azure DevOps HTTPS authentication
+4. **Build Tools:** Dagger CLI installed locally
 
 ## Workspace Parameters
 
@@ -161,7 +152,7 @@ uv add numpy pandas scikit-learn matplotlib
 **Current Versions:**
 - **Template:** v14.1.3 (latest)
 - **Container Images:** `registry.ra.se:5002/airiksarkivet/devenv:v14.1.3` (GPU), `v14.1.3-cpu` (CPU)
-- **Build System:** Dagger module with HTTPS Git and local directory support
+- **Build System:** Dagger module for local directory builds
 
 ## Support
 
