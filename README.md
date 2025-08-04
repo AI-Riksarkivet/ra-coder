@@ -8,8 +8,8 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
 
 -  **SSH Auto-Configuration**: New containers automatically start SSH agent and load keys
 -  **Modern Build System**: Dagger-based build with support for Git repositories and local directories
--  **Enhanced SSH Support**: Improved SSH authentication with automatic key format conversion
 -  **Local Build Support**: Build directly from current directory without Git
+-  **HTTPS Authentication**: Support for Azure DevOps PAT authentication
 -  **Offline Development**: Working Dagger examples for restricted network environments
 -  **Streamlined Structure**: Cleaned up documentation and improved project organization
 
@@ -44,11 +44,11 @@ dagger call build-from-current-dir --enable-cuda=false
 # GPU build from current directory
 dagger call build-from-current-dir --enable-cuda=true
 
-# Build from Git repository with SSH
-dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
+# Build from Git repository with HTTPS
+dagger call build-cpu --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" --git-username="user" --git-token="token"
 
 # Build with custom tag
-dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --image-tag="v14.1.3"
+dagger call build-cuda --git-repo="https://github.com/user/repo" --image-tag="v14.1.3"
 ```
 
 ### Offline Development
@@ -69,9 +69,9 @@ dagger call simple-test -m ./offline-example
 This template uses a modern **Dagger-based build system** with support for both Git repositories and local directories:
 
 ### Key Features
-- **Flexible Sources**: Build from SSH/HTTPS Git repositories or local directories
-- **SSH Support**: Enhanced SSH authentication with automatic key format conversion
+- **Flexible Sources**: Build from HTTPS Git repositories or local directories
 - **Local Builds**: Build directly from current directory without Git
+- **HTTPS Authentication**: Support for Azure DevOps PAT authentication
 - **Fast Builds**: Efficient Kaniko-based container builds
 - **Offline Examples**: Test Dagger without external dependencies
 
@@ -79,15 +79,15 @@ This template uses a modern **Dagger-based build system** with support for both 
 
 #### Build from Git Repository
 ```bash
-# SSH authentication with auto-detected key
-dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
-
 # HTTPS with Azure DevOps PAT
 dagger call build-from-git \
   --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
   --git-username="your-username" \
   --git-token="your-pat" \
   --enable-cuda=false
+
+# Public repository (no auth needed)
+dagger call build-cuda --git-repo="https://github.com/user/repo"
 ```
 
 #### Build from Local Directory
@@ -123,7 +123,7 @@ Before using this template, ensure you have:
 1. **Coder Server:** A Coder v2 instance deployed and accessible.
 2. **Kubernetes Cluster:** With appropriate GPU support if using GPUs.
 3. **Container Registry:** Access to `registry.ra.se:5002` or configure custom registry.
-4. **SSH Keys:** For Git access to `ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates`
+4. **Git Access:** Personal Access Token for Azure DevOps HTTPS authentication
 
 ## Workspace Parameters
 
@@ -161,7 +161,7 @@ uv add numpy pandas scikit-learn matplotlib
 **Current Versions:**
 - **Template:** v14.1.3 (latest)
 - **Container Images:** `registry.ra.se:5002/airiksarkivet/devenv:v14.1.3` (GPU), `v14.1.3-cpu` (CPU)
-- **Build System:** Dagger module with SSH/HTTPS Git and local directory support
+- **Build System:** Dagger module with HTTPS Git and local directory support
 
 ## Support
 

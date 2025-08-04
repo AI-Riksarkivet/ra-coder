@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	
 	"dagger/test/internal/dagger"
@@ -71,7 +70,7 @@ func (m *Build) BuildLocal(
 // BuildFromGit builds using Dockerfile from a Git repository with authentication
 func (m *Build) BuildFromGit(
 	ctx context.Context,
-	// Git repository URL (supports both HTTPS and SSH)
+	// Git repository URL (HTTPS only)
 	gitRepo string,
 	// Git reference (branch, tag, commit)
 	// +default="main"
@@ -82,9 +81,6 @@ func (m *Build) BuildFromGit(
 	// Git username (for username/token auth, required for Azure DevOps HTTPS)
 	// +optional
 	gitUsername string,
-	// SSH private key content (for SSH authentication)
-	// +optional
-	sshPrivateKey string,
 	// Enable CUDA support
 	// +default="true"  
 	enableCuda bool,
@@ -103,18 +99,7 @@ func (m *Build) BuildFromGit(
 ) (string, error) {
 	var source *dagger.Directory
 	
-	// Auto-detect SSH key if not provided and SSH URL is used
-	if sshPrivateKey == "" && (strings.HasPrefix(gitRepo, "ssh://") || strings.HasPrefix(gitRepo, "git@")) {
-		// Try to read SSH key from default path
-		if keyContent, err := os.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa"); err == nil {
-			sshPrivateKey = string(keyContent)
-		}
-	}
-	
-	if sshPrivateKey != "" {
-		// Use SSH key authentication
-		source = m.cloneWithSSH(ctx, gitRepo, gitRef, sshPrivateKey)
-	} else if gitToken != "" {
+	if gitToken != "" {
 		// Use Git credentials helper approach for HTTPS authentication
 		source = m.cloneWithCredentials(ctx, gitRepo, gitRef, gitToken, gitUsername)
 	} else {
@@ -215,14 +200,11 @@ func (m *Build) BuildCuda(
 	// Git username (required for Azure DevOps)
 	// +optional
 	gitUsername string,
-	// SSH private key content (for SSH authentication)
-	// +optional
-	sshPrivateKey string,
 	// Kaniko verbosity level
 	// +default="info"
 	verbosity string,
 ) (string, error) {
-	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, true, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
+	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, true, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
 }
 
 // BuildCpu builds CPU-only image from Git repository
@@ -242,14 +224,11 @@ func (m *Build) BuildCpu(
 	// Git username (required for Azure DevOps)
 	// +optional
 	gitUsername string,
-	// SSH private key content (for SSH authentication)
-	// +optional
-	sshPrivateKey string,
 	// Kaniko verbosity level
 	// +default="info"
 	verbosity string,
 ) (string, error) {
-	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, sshPrivateKey, false, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
+	return m.BuildFromGit(ctx, gitRepo, gitRef, gitToken, gitUsername, false, imageTag, "registry.ra.se:5002", "airiksarkivet/devenv", verbosity)
 }
 
 // BuildFromCurrentDir builds from the current working directory
@@ -293,9 +272,14 @@ func (m *Build) GetBuildCommand(
 		cudaFlag = "false"
 	}
 	
-	return fmt.Sprintf(`Azure DevOps Server builds:
+	return fmt.Sprintf(`Build Commands:
 
-# Build from your Azure DevOps repository:
+# Build from local directory:
+dagger call build-from-current-dir \
+  --enable-cuda=%s \
+  --image-tag=%s
+
+# Build from HTTPS repository:
 dagger call build-from-git \
   --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
   --git-username="your-username" \
@@ -303,98 +287,29 @@ dagger call build-from-git \
   --enable-cuda=%s \
   --image-tag=%s
 
-# CUDA shortcut:
-dagger call build-cuda \
-  --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
-  --git-username="your-username" \
-  --git-token="your-pat-token" \
-  --image-tag=%s
-
-# CPU shortcut:
-dagger call build-cpu \
-  --git-repo="https://devops.ra.se/DataLab/Datalab/_git/coder-templates" \
-  --git-username="your-username" \
-  --git-token="your-pat-token" \
-  --image-tag=%s
-
 # Public repositories (no auth needed):
 dagger call build-from-git \
   --git-repo="https://github.com/user/public-repo" \
   --enable-cuda=%s \
   --image-tag=%s`, 
-		cudaFlag, imageTag, imageTag, imageTag, cudaFlag, imageTag)
+		cudaFlag, imageTag, cudaFlag, imageTag)
 }
 
 // Hello returns usage information
 func (m *Build) Hello() string {
     return `🚀 Dagger Build Pipeline Ready!
 
-✅ Azure DevOps Server Support:
-  • Automatic credential embedding for devops.ra.se
-  • Username + Personal Access Token authentication
-  • Full build context from Git (no dockerfile size limits!)
+✅ Build Options:
+  • Build from local directory
+  • Build from HTTPS Git repositories with authentication
+  • Support for both CPU and CUDA builds
 
 Key functions:
-• build-from-git: Full control with Azure DevOps auth
-• build-cuda: CUDA-enabled shortcut  
-• build-cpu: CPU-only shortcut
-• build-from-dockerfile: Legacy method (still supported)
+• build-from-current-dir: Build from local directory
+• build-from-git: Build from HTTPS Git repository
+• build-local: Build from specified directory
+• build-cuda/build-cpu: Shortcuts for Git builds
 
-🔧 Setup: Create a Personal Access Token in Azure DevOps
-📚 Examples: Run 'dagger call get-build-command' for usage examples
-
-No more passing dockerfile content as parameters! 🎉`
+📚 Examples: Run 'dagger call get-build-command' for usage examples`
 }
 
-// cloneWithSSH uses SSH key authentication to clone repositories
-func (m *Build) cloneWithSSH(ctx context.Context, gitRepo, gitRef, sshPrivateKey string) *dagger.Directory {
-	// Create SSH configuration
-	sshConfig := `Host devops.ra.se
-    HostName devops.ra.se
-    Port 22
-    User git
-    IdentityFile /root/.ssh/id_rsa
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-    PubkeyAcceptedKeyTypes +ssh-rsa
-
-Host ssh.dev.azure.com
-    HostName ssh.dev.azure.com
-    User git
-    IdentityFile /root/.ssh/id_rsa
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-    PubkeyAcceptedKeyTypes +ssh-rsa
-`
-	
-	// Handle different Git URL formats
-	var cloneURL string
-	if strings.HasPrefix(gitRepo, "ssh://") {
-		// Already SSH URL, use as-is
-		cloneURL = gitRepo
-	} else if strings.HasPrefix(gitRepo, "https://devops.ra.se/") {
-		// Convert HTTPS URL to SSH URL
-		// https://devops.ra.se/DataLab/Datalab/_git/coder-templates
-		// to ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates
-		path := strings.Replace(gitRepo, "https://devops.ra.se/", "", 1)
-		cloneURL = fmt.Sprintf("ssh://git@devops.ra.se:22/%s", path)
-	} else {
-		// Default to original URL
-		cloneURL = gitRepo
-	}
-	
-	// Create a container with Git and SSH setup
-	cloneContainer := dag.Container().
-		From("mcr.microsoft.com/devcontainers/base:ubuntu").
-		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "git", "openssh-client"}).
-		WithExec([]string{"mkdir", "-p", "/root/.ssh"}).
-		WithNewFile("/root/.ssh/id_rsa", sshPrivateKey).
-		WithExec([]string{"chmod", "600", "/root/.ssh/id_rsa"}).
-		WithNewFile("/root/.ssh/config", sshConfig).
-		WithExec([]string{"ssh-keygen", "-p", "-f", "/root/.ssh/id_rsa", "-m", "PEM", "-N", ""}).
-		WithExec([]string{"git", "clone", "--depth=1", "--branch=" + gitRef, cloneURL, "/workspace"})
-	
-	// Return the cloned directory
-	return cloneContainer.Directory("/workspace")
-}
