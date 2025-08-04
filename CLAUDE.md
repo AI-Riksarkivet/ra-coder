@@ -3,6 +3,13 @@
 ## Project Overview
 This is a **Coder Template** for provisioning GPU-accelerated data science and MLOps development environments. It creates Kubernetes-based workspaces with comprehensive tooling for machine learning, data science, and AI development.
 
+## Recent Improvements (v14.1.2+)
+- ✅ **SSH Auto-Configuration**: Containers automatically configure SSH agent and load keys for seamless Git operations
+- ✅ **Modern Build System**: Replaced complex bash scripts with clean Go-based Dagger build system
+- ✅ **Offline Development**: Added working Dagger examples that function without external registry access
+- ✅ **Git Integration**: Direct builds from `ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates`
+- ✅ **Streamlined Structure**: Cleaned up documentation and removed obsolete files
+
 ## Technology Stack
 - **Infrastructure**: Terraform (IaC), Kubernetes, Docker
 - **Base Environment**: Ubuntu 22.04 LTS with NVIDIA CUDA 12.2
@@ -12,31 +19,38 @@ This is a **Coder Template** for provisioning GPU-accelerated data science and M
 
 ## Key Files & Structure
 - `main.tf` - Main Terraform configuration for Kubernetes deployment
-- `Dockerfile` - Container image definition with CUDA, Python, and dev tools
+- `Dockerfile` - Container image definition with CUDA, Python, dev tools, and SSH auto-configuration
 - `README.md` - Comprehensive documentation and setup instructions
-- `build.sh` - Build script for Docker image
-- `build.yaml` - Build configuration
-- `Makefile` - Build automation
+- `build-dagger.go` - Modern Go-based Dagger build script (replaces old bash scripts)
+- `build.yaml` - Argo build configuration (legacy)
+- `offline-example/` - Offline Dagger examples for testing without external registries
+- `offline-dagger-example.go` - Standalone offline Dagger example
+- `go.mod` / `go.sum` - Go module dependencies for build system
 
 ## Development Context
 This template creates workspaces with:
 - **Persistent storage**: Home directory backed by Kubernetes PVC
 - **GPU support**: NVIDIA GPUs with proper runtime configuration
+- **SSH ready**: Auto-configured SSH agent and keys for seamless Git operations
 - **AI assistance**: Pre-configured Aider and Continue with local LLM
-- **Pre-installed tools**: kubectl, helm, awscli, git, ruff, pre-commit
+- **Pre-installed tools**: kubectl, helm, awscli, git, ruff, pre-commit, dagger
 - **Python environment**: Virtual environment with PyTorch, transformers, pandas, scikit-learn
+- **Modern build system**: Go-based Dagger scripts for container builds
 
 ## Common Operations
-- **Build image**: `make build` or `./build.sh`
+- **Build image**: `go run build-dagger.go -cuda=false` (CPU) or `-cuda=true` (GPU)
+- **Test offline**: `go run offline-dagger-example.go` or `dagger call simple-test -m ./offline-example`
 - **Deploy template**: Import into Coder deployment
 - **Workspace creation**: Configure CPU/memory/GPU via Coder parameters
 - **Access**: Via code-server app in Coder dashboard
 
 ## Configuration Notes
 - Requires `lakefs-secrets` Kubernetes secret for LakeFS integration
-- Uses registry `registry.ra.se:5002/devenv:v8.0.0` for the container image
+- Uses registry `registry.ra.se:5002/airiksarkivet/devenv:v14.1.2` (latest images)
+- SSH auto-configuration for `ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates`
 - LLM service expected at `http://llm-service.models:8000/v1`
 - Supports GPU types: Quadro RTX 5000, NVIDIA RTX A5000/A6000, RTX 6000 Ada
+- Go-based build system with offline development support
 
 ## Dependencies
 - Kubernetes cluster with NVIDIA GPU support (if using GPUs)
