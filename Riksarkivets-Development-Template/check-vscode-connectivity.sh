@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# VS Code Sites Connectivity Checker
-# Checks if VS Code related domains are accessible
+# VS Code and Docker Sites Connectivity Checker
+# Checks if VS Code and Docker related domains are accessible
 
-echo "VS Code Sites Connectivity Check"
-echo "================================="
+echo "VS Code and Docker Sites Connectivity Check"
+echo "==========================================="
 echo ""
 
 # Color codes for output
@@ -110,6 +110,38 @@ declare -a go_sites=(
     "bitbucket.org|Bitbucket repositories"
 )
 
+# Docker authentication sites
+declare -a docker_auth_sites=(
+    "auth.docker.io|Docker authentication"
+    "cdn.auth0.com|Auth0 CDN"
+    "login.docker.com|Docker login"
+    "auth.docker.com|Docker auth service"
+)
+
+# Docker Hub and registry sites
+declare -a docker_hub_sites=(
+    "hub.docker.com|Docker Hub"
+    "registry-1.docker.io|Docker Registry"
+    "production.cloudflare.docker.com|Docker Cloudflare CDN"
+    "docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com|Docker images storage"
+)
+
+# Docker analytics and error reporting
+declare -a docker_analytics_sites=(
+    "api.segment.io|Segment API"
+    "cdn.segment.com|Segment CDN"
+    "notify.bugsnag.com|Bugsnag notifications"
+    "sessions.bugsnag.com|Bugsnag sessions"
+)
+
+# Other Docker service sites
+declare -a docker_service_sites=(
+    "desktop.docker.com|Docker Desktop"
+    "docker-pinata-support.s3.amazonaws.com|Docker support files"
+    "api.dso.docker.com|Docker DSO API"
+    "api.docker.com|Docker API"
+)
+
 echo -e "${BLUE}Checking core VS Code functionality...${NC}"
 accessible_count=0
 total_count=0
@@ -173,7 +205,47 @@ for site_info in "${go_sites[@]}"; do
 done
 
 echo ""
-echo "================================="
+echo -e "${BLUE}Checking Docker authentication sites...${NC}"
+for site_info in "${docker_auth_sites[@]}"; do
+    IFS='|' read -r url description <<< "$site_info"
+    if check_site "$url" "$description"; then
+        ((accessible_count++))
+    fi
+    ((total_count++))
+done
+
+echo ""
+echo -e "${BLUE}Checking Docker Hub and registry sites...${NC}"
+for site_info in "${docker_hub_sites[@]}"; do
+    IFS='|' read -r url description <<< "$site_info"
+    if check_site "$url" "$description"; then
+        ((accessible_count++))
+    fi
+    ((total_count++))
+done
+
+echo ""
+echo -e "${BLUE}Checking Docker analytics sites...${NC}"
+for site_info in "${docker_analytics_sites[@]}"; do
+    IFS='|' read -r url description <<< "$site_info"
+    if check_site "$url" "$description"; then
+        ((accessible_count++))
+    fi
+    ((total_count++))
+done
+
+echo ""
+echo -e "${BLUE}Checking Docker service sites...${NC}"
+for site_info in "${docker_service_sites[@]}"; do
+    IFS='|' read -r url description <<< "$site_info"
+    if check_site "$url" "$description"; then
+        ((accessible_count++))
+    fi
+    ((total_count++))
+done
+
+echo ""
+echo "==========================================="
 echo -e "Summary: ${GREEN}$accessible_count${NC}/${total_count} sites accessible"
 
 # Provide recommendations based on results
@@ -181,39 +253,44 @@ echo ""
 echo -e "${BLUE}Recommendations:${NC}"
 
 if [ $accessible_count -eq $total_count ]; then
-    echo -e "${GREEN}✓ All VS Code sites are accessible!${NC}"
-    echo "  VS Code should work normally without any connectivity issues."
+    echo -e "${GREEN}✓ All VS Code and Docker sites are accessible!${NC}"
+    echo "  VS Code and Docker should work normally without any connectivity issues."
     exit 0
 elif [ $accessible_count -gt $((total_count * 3 / 4)) ]; then
     echo -e "${YELLOW}⚠ Most sites accessible, minor functionality may be limited.${NC}"
-    echo "  Core VS Code features should work, but some extensions or services may be affected."
+    echo "  Core VS Code and Docker features should work, but some extensions or services may be affected."
     exit 0
 elif [ $accessible_count -gt $((total_count / 2)) ]; then
     echo -e "${YELLOW}⚠ Some connectivity issues detected.${NC}"
-    echo "  VS Code will work but with limited functionality:"
+    echo "  VS Code and Docker will work but with limited functionality:"
     echo "  - Extension marketplace may be slow or unavailable"
     echo "  - Settings sync may not work"
     echo "  - Some authentication features may fail"
     echo "  - Go module downloads may fail"
+    echo "  - Docker image pulls may fail or be slow"
+    echo "  - Docker Hub access may be limited"
     echo ""
     echo "  Consider configuring proxy settings or firewall exceptions."
     exit 1
 elif [ $accessible_count -gt 0 ]; then
     echo -e "${RED}⚠ Significant connectivity issues.${NC}"
-    echo "  VS Code may have severe limitations:"
+    echo "  VS Code and Docker may have severe limitations:"
     echo "  - Extensions may not install or update"
     echo "  - Authentication will likely fail"
     echo "  - Updates may not work"
     echo "  - Go development will be severely limited"
+    echo "  - Docker image pulls will likely fail"
+    echo "  - Container registries may be inaccessible"
     echo ""
-    echo "  Contact your network administrator to allow VS Code domains."
+    echo "  Contact your network administrator to allow VS Code and Docker domains."
     exit 1
 else
-    echo -e "${RED}✗ No VS Code sites accessible.${NC}"
-    echo "  VS Code will have very limited functionality:"
+    echo -e "${RED}✗ No VS Code or Docker sites accessible.${NC}"
+    echo "  VS Code and Docker will have very limited functionality:"
     echo "  - No extension marketplace access"
     echo "  - No updates or authentication"
     echo "  - Only offline features will work"
+    echo "  - Docker will not be able to pull images"
     echo ""
     echo "  Check internet connection or proxy configuration."
     exit 2
