@@ -600,7 +600,20 @@ module "vscode-web" {
 }
 
   subdomain     = false
-  extensions    =  [ "ms-python.python", "anthropic.claude-code","golang.Go","charliermarsh.ruff","marimo-team.vscode-marimo","miguelsolorio.symbols","astral-sh.ty","redhat.vscode-yaml", "tamasfe.even-better-toml", "pmndrs.pmndrs", "miguelsolorio.fluent-icons","RSIP-Vision.nvidia-smi-plus"]
+  extensions    =  [
+    "ms-python.python",
+    "anthropic.claude-code",
+    "golang.Go",
+    "charliermarsh.ruff",
+    "marimo-team.vscode-marimo",
+    "miguelsolorio.symbols",
+    "astral-sh.ty",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+    "pmndrs.pmndrs",
+    "miguelsolorio.fluent-icons",
+    "RSIP-Vision.nvidia-smi-plus"
+  ]
   telemetry_level = "off"
 }
 
