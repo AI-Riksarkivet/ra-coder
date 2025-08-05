@@ -47,7 +47,13 @@ variable "argowf_external_address" {
 variable "container_registry" {
   type        = string
   description = "The container registry URL for workspace images (e.g., registry.example.com:5000). Used for both base images and workspace container images."
-  default     = "registry.ra.se:5002"
+  default     = "docker.io"
+}
+
+variable "docker_registry_secret" {
+  type        = string
+  description = "The name of the Kubernetes secret containing Docker registry credentials for pulling private images."
+  default     = "dockerhub-secret"
 }
 
 # variable "anthropic_api_key" {
@@ -705,9 +711,14 @@ resource "kubernetes_deployment" "main" {
         }
         termination_grace_period_seconds = 60
 
+        # Image pull secret for private Docker Hub repository
+        image_pull_secrets {
+          name = var.docker_registry_secret
+        }
+
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v14.1.1" : "${var.container_registry}/airiksarkivet/devenv:v14.1.1-cpu"
+          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/riksarkivet/coder-workspace-ml:v14.1.3" : "${var.container_registry}/riksarkivet/coder-workspace-ml:v14.1.3-cpu"
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 
