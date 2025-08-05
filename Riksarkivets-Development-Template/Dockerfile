@@ -101,24 +101,4 @@ RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile && \
     mkdir -p ~/.ssh && \
     chmod 700 ~/.ssh
 
-# Configure SSH agent to start automatically and load keys
-RUN echo '# SSH Agent Configuration' >> ~/.bashrc && \
-    echo 'if [ -z "$SSH_AUTH_SOCK" ]; then' >> ~/.bashrc && \
-    echo '    eval "$(ssh-agent -s)" > /dev/null 2>&1' >> ~/.bashrc && \
-    echo '    if [ -f ~/.ssh/id_rsa ]; then' >> ~/.bashrc && \
-    echo '        ssh-add ~/.ssh/id_rsa > /dev/null 2>&1' >> ~/.bashrc && \
-    echo '    fi' >> ~/.bashrc && \
-    echo 'fi' >> ~/.bashrc && \
-    echo '' >> ~/.bashrc
-
-# Add SSH client configuration for DevOps server
-RUN echo 'Host devops.ra.se' >> ~/.ssh/config && \
-    echo '    HostName devops.ra.se' >> ~/.ssh/config && \
-    echo '    Port 22' >> ~/.ssh/config && \
-    echo '    User git' >> ~/.ssh/config && \
-    echo '    StrictHostKeyChecking no' >> ~/.ssh/config && \
-    echo '    UserKnownHostsFile /dev/null' >> ~/.ssh/config && \
-    echo '' >> ~/.ssh/config && \
-    chmod 600 ~/.ssh/config
-
 CMD ["/bin/bash"]
