@@ -574,6 +574,7 @@ locals {
 
 }
 
+
 # --- Coder Apps ---
 module "vscode-web" {
   count         = data.coder_workspace.me.start_count
@@ -581,18 +582,36 @@ module "vscode-web" {
   version       = "1.3.1"
   agent_id      = coder_agent.main.id
   accept_license = true
+  settings = {
+    "workbench.colorTheme": "poimandres",
+    "keyboard.layout": "0000041D",
+    "workbench.sideBar.location": "right",
+    "breadcrumbs.enabled": false,
+    "workbench.activityBar.location": "top",
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.wordWrap": "on",
+    "chat.commandCenter.enabled": false,
+    "workbench.navigationControl.enabled": false,
+    "workbench.layoutControl.enabled": false,
+    "workbench.iconTheme": "symbols",
+    "workbench.productIconTheme": "fluent-icons",
+    "window.title": "Riksarkivet IDE",
+}
+
   subdomain     = false
-  extensions    =  [ "ms-python.python", "ms-python.debugpy", "anthropic.claude-code"]
+  extensions    =  [ "ms-python.python", "anthropic.claude-code","golang.Go","charliermarsh.ruff","marimo-team.vscode-marimo","miguelsolorio.symbols","astral-sh.ty","redhat.vscode-yaml", "tamasfe.even-better-toml", "pmndrs.pmndrs", "miguelsolorio.fluent-icons","RSIP-Vision.nvidia-smi-plus"]
   telemetry_level = "off"
 }
 
 module "filebrowser" {
-  count     = data.coder_workspace.me.start_count
-  source    = "registry.coder.com/modules/filebrowser/coder"
-  version   = "1.0.30"
-  agent_id  = coder_agent.main.id
-  subdomain = false
+  count         = data.coder_workspace.me.start_count
+  source        = "registry.coder.com/modules/filebrowser/coder"
+  version       = "1.0.30"
+  agent_id      = coder_agent.main.id
+  subdomain     = false
   database_path = ".config/filebrowser.db"
+  folder        = "/"  # This gives access to entire filesystem
 }
 
 
@@ -804,6 +823,13 @@ resource "kubernetes_deployment" "main" {
           }
 
           volume_mount {
+            mount_path = "/dev/shm"
+            name       = "dshm"
+            read_only  = false
+          }
+
+
+          volume_mount {
             mount_path = "/home/coder"
             name       = "home"
             read_only  = false
@@ -937,6 +963,15 @@ resource "kubernetes_deployment" "main" {
           host_path {
             path = "/mnt/work/"    # Path on the Kubernetes Node
             type = "Directory"     # Ensure it's a directory on the host
+          }
+        }
+
+        volume {
+          name = "dshm"
+          empty_dir {
+            medium     = "Memory"
+            # 15% of total pod memory for shared memory
+            size_limit = "${floor(tonumber(data.coder_parameter.memory.value) * 0.20)}Gi"
           }
         }
 
