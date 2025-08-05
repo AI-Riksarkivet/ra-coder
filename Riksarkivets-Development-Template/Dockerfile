@@ -1,7 +1,4 @@
-# Stage 1: Base system setup
-
-ARG REGISTRY=registry.ra.se:5002
-FROM ${REGISTRY}/ubuntu:jammy AS base
+FROM ubuntu:jammy AS base
 
 ARG ENABLE_CUDA=true
 ARG CUDA_VERSION_MAJOR_MINOR=12.2

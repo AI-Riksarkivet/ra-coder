@@ -26,43 +26,18 @@ func (m *Build) BuildLocal(
 	// Image repository name
 	// +default="airiksarkivet/devenv"
 	imageRepository string,
-	// Kaniko verbosity level
-	// +default="info"
-	verbosity string,
-) (string, error) {
-	// Determine final tag
-	finalTag := imageTag
-	if !enableCuda {
-		finalTag = imageTag + "-cpu"
-	}
-	
-	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
-	
-	// Create Kaniko executor with local source
-	kaniko := dag.Container().
-		From("gcr.io/kaniko-project/executor:latest").
-		WithMountedDirectory("/workspace", source).
-		WithExec([]string{
-			"/kaniko/executor",
-			"--context=/workspace",
-			"--dockerfile=/workspace/Dockerfile",
-			"--destination=" + destination,
-			"--insecure",
-			"--insecure-registry=" + registry,
-			"--skip-tls-verify-registry=" + registry,
-			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
-			"--build-arg=REGISTRY=" + registry,
-			"--cache=false",
-			"--verbosity=" + verbosity,
+) (*dagger.Container, error) {
+	// Build the container using Dockerfile
+	container := dag.Container().
+		Build(source, dagger.ContainerBuildOpts{
+			Dockerfile: "Dockerfile",
+			BuildArgs: []dagger.BuildArg{
+				{Name: "ENABLE_CUDA", Value: fmt.Sprintf("%t", enableCuda)},
+				{Name: "REGISTRY", Value: registry},
+			},
 		})
 	
-	// Execute build
-	output, err := kaniko.Stdout(ctx)
-	if err != nil {
-		return "", fmt.Errorf("kaniko build failed: %w", err)
-	}
-	
-	return fmt.Sprintf("Successfully built image: %s\nSource: local directory\nOutput: %s", destination, output), nil
+	return container, nil
 }
 
 
@@ -82,23 +57,32 @@ func (m *Build) GetBuildCommand(
 	
 	return fmt.Sprintf(`Build Commands:
 
-# CPU build:
+# CPU build (local only):
 dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false --image-tag=%s
 
-# CUDA build:
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag=%s`, 
-		cudaFlag, imageTag, imageTag, imageTag, cudaFlag, imageTag)
+# CUDA build (local only):
+dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag=%s
+
+# Build and publish to registry:
+dagger call build-and-publish --source="./Riksarkivets-Development-Template" --username="myuser" --password="mypass" --enable-cuda=%s --image-tag=%s
+
+# Quick CPU build:
+dagger call quick-cpu-build --source="./Riksarkivets-Development-Template"
+
+# Quick CUDA build:
+dagger call quick-cuda-build --source="./Riksarkivets-Development-Template"`, 
+		imageTag, imageTag, cudaFlag, imageTag)
 }
 
-// BuildToDockerHub builds using Dockerfile from a local directory with Docker Hub authentication
-func (m *Build) BuildToDockerHub(
+// BuildAndPublish builds using Dockerfile and publishes to registry
+func (m *Build) BuildAndPublish(
 	ctx context.Context,
 	// Local directory to build from
 	source *dagger.Directory,
-	// Docker Hub username
-	dockerUsername string,
-	// Docker Hub password/token
-	dockerPassword string,
+	// Registry username
+	username string,
+	// Registry password/token
+	password string,
 	// Enable CUDA support
 	// +default="true"
 	enableCuda bool,
@@ -109,53 +93,34 @@ func (m *Build) BuildToDockerHub(
 	// +default="docker.io"
 	registry string,
 	// Image repository name
-	// +default="airiksarkivet/coder-workspace-ml"
+	// +default="riksarkivet/coder-workspace-ml"
 	imageRepository string,
-	// Kaniko verbosity level
-	// +default="info"
-	verbosity string,
 ) (string, error) {
 	// Determine final tag
 	finalTag := imageTag
 	if !enableCuda {
 		finalTag = imageTag + "-cpu"
 	}
-	
+
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
 	
-	// Create Docker config.json content
-	dockerConfig := fmt.Sprintf(`{
-		"auths": {
-			"https://index.docker.io/v1/": {
-				"username": "%s",
-				"password": "%s"
-			}
-		}
-	}`, dockerUsername, dockerPassword)
-	
-	// Create Kaniko executor with Docker authentication
-	kaniko := dag.Container().
-		From("gcr.io/kaniko-project/executor:latest").
-		WithMountedDirectory("/workspace", source).
-		WithNewFile("/kaniko/.docker/config.json", dockerConfig).
-		WithExec([]string{
-			"/kaniko/executor",
-			"--context=/workspace",
-			"--dockerfile=/workspace/Dockerfile",
-			"--destination=" + destination,
-			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
-			"--build-arg=REGISTRY=" + registry,
-			"--cache=false",
-			"--verbosity=" + verbosity,
+	// Build the container using Dockerfile
+	container := dag.Container().
+		Build(source, dagger.ContainerBuildOpts{
+			Dockerfile: "Dockerfile",
+			BuildArgs: []dagger.BuildArg{
+				{Name: "ENABLE_CUDA", Value: fmt.Sprintf("%t", enableCuda)},
+				{Name: "REGISTRY", Value: registry},
+			},
 		})
 	
-	// Execute build
-	output, err := kaniko.Stdout(ctx)
+	// Publish to registry with authentication
+	addr, err := container.WithRegistryAuth(registry, username, dag.SetSecret("registry-password", password)).Publish(ctx, destination)
 	if err != nil {
-		return "", fmt.Errorf("kaniko build failed: %w", err)
+		return "", fmt.Errorf("failed to publish image: %w", err)
 	}
 	
-	return fmt.Sprintf("Successfully built and pushed image: %s\nSource: local directory\nOutput: %s", destination, output), nil
+	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
 }
 
 // Hello returns usage information
@@ -163,14 +128,33 @@ func (m *Build) Hello() string {
     return `🚀 Dagger Build Pipeline Ready!
 
 ✅ Build Options:
+  • Native Dockerfile builds (no Kaniko)
   • Build from local directory only
   • Support for both CPU and CUDA builds
   • Simple and fast local builds
-  • Docker Hub authentication support
+  • Registry authentication support
 
 Key functions:
-• build-local: Build from specified directory (use "./Riksarkivets-Development-Template" as source)
-• build-with-auth: Build with Docker Hub authentication
+• build-local: Build container from specified directory
+• build-and-publish: Build and publish to registry with authentication
 
 📚 Examples: Run 'dagger call get-build-command' for usage examples`
+}
+
+// QuickCpuBuild is a convenience function for CPU-only builds
+func (m *Build) QuickCpuBuild(
+	ctx context.Context,
+	// Local directory to build from
+	source *dagger.Directory,
+) (*dagger.Container, error) {
+	return m.BuildLocal(ctx, source, false, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
+}
+
+// QuickCudaBuild is a convenience function for CUDA builds
+func (m *Build) QuickCudaBuild(
+	ctx context.Context,
+	// Local directory to build from
+	source *dagger.Directory,
+) (*dagger.Container, error) {
+	return m.BuildLocal(ctx, source, true, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
 }
