@@ -90,6 +90,74 @@ dagger call build-local --source="./Riksarkivets-Development-Template" --enable-
 		cudaFlag, imageTag, imageTag, imageTag, cudaFlag, imageTag)
 }
 
+// BuildToDockerHub builds using Dockerfile from a local directory with Docker Hub authentication
+func (m *Build) BuildToDockerHub(
+	ctx context.Context,
+	// Local directory to build from
+	source *dagger.Directory,
+	// Docker Hub username
+	dockerUsername string,
+	// Docker Hub password/token
+	dockerPassword string,
+	// Enable CUDA support
+	// +default="true"
+	enableCuda bool,
+	// Image tag
+	// +default="v14.1.3"
+	imageTag string,
+	// Registry URL
+	// +default="docker.io"
+	registry string,
+	// Image repository name
+	// +default="airiksarkivet/coder-workspace-ml"
+	imageRepository string,
+	// Kaniko verbosity level
+	// +default="info"
+	verbosity string,
+) (string, error) {
+	// Determine final tag
+	finalTag := imageTag
+	if !enableCuda {
+		finalTag = imageTag + "-cpu"
+	}
+	
+	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
+	
+	// Create Docker config.json content
+	dockerConfig := fmt.Sprintf(`{
+		"auths": {
+			"https://index.docker.io/v1/": {
+				"username": "%s",
+				"password": "%s"
+			}
+		}
+	}`, dockerUsername, dockerPassword)
+	
+	// Create Kaniko executor with Docker authentication
+	kaniko := dag.Container().
+		From("gcr.io/kaniko-project/executor:latest").
+		WithMountedDirectory("/workspace", source).
+		WithNewFile("/kaniko/.docker/config.json", dockerConfig).
+		WithExec([]string{
+			"/kaniko/executor",
+			"--context=/workspace",
+			"--dockerfile=/workspace/Dockerfile",
+			"--destination=" + destination,
+			"--build-arg=ENABLE_CUDA=" + fmt.Sprintf("%t", enableCuda),
+			"--build-arg=REGISTRY=" + registry,
+			"--cache=false",
+			"--verbosity=" + verbosity,
+		})
+	
+	// Execute build
+	output, err := kaniko.Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("kaniko build failed: %w", err)
+	}
+	
+	return fmt.Sprintf("Successfully built and pushed image: %s\nSource: local directory\nOutput: %s", destination, output), nil
+}
+
 // Hello returns usage information
 func (m *Build) Hello() string {
     return `🚀 Dagger Build Pipeline Ready!
@@ -98,9 +166,11 @@ func (m *Build) Hello() string {
   • Build from local directory only
   • Support for both CPU and CUDA builds
   • Simple and fast local builds
+  • Docker Hub authentication support
 
 Key functions:
 • build-local: Build from specified directory (use "./Riksarkivets-Development-Template" as source)
+• build-with-auth: Build with Docker Hub authentication
 
 📚 Examples: Run 'dagger call get-build-command' for usage examples`
 }
