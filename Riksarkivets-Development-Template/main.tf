@@ -537,6 +537,32 @@ SSHCONFIG
     timeout      = 1
   }
 
+  dynamic "metadata" {
+    for_each = local.actual_gpu_count > 0 ? range(local.actual_gpu_count) : []
+    content {
+      display_name = "GPU ${metadata.value} Memory"
+      key          = "gpu_${metadata.value}_memory"
+      script       = <<EOT
+        if command -v nvidia-smi >/dev/null 2>&1; then
+          nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits --id=${metadata.value} | awk -F', ' '{
+            used=$1; total=$2; 
+            if (total > 0) {
+              percent=int((used/total)*100); 
+              printf "%.1f/%.1fGB (%d%%)", used/1024, total/1024, percent
+            } else {
+              print "N/A"
+            }
+          }'
+        else
+          echo "nvidia-smi not available"
+        fi
+      EOT
+      interval     = 10
+      timeout      = 5
+    }
+  }
+
+
   display_apps {
     vscode = false
     vscode_insiders = false
