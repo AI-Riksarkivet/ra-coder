@@ -937,7 +937,8 @@ locals {
   git_author_email       = data.coder_workspace_owner.me.email
 
   # --- Images ---
-  main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v14.1.1" : "${var.container_registry}/airiksarkivet/devenv:v14.1.1-cpu"
+  main_image_tag = "v14.3.0"
+  main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:${locals.main_image_tag}" : "${var.container_registry}/airiksarkivet/devenv:${locals.main_image_tag}-cpu"
 
 
   # --- GPU Logic ---
