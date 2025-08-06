@@ -83,6 +83,7 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         terraform \
         nvtop \
         dagger \
+        starship \
         ripgrep \
         openssh && \
     PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code && \
