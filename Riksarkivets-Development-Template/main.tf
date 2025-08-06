@@ -300,6 +300,7 @@ provider "kubernetes" {
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+
 resource "coder_metadata" "resources" {
   count       = data.coder_workspace.me.start_count
   resource_id = kubernetes_deployment.main[0].id
@@ -429,6 +430,7 @@ AIDERCONFIG
     # Verify git configuration
     echo "Current git configuration:"
     git config --list | grep user || echo "WARNING: No git user config found"
+
 
     # --- Configure Starship Prompt ---
     echo "Setting up Starship prompt..."
@@ -927,7 +929,6 @@ SSHCONFIG
     port_forwarding_helper = false
     web_terminal = true
   }
-
 }
 
 # --- Locals ---
@@ -940,7 +941,6 @@ locals {
   main_image_name="riksarkivet/coder-workspace-ml"
   main_image_tag = "v14.3.0"
   main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/${local.main_image_name}:${local.main_image_tag}" : "${var.container_registry}/${local.main_image_name}:${local.main_image_tag}-cpu"
-
 
   # --- GPU Logic ---
   selected_gpu           = data.coder_parameter.gpu_type.value
@@ -962,7 +962,6 @@ locals {
   lakefs_secret_name = "lakefs-secrets"
 
 }
-
 
 # --- Coder Apps ---
 module "vscode-web" {
@@ -1013,7 +1012,7 @@ module "filebrowser" {
   agent_id      = coder_agent.main.id
   subdomain     = false
   database_path = ".config/filebrowser.db"
-  folder        = "/"  # This gives access to entire filesystem
+  folder        = "/mnt"  # This gives access to entire filesystem
 }
 
 
