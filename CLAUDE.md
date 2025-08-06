@@ -50,7 +50,7 @@ This template creates workspaces with:
 
 ## Configuration Notes
 - Requires `lakefs-secrets` Kubernetes secret for LakeFS integration
-- Uses registry `registry.ra.se:5002/airiksarkivet/devenv:v14.1.3` (latest images)
+- Uses registry `docker.io/riksarkivet/coder-workspace-ml:v14.1.3` (latest images)
 - Local directory builds only (no Git required)
 - LLM service expected at `http://llm-service.models:8000/v1`
 - Supports GPU types: Quadro RTX 5000, NVIDIA RTX A5000/A6000, RTX 6000 Ada

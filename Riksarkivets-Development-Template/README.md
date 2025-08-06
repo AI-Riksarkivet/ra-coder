@@ -4,6 +4,15 @@ This Coder template provisions a comprehensive development environment tailored 
 
 The environment comes pre-configured with CUDA, Python, PyTorch, popular data science libraries, MLOps tools, an AI coding assistant (Aider), and the Continue extension for VS Code, all integrated with a local/network-accessible Large Language Model (LLM).
 
+## Recent Updates (v14.1.3+)
+
+- ✅ **SSH Auto-Configuration**: Containers automatically configure SSH agent and load keys for seamless Git operations
+- ✅ **Simplified Dagger Module**: Streamlined Dagger functions for local directory builds only
+- ✅ **Local Build Support**: Build directly from current directory without Git complexity
+- ✅ **Fast Local Builds**: Optimized for quick local development cycles
+- ✅ **Offline Development**: Added working Dagger examples that function without external registry access
+- ✅ **Streamlined Structure**: Cleaned up documentation and removed obsolete files
+
 ## Features
 
 * **Base OS:** Ubuntu 22.04 LTS (Jammy).
@@ -52,7 +61,7 @@ Before using this template, ensure you have:
         * NVIDIA GPU drivers installed on the nodes.
         * NVIDIA Container Toolkit (or equivalent like `nvidia-docker2`) and the `nvidia` runtime class configured.
         * Nodes labeled appropriately (e.g., `nvidia.com/gpu.product: NVIDIA-RTX-A6000`) if specific GPU types are targeted.
-3.  **Docker Image:** The Docker image defined by the `Dockerfile` (e.g., `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`) must be built and pushed to a registry accessible by your Kubernetes cluster. This template specifies `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0`.
+3.  **Docker Image:** The Docker image defined by the `Dockerfile` (e.g., `riksarkivet/coder-workspace-ml:v14.1.3`) must be built and pushed to a registry accessible by your Kubernetes cluster. This template specifies `riksarkivet/coder-workspace-ml:v14.1.3`.
 4.  **Kubernetes Namespace:** The Kubernetes namespace specified by the `namespace` variable (e.g., `coder`) must exist.
 5.  **LakeFS Secret (Required for LakeFS integration):**
     * A Kubernetes secret named `lakefs-secrets` must exist in the **same namespace** where workspaces will be deployed.
@@ -82,7 +91,7 @@ Before using this template, ensure you have:
 
 * `use_kubeconfig` (bool): Set to `true` if Coder runs outside the Kubernetes cluster and should use `~/.kube/config` from the Coder host. Default: `false` (for in-cluster Coder).
 * `namespace` (string): The Kubernetes namespace to create workspaces in. This namespace must exist.
-* `container_registry` (string): The container registry URL for workspace images (e.g., `registry.example.com:5000`). Default: `"registry.ra.se:5002"`.
+* `container_registry` (string): The container registry URL for workspace images (e.g., `registry.example.com:5000`). Default: `"docker.io"`.
 * `mlflow_external_address` (string): External URL for the MLflow Tracking Server UI (e.g., `http://mlflow.example.com`). Leave empty to disable MLflow app and environment variable injection. Default: `""`.
 * `argowf_external_address` (string): External URL for the Argo Workflow Server UI (e.g., `http://argo.example.com`). Leave empty to disable Argo Workflow app and environment variable injection. Default: `""`.
 
@@ -162,7 +171,7 @@ Before using this template, ensure you have:
 
 ## Kubernetes Deployment Details
 
-* **Image:** Uses the custom Docker image `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0` (GPU) or `registry.ra.se:5002/airiksarkivet/devenv:v13.4.0-cpu` (CPU-only) as specified in the deployment configuration.
+* **Image:** Uses the custom Docker image `riksarkivet/coder-workspace-ml:v14.1.3` (GPU) or `riksarkivet/coder-workspace-ml:v14.1.3-cpu` (CPU-only) as specified in the deployment configuration.
 * **Persistent Storage:**
     * `/home/coder` is backed by a `PersistentVolumeClaim` named `coder-<workspace-id>-home`. The size is determined by the `home_disk_size` parameter.
 * **GPU Support:**
@@ -197,11 +206,12 @@ The agent startup script performs several key actions:
 4.  **Configures Git:** Sets global `user.name` and `user.email` using Coder workspace owner details.
 5.  **Configures Coder CLI:** Sets up basic Coder CLI configuration.
 6.  **Displays Service Info:** Prints MLflow and Argo UI addresses to the agent log if configured.
+7.  **SSH Configuration:** Automatically starts SSH agent and loads `~/.ssh/id_rsa` key if present for seamless Git operations.
 
 ## How to Use
 
 1.  **Import Template:** Add this template to your Coder deployment.
-2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`registry.ra.se:5002/airiksarkivet/devenv:v14.0.0`). Use the Dagger build system: `dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"` or modify the image tag in `main.tf` if you use a different one.
+2.  **Build Docker Image:** Ensure the Dockerfile provided is built and pushed to the registry specified in `main.tf` (`riksarkivet/coder-workspace-ml:v14.1.3`). Use the Dagger build system: `dagger call build-local --source="." --enable-cuda=true --image-tag="v14.1.3"` or modify the image tag in `main.tf` if you use a different one.
 3.  **Create Kubernetes Secret:** Ensure the `lakefs-secrets` secret is created in the target Kubernetes namespace.
 4.  **Create Workspace:**
     * Navigate to Coder and create a new workspace using this template.
@@ -252,42 +262,30 @@ cd my-project
 uv add torch numpy matplotlib
 ```
 
-## Build System
-
-This template uses a modern Git-based Dagger + Kaniko build pipeline with automatic SSH key detection and no caching for maximum reliability:
-
-### Quick Start
-```bash
-# CUDA build (production) - SSH key auto-detected from ~/.ssh/id_rsa
-dagger call build-cuda --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
-
-# CPU build (development)
-dagger call build-cpu --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates"
-
-# Custom version from specific branch/tag
-dagger call build-from-git --git-repo="ssh://git@devops.ra.se:22/DataLab/Datalab/_git/coder-templates" --git-ref="v14.1.1" --image-tag=v14.1.1
-```
-
 ### Key Features
-- **🔑 Auto SSH Key Detection**: Automatically uses `~/.ssh/id_rsa` for Git authentication
-- **🚫 Caching Disabled**: No cache-related issues, every build is fresh and reliable
-- **📁 Git-Based**: All builds use Git repository as source of truth
-- **⚡ Simplified**: Single `build-from-git` function with shortcuts
+- **📁 Local Builds**: Build directly from current directory
+- **⚡ Simple Setup**: No Git or authentication required for local builds
+- **🚀 Fast Builds**: Efficient Docker-based container builds
+- **🔄 CPU/GPU Support**: Easy switching between CPU and CUDA builds
+- **📶 Offline Examples**: Test Dagger without external dependencies
 
-### Documentation
-* **[BUILD.md](BUILD.md)** - Complete build guide with examples
-* **[MIGRATION.md](MIGRATION.md)** - Migration from old Argo system
-* **[BUILD-QUICK-REFERENCE.md](BUILD-QUICK-REFERENCE.md)** - Command reference card
+### Available Functions
+- `build-local`: Build from current directory with configurable options
+- `build-and-publish`: Build and publish to registry with authentication
+- `quick-cpu-build`: Convenience function for CPU-only builds
+- `quick-cuda-build`: Convenience function for CUDA builds
+- `get-build-command`: Show example build commands
+- `hello`: Display usage information
 
 ### Key Benefits
-* ✅ **No Argo dependency** - Direct Dagger execution
-* ✅ **No size limits** - Direct Dockerfile reading
-* ✅ **Better debugging** - Real-time build output
-* ✅ **Same results** - Identical images using Kaniko backend
+* ✅ **No Git Required** - Direct local directory builds
+* ✅ **No Authentication** - Simple local builds without complexity
+* ✅ **Better Performance** - Optimized for quick local development cycles
+* ✅ **Registry Support** - Optional publishing with authentication
 
 ## Customization
 
-* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Use the Dagger build system to rebuild and push images: `dagger call build-cuda --dockerfile-content="$(cat Dockerfile)"`
+* **Software in Docker Image:** Modify the `Dockerfile` to add or remove system packages, Homebrew formulae, or Python libraries. Use the Dagger build system to rebuild and push images: `dagger call build-local --source="." --enable-cuda=true --image-tag="v14.1.3"`
 * **LLM Configuration:**
     * Change the `apiBase` and `model` in `/home/coder/.continue/config.yaml` (within the startup script) for the Continue extension.
     * Change `openai-api-base` and `model` in `/home/coder/.aider.conf.yml` (within the startup script) for Aider.
@@ -316,7 +314,7 @@ The template includes comprehensive resource monitoring:
 ## Version Information
 
 **Current Template Versions:**
-* **Container Image:** `v13.4.0` (CUDA), `v13.4.0-cpu` (CPU-only)
+* **Container Image:** `v14.1.3` (CUDA), `v14.1.3-cpu` (CPU-only)
 * **VS Code Web Module:** `1.3.1`
 * **File Browser Module:** `1.0.30`  
 * **Claude Code Module:** `2.0.3`

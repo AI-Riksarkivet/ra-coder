@@ -39,13 +39,21 @@ The environment comes pre-configured with CUDA, Python, PyTorch, popular data sc
 
 ```bash
 # CPU build
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false
+dagger call build-local --source="." --enable-cuda=false
 
 # GPU build
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true
+dagger call build-local --source="." --enable-cuda=true
 
 # CUDA build with custom tag
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag="v14.1.3"
+dagger call build-local --source="." --enable-cuda=true --image-tag="v14.1.3"
+
+# Quick builds (convenience functions)
+dagger call quick-cpu-build --source="."
+dagger call quick-cuda-build --source="."
+
+# Get help and example commands
+dagger call hello
+dagger call get-build-command
 ```
 
 ### Offline Development
@@ -59,6 +67,10 @@ go run offline-dagger-example.go
 # Dagger module version
 dagger call hello-world -m ./offline-example
 dagger call simple-test -m ./offline-example
+
+# Check available functions
+dagger call hello
+dagger call get-build-command
 ```
 
 ## Build System
@@ -66,9 +78,9 @@ dagger call simple-test -m ./offline-example
 This template uses a modern **Dagger-based build system** for local directory builds:
 
 ### Key Features
-- **Local Builds**: Build directly from current directory
+- **Local Builds**: Build directly from current directory (use `--source="."` parameter)
 - **Simple Setup**: No Git or authentication required
-- **Fast Builds**: Efficient Kaniko-based container builds
+- **Fast Builds**: Efficient Docker-based container builds
 - **CPU/GPU Support**: Easy switching between CPU and CUDA builds
 - **Offline Examples**: Test Dagger without external dependencies
 
@@ -76,18 +88,24 @@ This template uses a modern **Dagger-based build system** for local directory bu
 
 ```bash
 # CPU build
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false --image-tag="v14.1.3"
+dagger call build-local --source="." --enable-cuda=false --image-tag="v14.1.3"
 
 # CUDA build
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag="v14.1.3"
+dagger call build-local --source="." --enable-cuda=true --image-tag="v14.1.3"
 
 # Build with different registry
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --registry="custom.registry.com"
+dagger call build-local --source="." --enable-cuda=true --registry="custom.registry.com"
+
+# Build and publish to registry
+dagger call build-and-publish --source="." --username="myuser" --password="mypass" --enable-cuda=true
 ```
 
 ### Available Dagger Functions
 
-- `build-local`: Build from specified local directory (use `./Riksarkivets-Development-Template` as source)
+- `build-local`: Build from current directory with configurable options
+- `build-and-publish`: Build and publish to registry with authentication
+- `quick-cpu-build`: Convenience function for CPU-only builds
+- `quick-cuda-build`: Convenience function for CUDA builds
 - `get-build-command`: Show example build commands
 - `hello`: Display usage information
 
@@ -105,7 +123,7 @@ Before using this template, ensure you have:
 
 1. **Coder Server:** A Coder v2 instance deployed and accessible.
 2. **Kubernetes Cluster:** With appropriate GPU support if using GPUs.
-3. **Container Registry:** Access to `registry.ra.se:5002` or configure custom registry.
+3. **Container Registry:** Access to Docker Hub or configure custom registry.
 4. **Build Tools:** Dagger CLI installed locally
 
 ## Workspace Parameters
@@ -142,9 +160,9 @@ uv add numpy pandas scikit-learn matplotlib
 ## Version Information
 
 **Current Versions:**
-- **Template:** v14.1.3 (latest)
-- **Container Images:** `registry.ra.se:5002/airiksarkivet/devenv:v14.1.3` (GPU), `v14.1.3-cpu` (CPU)
-- **Build System:** Dagger module for local directory builds
+- **Template:** v14.1.3+ (latest with SSH auto-configuration)
+- **Container Images:** `riksarkivet/coder-workspace-ml:v14.1.3` (GPU), `riksarkivet/coder-workspace-ml:v14.1.3-cpu` (CPU)
+- **Build System:** Simplified Dagger module for local directory builds only
 
 ## Support
 

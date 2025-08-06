@@ -21,10 +21,10 @@ func (m *Build) BuildLocal(
 	// +default="v14.1.3"
 	imageTag string,
 	// Registry URL
-	// +default="registry.ra.se:5002"
+	// +default="docker.io"
 	registry string,
 	// Image repository name
-	// +default="airiksarkivet/devenv"
+	// +default="riksarkivet/coder-workspace-ml"
 	imageRepository string,
 ) (*dagger.Container, error) {
 	// Build the container using Dockerfile
