@@ -273,6 +273,16 @@ data "coder_parameter" "hf_token" {
   order       = 13
 }
 
+data "coder_parameter" "docker_password" {
+  type        = "string"
+  name        = "docker_password"
+  display_name = "Docker Registry Password"
+  default     = ""
+  description = "Docker Hub or registry password/token for pushing images"
+  mutable     = true
+  order       = 14
+}
+
 data "coder_parameter" "ssh_private_key" {
   type        = "string"
   name        = "ssh_private_key"
@@ -280,7 +290,7 @@ data "coder_parameter" "ssh_private_key" {
   default     = ""
   description = "SSH private key for Git repository access (Azure DevOps, GitHub, etc.)"
   mutable     = true
-  order       = 14
+  order       = 15
 }
 
 provider "kubernetes" {
@@ -821,6 +831,10 @@ resource "kubernetes_deployment" "main" {
           env {
             name  = "HF_TOKEN"
             value = data.coder_parameter.hf_token.value
+          }
+          env {
+            name  = "DOCKER_PASSWORD"
+            value = data.coder_parameter.docker_password.value
           }
 
           # Set KUBECONFIG environment variable
