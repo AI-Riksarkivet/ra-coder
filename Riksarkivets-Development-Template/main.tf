@@ -412,6 +412,34 @@ AIDERCONFIG
     echo "Current git configuration:"
     git config --list | grep user || echo "WARNING: No git user config found"
 
+    # --- Configure Starship Prompt ---
+    echo "Setting up Starship prompt..."
+    
+    # Add Starship initialization to .bashrc if not already present
+    if ! grep -q "starship init bash" /home/coder/.bashrc; then
+        echo 'eval "$(starship init bash)"' >> /home/coder/.bashrc
+        echo "Added Starship initialization to .bashrc"
+    else
+        echo "Starship initialization already exists in .bashrc"
+    fi
+    
+    # Create starship config directory
+    mkdir -p /home/coder/.config
+    
+    # Apply Catppuccin powerline preset
+    if command -v starship >/dev/null 2>&1; then
+        starship preset catppuccin-powerline -o /home/coder/.config/starship.toml
+        echo "Applied Catppuccin powerline preset to Starship configuration"
+    else
+        echo "Warning: starship command not found - preset not applied"
+    fi
+    
+    # Set proper ownership
+    chown -R coder:coder /home/coder/.config
+    chown coder:coder /home/coder/.bashrc
+    
+    echo "Starship prompt configuration completed."
+
     # --- Configure Coder CLI ---
     echo "Configuring Coder CLI..."
     # Create coder config directory with basic URL configuration
