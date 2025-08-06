@@ -300,6 +300,24 @@ provider "kubernetes" {
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+resource "coder_metadata" "resources" {
+  count       = data.coder_workspace.me.start_count
+  resource_id = kubernetes_deployment.main[0].id
+  icon        = "/icon/memory.svg"
+  item {
+    key   = "volume_claim"
+    value = kubernetes_persistent_volume_claim.home.metadata[0].name
+  }
+  item {
+    key   = "gpu_type"
+    value = local.selected_gpu == "None" ? "No GPU" : local.selected_gpu
+  }
+  item {
+    key   = "image_id"
+    value = local.main_image
+  }
+}
+
 # --- Coder Agent Configuration ---
 resource "coder_agent" "main" {
   os   = "linux"
@@ -882,6 +900,25 @@ SSHCONFIG
     }
   }
 
+  metadata {
+    display_name = "Node Info"
+    key          = "7_node_info"
+    script       = <<EOT
+      kubectl describe pod $HOSTNAME | grep "^Node:" | awk '{print $NF}'
+    EOT
+    interval     = 600
+    timeout      = 5
+  }
+
+  metadata {
+    display_name = "Pod IP"
+    key          = "8_pod_ip"
+    script       = <<EOT
+      kubectl describe pod $HOSTNAME | grep "^IP:" | awk '{print $NF}'
+    EOT
+    interval     = 600
+    timeout      = 5
+  }
 
   display_apps {
     vscode = false
@@ -898,6 +935,10 @@ locals {
 
   git_author_name        = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
   git_author_email       = data.coder_workspace_owner.me.email
+
+  # --- Images ---
+  main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/airiksarkivet/devenv:v14.1.1" : "${var.container_registry}/airiksarkivet/devenv:v14.1.1-cpu"
+
 
   # --- GPU Logic ---
   selected_gpu           = data.coder_parameter.gpu_type.value
@@ -1096,13 +1137,17 @@ resource "kubernetes_deployment" "main" {
 
         container {
           name            = "coder-workspace-dev" # Renamed from "dev"
-          image           = local.actual_gpu_count > 0 ? "${var.container_registry}/riksarkivet/coder-workspace-ml:v14.2.0" : "${var.container_registry}/riksarkivet/coder-workspace-ml:v14.2.0-cpu"
+          image           = local.main_image
           image_pull_policy = "Always"
           command         = ["sh", "-c", coder_agent.main.init_script]
 
           env {
             name  = "CODER_AGENT_TOKEN"
             value = coder_agent.main.token
+          }
+          env {
+            name  = "POD_MAIN_IMAGE_ID"
+            value = local.main_image
           }
           env {
             name  = "HOME"
