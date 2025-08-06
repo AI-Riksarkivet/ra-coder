@@ -8,7 +8,7 @@ You are operating within a **GPU-accelerated data science and MLOps development 
 - **User**: `coder` (UID 1000, GID 1000) with passwordless sudo access
 - **Home Directory**: `/home/coder` (persistent via Kubernetes PVC)
 - **CUDA Support**: NVIDIA CUDA Toolkit 12.2 (GPU workspaces)
-- **Container Registry**: `docker.io/riksarkivet/coder-workspace-ml:v14.1.3`
+- **Container Registry**: `docker.io/riksarkivet/coder-workspace-ml:v14.2.0`
 - **Infrastructure**: Kubernetes-based deployment with Coder v2
 
 ## Python Environment
@@ -255,8 +255,8 @@ duckdb data.db "SELECT * FROM table LIMIT 10"
 - Monitor resource usage via Coder dashboard metrics
 
 ## Version Information
-- **Template Version**: Based on Riksarkivets-Development-Template v14.1.3+
-- **Container Images**: `v14.1.3` (GPU), `v14.1.3-cpu` (CPU-only)
+- **Template Version**: Based on Riksarkivets-Development-Template v14.2.0+
+- **Container Images**: `v14.2.0` (GPU), `v14.2.0-cpu` (CPU-only)
 - **VS Code Module**: v1.3.1
 - **Claude Code Module**: v2.0.3
 
