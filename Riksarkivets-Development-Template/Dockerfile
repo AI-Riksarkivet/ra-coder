@@ -95,6 +95,9 @@ FROM cuda-stage AS final
 # Copy Homebrew installation from previous stage
 COPY --from=homebrew-stage --chown=coder:coder /home/linuxbrew /home/linuxbrew
 
+# Copy CLAUDE.md workspace context file
+COPY --chown=coder:coder workspace-claude.md /home/coder/CLAUDE.md
+
 # Configure shell environment - users can create their own Python environments
 RUN echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.profile && \
     echo 'eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)"' >> ~/.bashrc && \
