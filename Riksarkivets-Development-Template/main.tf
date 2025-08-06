@@ -621,8 +621,10 @@ module "vscode-web" {
     "workbench.navigationControl.enabled": false,
     "workbench.layoutControl.enabled": false,
     "workbench.iconTheme": "symbols",
-    "workbench.productIconTheme": "fluent-icons",
     "window.title": "Riksarkivet IDE",
+    "recommendations": [
+        "astral-sh.ty",
+    ]
 }
 
   subdomain     = false
@@ -633,12 +635,9 @@ module "vscode-web" {
     "charliermarsh.ruff",
     "marimo-team.vscode-marimo",
     "miguelsolorio.symbols",
-    "astral-sh.ty",
     "redhat.vscode-yaml",
     "tamasfe.even-better-toml",
     "pmndrs.pmndrs",
-    "miguelsolorio.fluent-icons",
-    "RSIP-Vision.nvidia-smi-plus"
   ]
   telemetry_level = "off"
 }
