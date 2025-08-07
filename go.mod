@@ -1,4 +1,4 @@
-module temp-build
+module build
 
 go 1.24.5
 
