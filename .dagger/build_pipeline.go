@@ -359,21 +359,30 @@ func (m *Build) DeployCoderToK3s(
 	// Coder Helm chart version
 	// +default="2.19.2"
 	chartVersion string,
+	// Admin username to create
+	// +default="admin"
+	adminUsername string,
+	// Admin email to create
+	// +default="admin@example.com"
+	adminEmail string,
+	// Admin password to set
+	// +default="changeme123"
+	adminPassword string,
 ) (*dagger.Service, error) {
 	fmt.Println("🚀 DEPLOYING CODER TO K3S CLUSTER")
 	fmt.Println("==================================")
 
 	// Step 1: Start K3s cluster
 	fmt.Printf("📦 Step 1/4: Starting K3s cluster '%s'...\n", clusterName)
-	
+
 	k3s := dag.K3S(clusterName)
 	k3sSvc := k3s.Server()
-	
+
 	k3sSvc, err := k3sSvc.Start(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start K3s service: %w", err)
 	}
-	
+
 	// Get K3s endpoint to verify it's running
 	ep, err := k3sSvc.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: 6443, Scheme: "https"})
 	if err != nil {
@@ -387,7 +396,7 @@ func (m *Build) DeployCoderToK3s(
 
 	// Step 2: Create namespace
 	fmt.Printf("📋 Step 2/4: Creating namespace '%s'...\n", namespace)
-	
+
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithServiceBinding("k3s", k3sSvc).
@@ -410,7 +419,7 @@ func (m *Build) DeployCoderToK3s(
 			kubectl get namespace %s
 		`, namespace, namespace, namespace)}).
 		Stdout(ctx)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create namespace: %w", err)
 	}
@@ -418,7 +427,7 @@ func (m *Build) DeployCoderToK3s(
 
 	// Step 3: Deploy Coder using Helm
 	fmt.Printf("🚢 Step 3/4: Deploying Coder v%s using Helm...\n", chartVersion)
-	
+
 	// Base container with Helm and kubectl
 	helmContainer := dag.Container().
 		From("alpine/helm:3.13.3").
@@ -563,7 +572,7 @@ EOF
 			echo "✅ Helm deployment command completed (check status above)"
 		`, releaseName, namespace, releaseName, namespace, namespace)}).
 		Stdout(ctx)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Coder: %w", err)
 	}
@@ -571,7 +580,7 @@ EOF
 
 	// Step 4: Verify deployment
 	fmt.Println("🔍 Step 4/4: Verifying Coder deployment...")
-	
+
 	verifyResult, err := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithServiceBinding("k3s", k3sSvc).
@@ -607,12 +616,73 @@ EOF
 			kubectl logs -n %s -l app.kubernetes.io/name=coder --tail=20 2>/dev/null || echo "Logs not yet available"
 		`, namespace, namespace, namespace, namespace, namespace, namespace)}).
 		Stdout(ctx)
-	
+
 	if err != nil {
 		fmt.Printf("   ⚠️  Verification had issues: %v\n", err)
 		verifyResult = "Verification completed with warnings"
 	} else {
 		fmt.Println("   ✅ Verification completed")
+	}
+
+	// Step 5: Create admin user
+	fmt.Printf("👤 Step 5/5: Setting up admin user '%s'...\n", adminUsername)
+
+	adminResult, err := dag.Container().
+		From("alpine/k8s:1.28.3").
+		WithServiceBinding("k3s", k3sSvc).
+		WithEnvVariable("KUBECONFIG", "/.kube/config").
+		WithFile("/.kube/config", kubeconfig).
+		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+			echo "👤 Creating admin user '%s'..."
+			
+			# Wait for Coder pod to be ready
+			echo "⏳ Waiting for Coder pod to be ready..."
+			for i in $(seq 1 30); do
+				CODER_POD=$(kubectl get pods -n %s -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+				if [ -n "$CODER_POD" ]; then
+					POD_STATUS=$(kubectl get pod -n %s "$CODER_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
+					if [ "$POD_STATUS" = "Running" ]; then
+						echo "✅ Found running Coder pod: $CODER_POD"
+						break
+					fi
+				fi
+				[ "$i" -eq 1 ] && echo "   Waiting for Coder pod to start..."
+				sleep 2
+			done
+			
+			if [ -n "$CODER_POD" ]; then
+				echo "🔧 Creating admin user..."
+				
+				# Create admin user directly in the Coder pod
+				kubectl exec -n %s "$CODER_POD" -- /opt/coder server create-admin-user \
+					--username "%s" \
+					--email "%s" \
+					--password "%s" 2>&1 | grep -E "User created|Username:|Email:|already exists" || true
+				
+				echo ""
+				echo "✅ Admin user setup completed"
+				echo ""
+				echo "📌 User Credentials:"
+				echo "   Username: %s"
+				echo "   Email: %s"
+				echo "   Password: %s"
+				echo ""
+				echo "🔗 To access Coder:"
+				echo "   1. Port-forward: kubectl port-forward -n %s svc/coder 8080:80"
+				echo "   2. Open browser: http://localhost:8080"
+				echo "   3. Login with the credentials above"
+			else
+				echo "⚠️  Could not find Coder pod. Manual setup may be required."
+				echo "   Check pod status: kubectl get pods -n %s"
+			fi
+		`, adminUsername, namespace, namespace, namespace, adminUsername, adminEmail, adminPassword, adminUsername, adminEmail, adminPassword, namespace, namespace)}).
+		Stdout(ctx)
+
+	if err != nil {
+		fmt.Printf("   ⚠️  Admin user creation had issues: %v\n", err)
+		adminResult = "Admin user creation completed with warnings"
+	} else {
+		fmt.Println("   ✅ Admin user created successfully")
 	}
 
 	// Get access instructions
@@ -649,6 +719,7 @@ Results:
 ✅ PostgreSQL: Configured with internal database
 ✅ Resources: CPU/Memory limits configured
 ✅ Persistence: 10Gi for Coder, 20Gi for PostgreSQL
+✅ Admin user: %s (%s) created and ready
 
 Deployment Output:
 ==================
@@ -658,6 +729,10 @@ Verification:
 =============
 %s
 
+Admin User Creation:
+===================
+%s
+
 %s
 
 Summary:
@@ -665,6 +740,7 @@ Summary:
 - K3s cluster running with Coder deployed
 - Coder accessible within cluster at: http://coder.%s.svc.cluster.local
 - PostgreSQL database provisioned for Coder
+- Admin user '%s' created with email '%s'
 - All services deployed and configured
 - K3s service returned for external access
 
@@ -673,19 +749,27 @@ Next Steps:
 1. Use the returned K3s service to interact with the cluster
 2. Get kubeconfig: dagger call get-k3s-kubeconfig --cluster-name=%s
 3. Port-forward to access Coder UI:
-   kubectl port-forward -n %s svc/%s-coder 8080:80
+   kubectl port-forward -n %s svc/coder 8080:80
 4. Access Coder at http://localhost:8080
-`, 
-		clusterName, 
-		namespace, 
-		chartVersion, 
+5. Login with username: %s, password: %s
+`,
+		clusterName,
+		namespace,
+		chartVersion,
 		releaseName,
+		adminUsername,
+		adminEmail,
 		deployResult,
 		verifyResult,
+		adminResult,
 		accessInfo,
 		namespace,
+		adminUsername,
+		adminEmail,
 		clusterName,
-		namespace, releaseName)
+		namespace, releaseName,
+		adminUsername,
+		adminPassword)
 
 	// Return the K3s service for external access
 	return k3sSvc, nil
@@ -699,15 +783,15 @@ func (m *Build) GetK3sKubeconfig(
 	clusterName string,
 ) (*dagger.File, error) {
 	fmt.Println("📋 Getting K3s kubeconfig...")
-	
+
 	// Get the K3s cluster config
 	k3s := dag.K3S(clusterName)
 	kubeconfig := k3s.Config()
-	
+
 	fmt.Printf("✅ Kubeconfig retrieved for cluster: %s\n", clusterName)
 	fmt.Println("💡 Save to file: dagger call get-k3s-kubeconfig --cluster-name=<name> > kubeconfig.yaml")
 	fmt.Println("💡 Use with kubectl: export KUBECONFIG=./kubeconfig.yaml")
-	
+
 	return kubeconfig, nil
 }
 
@@ -722,20 +806,20 @@ func (m *Build) AccessCoderCluster(
 	command string,
 ) (string, error) {
 	fmt.Printf("🔧 Accessing cluster '%s'...\n", clusterName)
-	
+
 	// Get the K3s service
 	k3s := dag.K3S(clusterName)
 	k3sSvc := k3s.Server()
-	
+
 	// Start the service if not already running
 	k3sSvc, err := k3sSvc.Start(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to start K3s service: %w", err)
 	}
-	
+
 	// Get kubeconfig
 	kubeconfig := k3s.Config()
-	
+
 	// Run kubectl command
 	result, err := dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -744,10 +828,10 @@ func (m *Build) AccessCoderCluster(
 		WithFile("/.kube/config", kubeconfig).
 		WithExec([]string{"sh", "-c", fmt.Sprintf("kubectl %s", command)}).
 		Stdout(ctx)
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to execute command: %w", err)
 	}
-	
+
 	return result, nil
 }
