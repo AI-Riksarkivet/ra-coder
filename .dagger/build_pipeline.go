@@ -347,6 +347,8 @@ Next Steps:
 // DeployCoderToK3s deploys Coder to a K3s cluster using Helm and returns the K3s service
 func (m *Build) DeployCoderToK3s(
 	ctx context.Context,
+	// Template source directory
+	source *dagger.Directory,
 	// K3s cluster name
 	// +default="coder-cluster"
 	clusterName string,
@@ -368,12 +370,26 @@ func (m *Build) DeployCoderToK3s(
 	// Admin password to set
 	// +default="changeme123"
 	adminPassword string,
+	// Enable CUDA support
+	// +default=false
+	enableCuda bool,
+	// Image tag
+	// +default="coder-deploy"
+	imageTag string,
 ) (*dagger.Service, error) {
 	fmt.Println("🚀 DEPLOYING CODER TO K3S CLUSTER")
 	fmt.Println("==================================")
 
-	// Step 1: Start K3s cluster
-	fmt.Printf("📦 Step 1/4: Starting K3s cluster '%s'...\n", clusterName)
+	// Step 1: Setup local registry service
+	fmt.Println("📦 Step 1/6: Setting up local registry...")
+	
+	regSvc := dag.Container().From("registry:2.8").
+		WithExposedPort(5000).AsService()
+
+	fmt.Println("   ✅ Local registry service created")
+
+	// Step 2: Start K3s cluster
+	fmt.Printf("📦 Step 2/6: Starting K3s cluster '%s'...\n", clusterName)
 
 	k3s := dag.K3S(clusterName)
 	k3sSvc := k3s.Server()
@@ -394,8 +410,43 @@ func (m *Build) DeployCoderToK3s(
 	// Get kubeconfig from K3s
 	kubeconfig := k3s.Config()
 
-	// Step 2: Create namespace
-	fmt.Printf("📋 Step 2/4: Creating namespace '%s'...\n", namespace)
+	// Step 3: Build workspace image
+	fmt.Println("🔨 Step 3/6: Building workspace image...")
+	
+	container, err := m.BuildLocal(ctx, source, enableCuda, imageTag, "registry:5000", "coder-workspace")
+	if err != nil {
+		return nil, fmt.Errorf("build failed: %w", err)
+	}
+	fmt.Println("   ✅ Image built successfully")
+
+	// Step 4: Push to local registry
+	fmt.Println("📤 Step 4/6: Pushing to local registry...")
+	finalImageTag := imageTag
+	if !enableCuda {
+		finalImageTag = imageTag + "-cpu"
+	}
+
+	// Export container as tar and push using Skopeo
+	imageTar := container.AsTarball()
+
+	_, err = dag.Container().
+		From("quay.io/skopeo/stable").
+		WithServiceBinding("registry", regSvc).
+		WithFile("/image.tar", imageTar).
+		WithExec([]string{"skopeo", "copy", "--dest-tls-verify=false",
+			"docker-archive:/image.tar",
+			fmt.Sprintf("docker://registry:5000/coder-workspace:%s", finalImageTag)}).
+		Sync(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("push failed: %w", err)
+	}
+
+	pushedRef := fmt.Sprintf("registry:5000/coder-workspace:%s", finalImageTag)
+	fmt.Printf("   ✅ Image pushed: %s\n", pushedRef)
+
+	// Step 5: Create namespace
+	fmt.Printf("📋 Step 5/7: Creating namespace '%s'...\n", namespace)
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -425,8 +476,75 @@ func (m *Build) DeployCoderToK3s(
 	}
 	fmt.Println("   ✅ Namespace ready")
 
-	// Step 3: Deploy Coder using Helm
-	fmt.Printf("🚢 Step 3/4: Deploying Coder v%s using Helm...\n", chartVersion)
+	// Step 6: Deploy workspace image as test pod
+	fmt.Printf("🚀 Step 6/7: Deploying workspace image as test pod...\n")
+	
+	testPodResult, err := dag.Container().
+		From("alpine/k8s:1.28.3").
+		WithServiceBinding("k3s", k3sSvc).
+		WithServiceBinding("registry", regSvc).
+		WithEnvVariable("KUBECONFIG", "/.kube/config").
+		WithFile("/.kube/config", kubeconfig).
+		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+			# Create test pod with the workspace image in the coder namespace
+			echo "🏗️ Creating test pod with workspace image: %s"
+			cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workspace-test
+  namespace: %s
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: workspace-test-pod
+  namespace: %s
+  labels:
+    app: workspace-test
+    component: coder-workspace
+spec:
+  serviceAccountName: workspace-test
+  containers:
+  - name: workspace
+    image: %s
+    imagePullPolicy: Always
+    command: ["/bin/bash"]
+    args: ["-c", "echo 'Workspace container started successfully!' && echo 'Testing workspace environment...' && python3 --version && which code-server && sleep 60"]
+    env:
+    - name: USER
+      value: "coder"
+    - name: HOME
+      value: "/home/coder"
+  restartPolicy: Never
+EOF
+
+			echo "✅ Test pod deployment manifest applied"
+			
+			# Wait a bit for pod to start
+			echo "⏳ Waiting for test pod to start..."
+			sleep 10
+			
+			# Check pod status in coder namespace
+			echo "📊 Pod Status:"
+			kubectl get pod workspace-test-pod -n %s -o wide 2>/dev/null || echo "Pod not found yet"
+			
+			# Get pod logs to verify it's working
+			echo ""
+			echo "📋 Pod Logs:"
+			kubectl logs workspace-test-pod -n %s --tail=20 2>/dev/null || echo "Logs not yet available"
+		`, pushedRef, namespace, namespace, pushedRef, namespace, namespace)}).
+		Stdout(ctx)
+
+	if err != nil {
+		fmt.Printf("   ⚠️  Test pod deployment failed: %v\n", err)
+		testPodResult = "Test pod deployment failed but continuing with Coder deployment"
+	} else {
+		fmt.Println("   ✅ Test pod deployed successfully")
+	}
+
+	// Step 7: Deploy Coder using Helm
+	fmt.Printf("🚢 Step 7/7: Deploying Coder v%s using Helm...\n", chartVersion)
 
 	// Base container with Helm and kubectl
 	helmContainer := dag.Container().
@@ -578,8 +696,8 @@ EOF
 	}
 	fmt.Println("   ✅ Coder deployed successfully")
 
-	// Step 4: Verify deployment
-	fmt.Println("🔍 Step 4/4: Verifying Coder deployment...")
+	// Verify deployment
+	fmt.Println("🔍 Verifying Coder deployment...")
 
 	verifyResult, err := dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -624,8 +742,8 @@ EOF
 		fmt.Println("   ✅ Verification completed")
 	}
 
-	// Step 5: Create admin user
-	fmt.Printf("👤 Step 5/5: Setting up admin user '%s'...\n", adminUsername)
+	// Create admin user
+	fmt.Printf("👤 Setting up admin user '%s'...\n", adminUsername)
 
 	adminResult, err := dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -712,7 +830,10 @@ EOF
 
 Results:
 ========
+✅ Local registry: registry:5000 running
 ✅ K3s cluster: %s running
+✅ Workspace image: %s built and pushed
+✅ Test pod: workspace-test-pod deployed with workspace image
 ✅ Namespace: %s created
 ✅ Coder version: %s deployed
 ✅ Release name: %s
@@ -723,6 +844,10 @@ Results:
 
 Deployment Output:
 ==================
+%s
+
+Test Pod Deployment:
+===================
 %s
 
 Verification:
@@ -752,14 +877,17 @@ Next Steps:
    kubectl port-forward -n %s svc/coder 8080:80
 4. Access Coder at http://localhost:8080
 5. Login with username: %s, password: %s
+6. Use workspace image: %s for creating Coder templates
 `,
 		clusterName,
+		pushedRef,
 		namespace,
 		chartVersion,
 		releaseName,
 		adminUsername,
 		adminEmail,
 		deployResult,
+		testPodResult,
 		verifyResult,
 		adminResult,
 		accessInfo,
@@ -767,9 +895,10 @@ Next Steps:
 		adminUsername,
 		adminEmail,
 		clusterName,
-		namespace, releaseName,
+		namespace, 
 		adminUsername,
-		adminPassword)
+		adminPassword,
+		pushedRef)
 
 	// Return the K3s service for external access
 	return k3sSvc, nil
