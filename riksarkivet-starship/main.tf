@@ -961,7 +961,11 @@ resource "kubernetes_deployment" "main" {
               requests = merge({
                 "cpu"    = local.dagger_cpu_request
                 "memory" = local.dagger_memory_request
-              }, local.gpu_resources) 
+              }) 
+              limits = merge({
+                "cpu"    = local.dagger_cpu_limit
+                "memory" = "${local.dagger_memory_limit}Gi"
+              }) 
             }
           }
         }
