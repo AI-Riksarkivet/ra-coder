@@ -17,7 +17,7 @@ provider "kubernetes" {
 }
 
 # ========================================
-# Variables
+# Variable
 # ========================================
 
 variable "use_kubeconfig" {
@@ -144,9 +144,9 @@ data "coder_workspace_preset" "intense-ml" {
   }
 }
 
-data "coder_workspace_preset" "standard-dev" {
-  name        = "Standard Development"
-  description = "Balanced configuration for general development work without GPU"
+data "coder_workspace_preset" "standard-ds" {
+  name        = "Standard Data Science"
+  description = "Standard configuration for general development work (without GPU)"
   icon        = "/emojis/1f435.png"
   parameters = {
     "cpu"                      = "8"
@@ -158,6 +158,22 @@ data "coder_workspace_preset" "standard-dev" {
     "enable_advanced_tools"    = "false"
   }
 }
+
+data "coder_workspace_preset" "standard-dev" {
+  name        = "Standard Development"
+  description = "CI + general development work (without GPU)"
+  icon        = "/emojis/1f435.png"
+  parameters = {
+    "cpu"                      = "8"
+    "memory"                   = "32"
+    "home_disk_size"           = "100"
+    "shared_memory_percentage" = "20"
+    "gpu_type"                 = "None"
+    "use_dagger"               = "true"
+    "enable_advanced_tools"    = "true"
+  }
+}
+
 
 # ========================================
 # Parameters
@@ -555,13 +571,11 @@ resource "coder_agent" "main" {
 # Coder Apps
 # ========================================
 
-module "vscode-web" {
-  count         = data.coder_workspace.me.start_count
-  source        = "registry.coder.com/modules/vscode-web/coder"
-  version       = "1.3.1"
-  agent_id      = coder_agent.main.id
-  accept_license = true
-  
+module "code-server" {
+  count      = data.coder_workspace.me.start_count
+  source     = "registry.coder.com/coder/code-server/coder"
+  version    = "1.3.1"
+  agent_id   = coder_agent.main.id
   settings = {
     "workbench.colorTheme": "poimandres",
     "keyboard.layout": "0000041D",
@@ -581,23 +595,23 @@ module "vscode-web" {
     "recommendations": [
         "astral-sh.ty",
         "4ops.terraform"
-    ]
+    ],
+    "workbench.startupEditor": "terminal"
   }
 
   subdomain     = false
   extensions    = [
     "ms-python.python",
-    "anthropic.claude-code",
     "golang.Go",
     "fowind.material-icon-theme-with-jb-nf",
+    "flvffy.poimandres",
     "charliermarsh.ruff",
     "marimo-team.vscode-marimo",
     "redhat.vscode-yaml",
     "tamasfe.even-better-toml",
-    "pmndrs.pmndrs",
   ]
-  telemetry_level = "off"
 }
+
 
 module "filebrowser" {
   count         = data.coder_workspace.me.start_count
@@ -613,6 +627,14 @@ module "dotfiles" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/modules/dotfiles/coder"
   version  = "1.0.29"
+  default_dotfiles_uri = ""
+  agent_id = coder_agent.main.id
+}
+
+module "coder-login" {
+  count    = data.coder_workspace.me.start_count
+  source   = "registry.coder.com/coder/coder-login/coder"
+  version  = "1.0.31"
   agent_id = coder_agent.main.id
 }
 
@@ -623,7 +645,6 @@ module "claude-code" {
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
   install_claude_code = true
-  claude_code_version = "1.0.62"
 
   # Enable experimental features
   experiment_report_tasks = false
@@ -791,6 +812,10 @@ resource "kubernetes_deployment" "main" {
             value = data.coder_parameter.use_dagger.value ? "unix:///run/dagger/engine.sock" : ""
           }
           env {
+            name  = "_EXPERIMENTAL_DAGGER_GPU_SUPPORT"
+            value = "true"
+          }
+          env {
             name  = "DAGGER_CLOUD_TOKEN"  
             value = ""
           }
@@ -873,10 +898,27 @@ resource "kubernetes_deployment" "main" {
           for_each = data.coder_parameter.use_dagger.value ? [1] : []
           content {
             name  = "dagger-engine"
-            image = "registry.dagger.io/engine:v0.18.14"
+            image = "registry.dagger.io/engine:v0.18.14-gpu"
             
             command = ["/usr/local/bin/dagger-engine"]
             args    = ["--config", "/etc/dagger/engine.toml"]
+
+
+            env {
+            name  = "_EXPERIMENTAL_DAGGER_GPU_SUPPORT"
+            value = "true"
+            }
+
+
+            env {
+              name  = "NVIDIA_VISIBLE_DEVICES"
+              value = "all"
+            }
+            
+            env {
+              name  = "NVIDIA_DRIVER_CAPABILITIES"
+              value = "compute,utility"
+            }
             
             security_context {
               privileged                = true
@@ -908,16 +950,18 @@ resource "kubernetes_deployment" "main" {
               mount_path = "/var/lib/dagger"
               name       = "dagger-storage"
             }
-            
+
+            volume_mount {
+              mount_path = "/proc/driver/nvidia"
+              name       = "nvidia-proc"
+              read_only  = true
+            }
+                    
             resources {
-              requests = {
+              requests = merge({
                 "cpu"    = local.dagger_cpu_request
                 "memory" = local.dagger_memory_request
-              }
-              limits = {
-                "cpu"    = local.dagger_cpu_limit
-                "memory" = "${local.dagger_memory_limit}Gi"
-              }
+              }, local.gpu_resources) 
             }
           }
         }
@@ -928,6 +972,14 @@ resource "kubernetes_deployment" "main" {
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim.home.metadata.0.name
             read_only  = false
+          }
+        }
+
+        volume {
+          name = "nvidia-proc"
+          host_path {
+            path = "/proc/driver/nvidia"
+            type = "DirectoryOrCreate"
           }
         }
 
