@@ -951,11 +951,6 @@ resource "kubernetes_deployment" "main" {
               name       = "dagger-storage"
             }
 
-            volume_mount {
-              mount_path = "/proc/driver/nvidia"
-              name       = "nvidia-proc"
-              read_only  = true
-            }
                     
             resources {
               requests = merge({
@@ -979,13 +974,6 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-        volume {
-          name = "nvidia-proc"
-          host_path {
-            path = "/proc/driver/nvidia"
-            type = "DirectoryOrCreate"
-          }
-        }
 
         volume {
           name = "lakefs-secrets"
