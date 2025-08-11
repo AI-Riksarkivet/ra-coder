@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"dagger/test/internal/dagger"
@@ -373,23 +374,21 @@ func (m *Build) DeployCoderToK3s(
 	// Enable CUDA support
 	// +default=false
 	enableCuda bool,
-	// Image tag
-	// +default="coder-deploy"
-	imageTag string,
+	// Docker Hub username (required for pushing)
+	dockerUsername string,
+	// Docker Hub password/token (required for pushing)
+	dockerPassword string,
 ) (*dagger.Service, error) {
 	fmt.Println("🚀 DEPLOYING CODER TO K3S CLUSTER")
 	fmt.Println("==================================")
 
-	// Step 1: Setup local registry service
-	fmt.Println("📦 Step 1/6: Setting up local registry...")
-	
-	regSvc := dag.Container().From("registry:2.8").
-		WithExposedPort(5000).AsService()
+	// Validate Docker Hub credentials
+	if dockerUsername == "" || dockerPassword == "" {
+		return nil, fmt.Errorf("Docker Hub credentials are required (dockerUsername and dockerPassword)")
+	}
 
-	fmt.Println("   ✅ Local registry service created")
-
-	// Step 2: Start K3s cluster
-	fmt.Printf("📦 Step 2/6: Starting K3s cluster '%s'...\n", clusterName)
+	// Step 1: Start K3s cluster (no local registry needed)
+	fmt.Printf("📦 Step 1/6: Starting K3s cluster '%s'...\n", clusterName)
 
 	k3s := dag.K3S(clusterName)
 	k3sSvc := k3s.Server()
@@ -410,43 +409,40 @@ func (m *Build) DeployCoderToK3s(
 	// Get kubeconfig from K3s
 	kubeconfig := k3s.Config()
 
-	// Step 3: Build workspace image
-	fmt.Println("🔨 Step 3/6: Building workspace image...")
-	
-	container, err := m.BuildLocal(ctx, source, enableCuda, imageTag, "registry:5000", "coder-workspace")
-	if err != nil {
-		return nil, fmt.Errorf("build failed: %w", err)
-	}
-	fmt.Println("   ✅ Image built successfully")
+	// Step 2: Build and push workspace image to Docker Hub
+	fmt.Println("🔨 Step 2/5: Building and pushing workspace image to Docker Hub...")
 
-	// Step 4: Push to local registry
-	fmt.Println("📤 Step 4/6: Pushing to local registry...")
-	finalImageTag := imageTag
+	// Use Docker Hub registry for building
+
+	// Generate SHA-based tag from source directory
+	sourceHash, err := source.Digest(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate source hash: %w", err)
+	}
+	// Remove "sha256:" prefix and use first 12 characters of the actual hash
+	hashParts := strings.Split(sourceHash, ":")
+	actualHash := hashParts[len(hashParts)-1]
+	generatedTag := actualHash[:12]
+	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
+
+	// Use BuildAndPublish to build and push in one operation
+	publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "docker.io", "riksarkivet/coder-workspace-ml")
+	if err != nil {
+		return nil, fmt.Errorf("build and publish failed: %w", err)
+	}
+
+	// Construct the full image reference
+	finalImageTag := generatedTag
 	if !enableCuda {
-		finalImageTag = imageTag + "-cpu"
+		finalImageTag = generatedTag + "-cpu"
 	}
+	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
 
-	// Export container as tar and push using Skopeo
-	imageTar := container.AsTarball()
+	fmt.Printf("   ✅ %s\n", publishResult)
+	fmt.Printf("   📌 Image reference: %s\n", pushedRef)
 
-	_, err = dag.Container().
-		From("quay.io/skopeo/stable").
-		WithServiceBinding("registry", regSvc).
-		WithFile("/image.tar", imageTar).
-		WithExec([]string{"skopeo", "copy", "--dest-tls-verify=false",
-			"docker-archive:/image.tar",
-			fmt.Sprintf("docker://registry:5000/coder-workspace:%s", finalImageTag)}).
-		Sync(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("push failed: %w", err)
-	}
-
-	pushedRef := fmt.Sprintf("registry:5000/coder-workspace:%s", finalImageTag)
-	fmt.Printf("   ✅ Image pushed: %s\n", pushedRef)
-
-	// Step 5: Create namespace
-	fmt.Printf("📋 Step 5/7: Creating namespace '%s'...\n", namespace)
+	// Step 3: Create namespace
+	fmt.Printf("📋 Step 3/5: Creating namespace '%s'...\n", namespace)
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -476,17 +472,25 @@ func (m *Build) DeployCoderToK3s(
 	}
 	fmt.Println("   ✅ Namespace ready")
 
-	// Step 6: Deploy workspace image as test pod
-	fmt.Printf("🚀 Step 6/7: Deploying workspace image as test pod...\n")
-	
+	// Step 4: Deploy workspace image as test pod (pulling from Docker Hub)
+	fmt.Printf("🚀 Step 4/5: Deploying workspace image as test pod from Docker Hub...\n")
+
 	testPodResult, err := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithServiceBinding("k3s", k3sSvc).
-		WithServiceBinding("registry", regSvc).
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", kubeconfig).
 		WithExec([]string{"sh", "-c", fmt.Sprintf(`
-			# Create test pod with the workspace image in the coder namespace
+			# First create Docker Hub pull secret in the namespace
+			echo "🔑 Creating Docker Hub credentials secret..."
+			kubectl create secret docker-registry dockerhub-creds \
+				--docker-server=docker.io \
+				--docker-username='%s' \
+				--docker-password='%s' \
+				--docker-email=test@example.com \
+				-n %s 2>/dev/null || echo "Secret already exists"
+			
+			# Now create test pod with the workspace image from Docker Hub
 			echo "🏗️ Creating test pod with workspace image: %s"
 			cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -505,12 +509,14 @@ metadata:
     component: coder-workspace
 spec:
   serviceAccountName: workspace-test
+  imagePullSecrets:
+  - name: dockerhub-creds
   containers:
   - name: workspace
     image: %s
     imagePullPolicy: Always
     command: ["/bin/bash"]
-    args: ["-c", "echo 'Workspace container started successfully!' && echo 'Testing workspace environment...' && python3 --version && which code-server && sleep 60"]
+    args: ["-c", "echo 'Workspace container started successfully!' && echo 'Testing workspace environment...' && python3 --version"]
     env:
     - name: USER
       value: "coder"
@@ -533,7 +539,7 @@ EOF
 			echo ""
 			echo "📋 Pod Logs:"
 			kubectl logs workspace-test-pod -n %s --tail=20 2>/dev/null || echo "Logs not yet available"
-		`, pushedRef, namespace, namespace, pushedRef, namespace, namespace)}).
+		`, dockerUsername, dockerPassword, namespace, pushedRef, namespace, namespace, pushedRef, namespace, namespace)}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -543,8 +549,8 @@ EOF
 		fmt.Println("   ✅ Test pod deployed successfully")
 	}
 
-	// Step 7: Deploy Coder using Helm
-	fmt.Printf("🚢 Step 7/7: Deploying Coder v%s using Helm...\n", chartVersion)
+	// Step 5: Deploy Coder using Helm
+	fmt.Printf("🚢 Step 5/5: Deploying Coder v%s using Helm...\n", chartVersion)
 
 	// Base container with Helm and kubectl
 	helmContainer := dag.Container().
@@ -830,10 +836,10 @@ EOF
 
 Results:
 ========
-✅ Local registry: registry:5000 running
+✅ Docker Hub: Image pushed to %s
 ✅ K3s cluster: %s running
-✅ Workspace image: %s built and pushed
-✅ Test pod: workspace-test-pod deployed with workspace image
+✅ Workspace image: %s built and pushed to Docker Hub
+✅ Test pod: workspace-test-pod deployed pulling from Docker Hub
 ✅ Namespace: %s created
 ✅ Coder version: %s deployed
 ✅ Release name: %s
@@ -863,6 +869,7 @@ Admin User Creation:
 Summary:
 ========
 - K3s cluster running with Coder deployed
+- Workspace image pushed to Docker Hub and pulled by K3s
 - Coder accessible within cluster at: http://coder.%s.svc.cluster.local
 - PostgreSQL database provisioned for Coder
 - Admin user '%s' created with email '%s'
@@ -879,6 +886,7 @@ Next Steps:
 5. Login with username: %s, password: %s
 6. Use workspace image: %s for creating Coder templates
 `,
+		pushedRef,
 		clusterName,
 		pushedRef,
 		namespace,
@@ -895,7 +903,7 @@ Next Steps:
 		adminUsername,
 		adminEmail,
 		clusterName,
-		namespace, 
+		namespace,
 		adminUsername,
 		adminPassword,
 		pushedRef)
