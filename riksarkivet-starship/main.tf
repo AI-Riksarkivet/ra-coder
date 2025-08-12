@@ -41,6 +41,14 @@ variable "namespace" {
 
 }
 
+variable "temp_ip" {
+  type        = string
+  description = "The Kubernetes iP."
+  default     = "http://10.100.127.31:30256"
+
+}
+
+
 variable "mlflow_external_address" {
   type        = string
   description = "The external address for the MLflow Tracking Server UI (e.g., http://mlflow.example.com or http://<IP>:<Port>). Leave empty to disable the MLflow App and environment variable injection."
@@ -1196,7 +1204,7 @@ resource "coder_script" "coder_cli_config" {
   
   script = replace(
     templatefile("${path.module}/scripts/coder_cli_config.sh", {
-      coder_url = "$${CODER_URL:-http://10.100.127.31:30256}"
+      coder_url = "$${CODER_URL:-${var.temp_ip}}"
     }),
     "\r",
     ""
