@@ -617,6 +617,7 @@ module "code-server" {
     "marimo-team.vscode-marimo",
     "redhat.vscode-yaml",
     "tamasfe.even-better-toml",
+    "ms-ossdata.vscode-pgsql"
   ]
 }
 
