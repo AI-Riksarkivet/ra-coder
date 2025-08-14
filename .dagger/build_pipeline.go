@@ -481,22 +481,9 @@ func (m *Build) DeployCoderToK3s(
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", kubeconfig)
 
-	// Create values for Coder deployment with in-memory database for testing
+	// Create values for Coder deployment with RBAC permissions
 	coderValues := fmt.Sprintf(`
-cat <<'EOF' > /tmp/coder-values.yaml
-coder:
-  env:
-    - name: CODER_ACCESS_URL
-      value: "http://localhost:8080"
-    - name: CODER_IN_MEMORY
-      value: "true"
-    - name: CODER_TELEMETRY_ENABLE
-      value: "false"
-  service:
-    type: ClusterIP
-EOF
-
-# First deploy a simple PostgreSQL if in-memory doesn't work
+# First deploy a simple PostgreSQL
 kubectl apply -n %s -f - <<PSQL
 apiVersion: v1
 kind: ConfigMap
@@ -541,7 +528,58 @@ spec:
   - port: 5432
 PSQL
 
-# Update Coder values to use the PostgreSQL service
+# Create RBAC permissions for Coder to manage workspaces
+kubectl apply -f - <<RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-workspace-manager
+rules:
+# Core resources for workspaces
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "pods/exec", "pods/attach", "pods/portforward"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["services", "persistentvolumeclaims", "configmaps", "secrets"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch", "create"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+# Apps resources
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+  verbs: ["*"]
+# Batch resources for jobs
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["*"]
+# Networking resources
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["*"]
+# Storage resources
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: coder-workspace-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: coder-workspace-manager
+subjects:
+- kind: ServiceAccount
+  name: coder
+  namespace: %s
+RBAC
+
+# Create Helm values with enhanced permissions
 cat <<'EOF' > /tmp/coder-values.yaml
 coder:
   env:
@@ -553,8 +591,15 @@ coder:
       value: "false"
   service:
     type: ClusterIP
+  serviceAccount:
+    create: true
+    name: coder
+    annotations: {}
+  rbac:
+    create: true
+    clusterRoleName: coder-workspace-manager
 EOF
-`, namespace, namespace)
+`, namespace, namespace, namespace)
 
 	// Deploy PostgreSQL and Coder with Helm
 	deployResult, err := helmContainer.
@@ -663,69 +708,12 @@ EOF
 
 				# Create workspace
 				#coder create workspace1 --template my-template --yes
-			'
-
-
-
-		
+			'		
 		`}).
 		WithWorkdir("/template").
 		Terminal().
 		Stdout(ctx)
 
-		//adminResult, err := dag.Container().
-		//	From("alpine/k8s:1.28.3").
-		//	WithServiceBinding("k3s", k3sSvc).
-		//	WithEnvVariable("KUBECONFIG", "/.kube/config").
-		//	WithFile("/.kube/config", kubeconfig).
-		//	WithDirectory("/template", source).
-		//	WithWorkdir("/template").
-		//	WithExec([]string{"sh", "-c", fmt.Sprintf(`
-		//		echo "👤 Creating admin user '%s'..."
-		//
-		//		# Wait for Coder pod to be ready
-		//		echo "⏳ Waiting for Coder pod to be ready..."
-		//		for i in $(seq 1 30); do
-		//			CODER_POD=$(kubectl get pods -n %s -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-		//			if [ -n "$CODER_POD" ]; then
-		//				POD_STATUS=$(kubectl get pod -n %s "$CODER_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
-		//				if [ "$POD_STATUS" = "Running" ]; then
-		//					echo "✅ Found running Coder pod: $CODER_POD"
-		//					break
-		//				fi
-		//			fi
-		//			[ "$i" -eq 1 ] && echo "   Waiting for Coder pod to start..."
-		//			sleep 2
-		//		done
-		//
-		//		if [ -n "$CODER_POD" ]; then
-		//			echo "🔧 Creating admin user..."
-		//
-		//			# Create admin user directly in the Coder pod
-		//			kubectl exec -n %s "$CODER_POD" -- /opt/coder server create-admin-user \
-		//				--username "%s" \
-		//				--email "%s" \
-		//				--password "%s" 2>&1 | grep -E "User created|Username:|Email:|already exists" || true
-		//
-		//			echo ""
-		//			echo "✅ Admin user setup completed"
-		//			echo ""
-		//			echo "📌 User Credentials:"
-		//			echo "   Username: %s"
-		//			echo "   Email: %s"
-		//			echo "   Password: %s"
-		//			echo ""
-		//			echo "🔗 To access Coder:"
-		//			echo "   1. Port-forward: kubectl port-forward -n %s svc/coder 8080:80"
-		//			echo "   2. Open browser: http://localhost:8080"
-		//			echo "   3. Login with the credentials above"
-		//		else
-		//			echo "⚠️  Could not find Coder pod. Manual setup may be required."
-		//			echo "   Check pod status: kubectl get pods -n %s"
-		//		fi
-		//	`, adminUsername, namespace, namespace, namespace, adminUsername, adminEmail, adminPassword, adminUsername, adminEmail, adminPassword, namespace, namespace)}).Terminal().
-		//	Stdout(ctx)
-		//
 	if err != nil {
 		fmt.Printf("   ⚠️  Admin user creation had issues: %v\n", err)
 		adminResult = "Admin user creation completed with warnings"
@@ -789,9 +777,9 @@ Next Steps:
 6. Use workspace image: %s for creating Coder templates
 7. Template '%s' automatically pushed to Coder instance
 `,
-		pushedRef,
+		"",
 		clusterName,
-		pushedRef,
+		"",
 		namespace,
 		chartVersion,
 		"",
@@ -809,7 +797,7 @@ Next Steps:
 		namespace,
 		adminUsername,
 		adminPassword,
-		pushedRef,
+		"",
 		templateDirName)
 
 	// Step 6: Push template to Coder
@@ -818,14 +806,13 @@ Next Steps:
 	// Use the entire source directory as the template
 	// This copies everything from the folder that's being passed
 	fmt.Printf("   📁 Using source directory as template: %s\n", templateDirName)
-	
+
 	if err != nil {
 		fmt.Printf("   ⚠️  Template push failed: %v\n", err)
 
 	}
 
 	fmt.Println("   ✅ Template pushed successfully")
-
 
 	// Return the K3s service for external access
 	return k3sSvc, nil
