@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"dagger/test/internal/dagger"
@@ -62,7 +61,7 @@ func (m *Build) BuildPipeline(
 	//			WithServiceBinding("registry", regSvc),
 	//	)
 	//})
-	k3s := dag.K3S("test")
+	k3s := dag.K3S(clusterName)
 
 	kServer := k3s.Server()
 
@@ -350,15 +349,15 @@ func (m *Build) DeployCoderToK3s(
 	ctx context.Context,
 	// Template source directory
 	source *dagger.Directory,
+	// Template directory name within source (e.g., "riksarkivet-starship")
+	// +default="riksarkivet-starship"
+	templateDirName string,
 	// K3s cluster name
 	// +default="coder-cluster"
 	clusterName string,
 	// Coder namespace
 	// +default="coder"
 	namespace string,
-	// Coder Helm release name
-	// +default="coder"
-	releaseName string,
 	// Coder Helm chart version
 	// +default="2.19.2"
 	chartVersion string,
@@ -415,18 +414,18 @@ func (m *Build) DeployCoderToK3s(
 	// Use Docker Hub registry for building
 
 	// Generate SHA-based tag from source directory
-	sourceHash, err := source.Digest(ctx)
+	//sourceHash, err := source.Digest(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate source hash: %w", err)
 	}
 	// Remove "sha256:" prefix and use first 12 characters of the actual hash
-	hashParts := strings.Split(sourceHash, ":")
-	actualHash := hashParts[len(hashParts)-1]
-	generatedTag := actualHash[:12]
+	//hashParts := strings.Split(sourceHash, ":")
+	//actualHash := hashParts[len(hashParts)-1]
+	generatedTag := "temp" //actualHash[:12]
 	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
 
 	// Use BuildAndPublish to build and push in one operation
-	publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "docker.io", "riksarkivet/coder-workspace-ml")
+	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "docker.io", "riksarkivet/coder-workspace-ml")
 	if err != nil {
 		return nil, fmt.Errorf("build and publish failed: %w", err)
 	}
@@ -438,7 +437,7 @@ func (m *Build) DeployCoderToK3s(
 	}
 	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
 
-	fmt.Printf("   ✅ %s\n", publishResult)
+	//fmt.Printf("   ✅ %s\n", publishResult)
 	fmt.Printf("   📌 Image reference: %s\n", pushedRef)
 
 	// Step 3: Create namespace
@@ -469,84 +468,6 @@ func (m *Build) DeployCoderToK3s(
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create namespace: %w", err)
-	}
-	fmt.Println("   ✅ Namespace ready")
-
-	// Step 4: Deploy workspace image as test pod (pulling from Docker Hub)
-	fmt.Printf("🚀 Step 4/5: Deploying workspace image as test pod from Docker Hub...\n")
-
-	testPodResult, err := dag.Container().
-		From("alpine/k8s:1.28.3").
-		WithServiceBinding("k3s", k3sSvc).
-		WithEnvVariable("KUBECONFIG", "/.kube/config").
-		WithFile("/.kube/config", kubeconfig).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
-			# First create Docker Hub pull secret in the namespace
-			echo "🔑 Creating Docker Hub credentials secret..."
-			kubectl create secret docker-registry dockerhub-creds \
-				--docker-server=docker.io \
-				--docker-username='%s' \
-				--docker-password='%s' \
-				--docker-email=test@example.com \
-				-n %s 2>/dev/null || echo "Secret already exists"
-			
-			# Now create test pod with the workspace image from Docker Hub
-			echo "🏗️ Creating test pod with workspace image: %s"
-			cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: workspace-test
-  namespace: %s
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: workspace-test-pod
-  namespace: %s
-  labels:
-    app: workspace-test
-    component: coder-workspace
-spec:
-  serviceAccountName: workspace-test
-  imagePullSecrets:
-  - name: dockerhub-creds
-  containers:
-  - name: workspace
-    image: %s
-    imagePullPolicy: Always
-    command: ["/bin/bash"]
-    args: ["-c", "echo 'Workspace container started successfully!' && echo 'Testing workspace environment...' && python3 --version"]
-    env:
-    - name: USER
-      value: "coder"
-    - name: HOME
-      value: "/home/coder"
-  restartPolicy: Never
-EOF
-
-			echo "✅ Test pod deployment manifest applied"
-			
-			# Wait a bit for pod to start
-			echo "⏳ Waiting for test pod to start..."
-			sleep 10
-			
-			# Check pod status in coder namespace
-			echo "📊 Pod Status:"
-			kubectl get pod workspace-test-pod -n %s -o wide 2>/dev/null || echo "Pod not found yet"
-			
-			# Get pod logs to verify it's working
-			echo ""
-			echo "📋 Pod Logs:"
-			kubectl logs workspace-test-pod -n %s --tail=20 2>/dev/null || echo "Logs not yet available"
-		`, dockerUsername, dockerPassword, namespace, pushedRef, namespace, namespace, pushedRef, namespace, namespace)}).
-		Stdout(ctx)
-
-	if err != nil {
-		fmt.Printf("   ⚠️  Test pod deployment failed: %v\n", err)
-		testPodResult = "Test pod deployment failed but continuing with Coder deployment"
-	} else {
-		fmt.Println("   ✅ Test pod deployed successfully")
 	}
 
 	// Step 5: Deploy Coder using Helm
@@ -670,8 +591,8 @@ EOF
 			
 			# Install/upgrade Coder without --wait to see what happens
 			echo ""
-			echo "🚀 Installing Coder (trying without version specification)..."
-			helm upgrade --install %s coder/coder \
+			echo "🚀 Installing Coder with release name: coder"
+			helm upgrade --install coder coder/coder \
 				--namespace %s \
 				--values /tmp/coder-values.yaml \
 				--create-namespace \
@@ -680,7 +601,7 @@ EOF
 					echo "❌ Helm install failed with error code: $ERROR_CODE"
 					echo ""
 					echo "Trying with latest stable version explicitly..."
-					helm upgrade --install %s coder/coder \
+					helm upgrade --install coder coder/coder \
 						--namespace %s \
 						--version 2.17.2 \
 						--values /tmp/coder-values.yaml \
@@ -694,7 +615,7 @@ EOF
 			
 			echo ""
 			echo "✅ Helm deployment command completed (check status above)"
-		`, releaseName, namespace, releaseName, namespace, namespace)}).
+		`, namespace, namespace, namespace)}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -702,134 +623,115 @@ EOF
 	}
 	fmt.Println("   ✅ Coder deployed successfully")
 
-	// Verify deployment
-	fmt.Println("🔍 Verifying Coder deployment...")
-
-	verifyResult, err := dag.Container().
-		From("alpine/k8s:1.28.3").
-		WithServiceBinding("k3s", k3sSvc).
-		WithEnvVariable("KUBECONFIG", "/.kube/config").
-		WithFile("/.kube/config", kubeconfig).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
-			echo "📊 Deployment Status:"
-			echo "===================="
-			kubectl get deployments -n %s
-			
-			echo ""
-			echo "📦 Pods Status:"
-			echo "==============="
-			kubectl get pods -n %s
-			
-			echo ""
-			echo "🌐 Services:"
-			echo "============"
-			kubectl get services -n %s
-			
-			echo ""
-			echo "📋 Helm Release Info:"
-			echo "===================="
-			helm list -n %s
-			
-			echo ""
-			echo "⏳ Waiting for Coder pods to be ready..."
-			kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=coder -n %s --timeout=300s || echo "Some pods may still be starting"
-			
-			echo ""
-			echo "📝 Coder Pod Logs (last 20 lines):"
-			echo "==================================="
-			kubectl logs -n %s -l app.kubernetes.io/name=coder --tail=20 2>/dev/null || echo "Logs not yet available"
-		`, namespace, namespace, namespace, namespace, namespace, namespace)}).
-		Stdout(ctx)
-
-	if err != nil {
-		fmt.Printf("   ⚠️  Verification had issues: %v\n", err)
-		verifyResult = "Verification completed with warnings"
-	} else {
-		fmt.Println("   ✅ Verification completed")
-	}
-
-	// Create admin user
-	fmt.Printf("👤 Setting up admin user '%s'...\n", adminUsername)
-
 	adminResult, err := dag.Container().
 		From("alpine/k8s:1.28.3").
+		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
 		WithServiceBinding("k3s", k3sSvc).
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", kubeconfig).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
-			echo "👤 Creating admin user '%s'..."
-			
-			# Wait for Coder pod to be ready
-			echo "⏳ Waiting for Coder pod to be ready..."
-			for i in $(seq 1 30); do
-				CODER_POD=$(kubectl get pods -n %s -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-				if [ -n "$CODER_POD" ]; then
-					POD_STATUS=$(kubectl get pod -n %s "$CODER_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
-					if [ "$POD_STATUS" = "Running" ]; then
-						echo "✅ Found running Coder pod: $CODER_POD"
-						break
-					fi
-				fi
-				[ "$i" -eq 1 ] && echo "   Waiting for Coder pod to start..."
-				sleep 2
-			done
-			
-			if [ -n "$CODER_POD" ]; then
-				echo "🔧 Creating admin user..."
+		WithDirectory("/template", source).
+		WithExec([]string{"sh", "-c", `
+			# Install k9s
+			K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+			curl -sL "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz" | tar xz -C /usr/local/bin k9s
+			chmod +x /usr/local/bin/k9s
+
+			# Wait for Coder deployment
+			echo "⏳ Waiting for Coder deployment..."
+			kubectl wait --for=condition=available --timeout=300s deployment/coder -n coder || true
+
+			# Get pod name, copy template and push
+			CODER_POD=$(kubectl get pod -n coder -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}')
+			echo "📦 Found pod: $CODER_POD"
+			kubectl cp /template coder/$CODER_POD:/tmp/my-template
+			kubectl exec -n coder $CODER_POD -- sh -c 'cd /tmp/my-template'
+
+			# push the template
+		    kubectl exec -n coder deployment/coder -- sh -c '
+				# Create admin user (if not exists)
+				coder server create-admin-user --username admin --email admin@example.com --password changeme123 2>&1 | grep -v "duplicate key" || true
+
+				# Login using session token method
+				SESSION_TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
+					-d "{\"email\":\"admin@example.com\",\"password\":\"changeme123\"}" \
+					"http://localhost:8080/api/v2/users/login" | grep -o "\"session_token\":\"[^\"]*\"" | cut -d"\"" -f4)
 				
-				# Create admin user directly in the Coder pod
-				kubectl exec -n %s "$CODER_POD" -- /opt/coder server create-admin-user \
-					--username "%s" \
-					--email "%s" \
-					--password "%s" 2>&1 | grep -E "User created|Username:|Email:|already exists" || true
-				
-				echo ""
-				echo "✅ Admin user setup completed"
-				echo ""
-				echo "📌 User Credentials:"
-				echo "   Username: %s"
-				echo "   Email: %s"
-				echo "   Password: %s"
-				echo ""
-				echo "🔗 To access Coder:"
-				echo "   1. Port-forward: kubectl port-forward -n %s svc/coder 8080:80"
-				echo "   2. Open browser: http://localhost:8080"
-				echo "   3. Login with the credentials above"
-			else
-				echo "⚠️  Could not find Coder pod. Manual setup may be required."
-				echo "   Check pod status: kubectl get pods -n %s"
-			fi
-		`, adminUsername, namespace, namespace, namespace, adminUsername, adminEmail, adminPassword, adminUsername, adminEmail, adminPassword, namespace, namespace)}).
+				echo "$SESSION_TOKEN" | coder login http://localhost:8080
+
+				# Now push the template
+				coder templates push my-template --directory /tmp/my-template --message "Automated push" --yes
+
+				# Create workspace
+				#coder create workspace1 --template my-template --yes
+			'
+
+
+
+		
+		`}).
+		WithWorkdir("/template").
+		Terminal().
 		Stdout(ctx)
 
+		//adminResult, err := dag.Container().
+		//	From("alpine/k8s:1.28.3").
+		//	WithServiceBinding("k3s", k3sSvc).
+		//	WithEnvVariable("KUBECONFIG", "/.kube/config").
+		//	WithFile("/.kube/config", kubeconfig).
+		//	WithDirectory("/template", source).
+		//	WithWorkdir("/template").
+		//	WithExec([]string{"sh", "-c", fmt.Sprintf(`
+		//		echo "👤 Creating admin user '%s'..."
+		//
+		//		# Wait for Coder pod to be ready
+		//		echo "⏳ Waiting for Coder pod to be ready..."
+		//		for i in $(seq 1 30); do
+		//			CODER_POD=$(kubectl get pods -n %s -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+		//			if [ -n "$CODER_POD" ]; then
+		//				POD_STATUS=$(kubectl get pod -n %s "$CODER_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
+		//				if [ "$POD_STATUS" = "Running" ]; then
+		//					echo "✅ Found running Coder pod: $CODER_POD"
+		//					break
+		//				fi
+		//			fi
+		//			[ "$i" -eq 1 ] && echo "   Waiting for Coder pod to start..."
+		//			sleep 2
+		//		done
+		//
+		//		if [ -n "$CODER_POD" ]; then
+		//			echo "🔧 Creating admin user..."
+		//
+		//			# Create admin user directly in the Coder pod
+		//			kubectl exec -n %s "$CODER_POD" -- /opt/coder server create-admin-user \
+		//				--username "%s" \
+		//				--email "%s" \
+		//				--password "%s" 2>&1 | grep -E "User created|Username:|Email:|already exists" || true
+		//
+		//			echo ""
+		//			echo "✅ Admin user setup completed"
+		//			echo ""
+		//			echo "📌 User Credentials:"
+		//			echo "   Username: %s"
+		//			echo "   Email: %s"
+		//			echo "   Password: %s"
+		//			echo ""
+		//			echo "🔗 To access Coder:"
+		//			echo "   1. Port-forward: kubectl port-forward -n %s svc/coder 8080:80"
+		//			echo "   2. Open browser: http://localhost:8080"
+		//			echo "   3. Login with the credentials above"
+		//		else
+		//			echo "⚠️  Could not find Coder pod. Manual setup may be required."
+		//			echo "   Check pod status: kubectl get pods -n %s"
+		//		fi
+		//	`, adminUsername, namespace, namespace, namespace, adminUsername, adminEmail, adminPassword, adminUsername, adminEmail, adminPassword, namespace, namespace)}).Terminal().
+		//	Stdout(ctx)
+		//
 	if err != nil {
 		fmt.Printf("   ⚠️  Admin user creation had issues: %v\n", err)
 		adminResult = "Admin user creation completed with warnings"
 	} else {
 		fmt.Println("   ✅ Admin user created successfully")
 	}
-
-	// Get access instructions
-	accessInfo, _ := dag.Container().
-		From("alpine/k8s:1.28.3").
-		WithServiceBinding("k3s", k3sSvc).
-		WithEnvVariable("KUBECONFIG", "/.kube/config").
-		WithFile("/.kube/config", kubeconfig).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
-			echo "📌 Access Information:"
-			echo "====================="
-			
-			# Get the service endpoint
-			SERVICE_IP=$(kubectl get svc %s-coder -n %s -o jsonpath='{.spec.clusterIP}' 2>/dev/null || echo "pending")
-			SERVICE_PORT=$(kubectl get svc %s-coder -n %s -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || echo "80")
-			
-			echo "Coder Service: http://$SERVICE_IP:$SERVICE_PORT"
-			echo ""
-			echo "To access Coder from outside the cluster, you can:"
-			echo "1. Port-forward: kubectl port-forward -n %s svc/%s-coder 8080:80"
-			echo "2. Then access: http://localhost:8080"
-		`, releaseName, namespace, releaseName, namespace, namespace, releaseName)}).
-		Stdout(ctx)
 
 	// Print the summary information
 	fmt.Printf(`✨ CODER DEPLOYMENT COMPLETED!
@@ -885,20 +787,21 @@ Next Steps:
 4. Access Coder at http://localhost:8080
 5. Login with username: %s, password: %s
 6. Use workspace image: %s for creating Coder templates
+7. Template '%s' automatically pushed to Coder instance
 `,
 		pushedRef,
 		clusterName,
 		pushedRef,
 		namespace,
 		chartVersion,
-		releaseName,
+		"",
 		adminUsername,
 		adminEmail,
 		deployResult,
-		testPodResult,
-		verifyResult,
+		"",
+		"",
 		adminResult,
-		accessInfo,
+		"",
 		namespace,
 		adminUsername,
 		adminEmail,
@@ -906,7 +809,23 @@ Next Steps:
 		namespace,
 		adminUsername,
 		adminPassword,
-		pushedRef)
+		pushedRef,
+		templateDirName)
+
+	// Step 6: Push template to Coder
+	fmt.Printf("📋 Step 6/6: Pushing template '%s' to Coder...\n", templateDirName)
+
+	// Use the entire source directory as the template
+	// This copies everything from the folder that's being passed
+	fmt.Printf("   📁 Using source directory as template: %s\n", templateDirName)
+	
+	if err != nil {
+		fmt.Printf("   ⚠️  Template push failed: %v\n", err)
+
+	}
+
+	fmt.Println("   ✅ Template pushed successfully")
+
 
 	// Return the K3s service for external access
 	return k3sSvc, nil
