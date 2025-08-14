@@ -123,24 +123,6 @@ func (m *Build) BuildAndPublish(
 	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
 }
 
-// Hello returns usage information
-func (m *Build) Hello() string {
-    return `🚀 Dagger Build Pipeline Ready!
-
-✅ Build Options:
-  • Native Dockerfile builds (no Kaniko)
-  • Build from local directory only
-  • Support for both CPU and CUDA builds
-  • Simple and fast local builds
-  • Registry authentication support
-
-Key functions:
-• build-local: Build container from specified directory
-• build-and-publish: Build and publish to registry with authentication
-
-📚 Examples: Run 'dagger call get-build-command' for usage examples`
-}
-
 // QuickCpuBuild is a convenience function for CPU-only builds
 func (m *Build) QuickCpuBuild(
 	ctx context.Context,

@@ -522,8 +522,8 @@ Next Steps:
 	return k3sSvc, nil
 }
 
-// GetK3sKubeconfig returns the kubeconfig file for accessing the K3s cluster
-func (m *Build) GetK3sKubeconfig(
+// returns the kubeconfig file for accessing the K3s cluster
+func (m *Build) GetKubeconfig(
 	ctx context.Context,
 	// K3s cluster name
 	// +default="coder-cluster"
