@@ -38,7 +38,19 @@ variable "namespace" {
   type        = string
   description = "The Kubernetes namespace to create workspaces in (must exist prior to creating workspaces)."
   default     = "coder"
+}
 
+variable "main_image_name" {
+  type        = string
+  description = "The base container image name for workspace. Note -cpu suffix is added if no GPU to image name."
+  default     = "riksarkivet/coder-workspace-ml"
+}
+
+
+variable "main_image_tag" {
+  type        = string
+  description = "The container image tag version"
+  default     = "v14.3.0"
 }
 
 variable "temp_ip" {
@@ -89,9 +101,7 @@ locals {
   git_author_email = data.coder_workspace_owner.me.email
 
   # --- Images ---
-  main_image_name = "riksarkivet/coder-workspace-ml"
-  main_image_tag  = "v14.3.0"
-  main_image      = local.actual_gpu_count > 0 ? "${var.container_registry}/${local.main_image_name}:${local.main_image_tag}" : "${var.container_registry}/${local.main_image_name}:${local.main_image_tag}-cpu"
+  main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/${var.main_image_name}:${var.main_image_tag}" : "${var.container_registry}/${var.main_image_name}:${var.main_image_tag}-cpu"
 
   # --- GPU Logic ---
   selected_gpu             = data.coder_parameter.gpu_type.value
@@ -201,7 +211,7 @@ data "coder_parameter" "cpu" {
 
   validation {
     min   = 2
-    max   = 24
+    max   = 36
     error = "CPU cores must be between {min} and {max}"
   }
 }
@@ -219,7 +229,7 @@ data "coder_parameter" "memory" {
 
   validation {
     min   = 8
-    max   = 128
+    max   = 180
     error = "Memory must be between {min} and {max} GB"
   }
 }
@@ -321,24 +331,34 @@ data "coder_parameter" "ai_prompt" {
   })
 }
 
-data "coder_parameter" "enable_advanced_tools" {
-  name         = "enable_advanced_tools"
-  display_name = "Enable Advanced Development Tools"
-  description  = "Enable additional API tokens and SSH configuration"
-  type         = "bool"
-  default      = false
-  form_type    = "checkbox"
-  order        = 30
-}
+
 
 data "coder_parameter" "use_dagger" {
   name         = "use_dagger"
   display_name = "Use Dagger Engine"
-  description  = "Enable Dagger container build system as a sidecar. Dagger provides containerized build capabilities without Docker. Requires additional CPU and memory resources."
+  description  = "Enable Dagger container build system as a sidecar. Dagger provides containerized build capabilities without Docker. Requires additional CPU and memory resources. Note that the meomery is shared between the dagger and main container in the pod."
   type         = "bool"
   default      = false
   form_type    = "checkbox"
-  order        = 31
+  mutable     = false
+  order        = 30
+}
+
+data "coder_parameter" "dagger_cloud_token" {
+  count       = data.coder_parameter.use_dagger.value ? 1 : 0
+  name        = "dagger_cloud_token"
+  display_name = "Docker Cloud Token"
+  description = "For Dagger Traces and debugg"
+  type        = "string"
+  default     = ""
+  mutable     = true
+  form_type   = "input"
+  order       = 31
+  
+  styling = jsonencode({
+    mask_input  = true
+    placeholder = "..."
+  })
 }
 
 # --- Dagger Engine Resource Configuration (conditional) ---
@@ -355,7 +375,7 @@ data "coder_parameter" "dagger_cpu_limit" {
   
   validation {
     min   = 2
-    max   = 8
+    max   = 24
     error = "Dagger CPU must be between {min} and {max} cores"
   }
 }
@@ -373,12 +393,23 @@ data "coder_parameter" "dagger_memory_limit" {
   
   validation {
     min   = 8
-    max   = 32
+    max   = 128
     error = "Dagger memory must be between {min} and {max} GB"
   }
 }
 
 # --- API Keys & Tokens (conditional) ---
+
+data "coder_parameter" "enable_advanced_tools" {
+  name         = "enable_advanced_tools"
+  display_name = "Enable Advanced Development Tools"
+  description  = "Enable additional API tokens and SSH configuration"
+  type         = "bool"
+  default      = false
+  form_type    = "checkbox"
+  order        = 40
+}
+
 data "coder_parameter" "anthropic_api_key" {
   count       = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
   name        = "anthropic_api_key"
@@ -388,7 +419,7 @@ data "coder_parameter" "anthropic_api_key" {
   default     = ""
   mutable     = true
   form_type   = "input"
-  order       = 40
+  order       = 41
   
   styling = jsonencode({
     mask_input  = true
@@ -405,7 +436,7 @@ data "coder_parameter" "gh_token" {
   default     = ""
   mutable     = true
   form_type   = "input"
-  order       = 41
+  order       = 42
   
   styling = jsonencode({
     mask_input  = true
@@ -422,13 +453,14 @@ data "coder_parameter" "hf_token" {
   default     = ""
   mutable     = true
   form_type   = "input"
-  order       = 42
+  order       = 43
   
   styling = jsonencode({
     mask_input  = true
     placeholder = "hf_..."
   })
 }
+
 
 data "coder_parameter" "docker_password" {
   count       = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
@@ -439,7 +471,7 @@ data "coder_parameter" "docker_password" {
   default     = ""
   mutable     = true
   form_type   = "input"
-  order       = 43
+  order       = 45
   
   styling = jsonencode({
     mask_input  = true
@@ -456,7 +488,7 @@ data "coder_parameter" "ssh_private_key" {
   default     = ""
   mutable     = true
   form_type   = "textarea"
-  order       = 44
+  order       = 46
   
   styling = jsonencode({
     placeholder = "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----"
@@ -832,6 +864,10 @@ resource "kubernetes_deployment" "main" {
             name  = "DAGGER_NO_NAG"
             value = "1"
           }
+          env {
+            name  = "DAGGER_CLOUD_TOKEN"
+            value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.dagger_cloud_token) > 0 ? data.coder_parameter.dagger_cloud_token[0].value : ""
+          }
 
           # Dynamic environment variables for external services
           dynamic "env" {
@@ -912,18 +948,26 @@ resource "kubernetes_deployment" "main" {
             command = ["/usr/local/bin/dagger-engine"]
             args    = ["--config", "/etc/dagger/engine.toml"]
 
-
             env {
             name  = "_EXPERIMENTAL_DAGGER_GPU_SUPPORT"
             value = "true"
             }
 
-
             env {
               name  = "NVIDIA_VISIBLE_DEVICES"
               value = "all"
             }
-            
+
+            env {
+            name  = "DO_NOT_TRACK"
+            value = "1"
+            }
+
+            env {
+              name  = "DAGGER_CLOUD_TOKEN"
+              value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.dagger_cloud_token) > 0 ? data.coder_parameter.dagger_cloud_token[0].value : ""
+            }
+
             env {
               name  = "NVIDIA_DRIVER_CAPABILITIES"
               value = "compute,utility"
@@ -1105,6 +1149,14 @@ resource "coder_metadata" "resources" {
   item {
     key   = "image_id"
     value = local.main_image
+  }
+
+  dynamic "item" {
+    for_each = local.dagger_enabled ? [1] : []
+    content {
+      key   = "dagger"
+      value = "Enabled (${local.dagger_cpu_limit} CPU, ${local.dagger_memory_limit}GB RAM)"
+    }
   }
 }
 
