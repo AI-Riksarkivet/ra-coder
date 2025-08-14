@@ -440,8 +440,8 @@ func (m *Build) DeployCoderToK3s(
 	//fmt.Printf("   ✅ %s\n", publishResult)
 	fmt.Printf("   📌 Image reference: %s\n", pushedRef)
 
-	// Step 3: Create namespace
-	fmt.Printf("📋 Step 3/5: Creating namespace '%s'...\n", namespace)
+	// Step 3: Create namespace and LakeFS secret
+	fmt.Printf("📋 Step 3/5: Creating namespace '%s' and LakeFS secret...\n", namespace)
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -463,11 +463,52 @@ func (m *Build) DeployCoderToK3s(
 			# Create namespace
 			kubectl create namespace %s 2>/dev/null || echo "Namespace %s already exists"
 			kubectl get namespace %s
+			
+			# Create LakeFS secret in coder namespace (hardcoded)
+			echo "🔐 Creating LakeFS secret in coder namespace..."
+			kubectl apply -n coder -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lakefs-secrets
+type: Opaque
+stringData:
+  endpoint: "http://lakefs.lakefs.svc.cluster.local:8000"
+  access_key_id: "AKIAIOSFODNN7EXAMPLE"
+  secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+EOF
+			echo "✅ LakeFS secret created"
+			kubectl get secret -n coder lakefs-secrets
+			
+			# Create fake kubeconfig secret in coder namespace
+			echo "🔐 Creating default kubeconfig secret in coder namespace..."
+			kubectl apply -n coder -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: default-kubeconfig
+type: Opaque
+stringData:
+  config: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - cluster:
+        server: https://fake-k8s:6443
+      name: fake
+    contexts:
+    - context:
+        cluster: fake
+      name: fake
+    current-context: fake
+EOF
+			echo "✅ Default kubeconfig secret created"
+			kubectl get secret -n coder default-kubeconfig
 		`, namespace, namespace, namespace)}).
 		Stdout(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create namespace: %w", err)
+		return nil, fmt.Errorf("failed to create namespace and secret: %w", err)
 	}
 
 	// Step 5: Deploy Coder using Helm
