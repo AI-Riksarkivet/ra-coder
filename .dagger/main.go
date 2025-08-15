@@ -3,20 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	
 	"dagger/test/internal/dagger"
 )
 
 type Build struct{}
 
-// BuildLocal builds using Dockerfile from a local directory
+// BuildLocal builds using Dockerfile from a local directory with custom environment variables
 func (m *Build) BuildLocal(
 	ctx context.Context,
 	// Local directory to build from
 	source *dagger.Directory,
-	// Enable CUDA support
-	// +default="true"
-	enableCuda bool,
+	// Environment variables for build customization (KEY=VALUE format)
+	// +default=["ENABLE_CUDA=true"]
+	envVars []string,
 	// Image tag
 	// +default="v14.1.3"
 	imageTag string,
@@ -27,14 +28,26 @@ func (m *Build) BuildLocal(
 	// +default="riksarkivet/coder-workspace-ml"
 	imageRepository string,
 ) (*dagger.Container, error) {
+	// Convert environment variables to build args
+	buildArgs := []dagger.BuildArg{
+		{Name: "REGISTRY", Value: registry},
+	}
+	
+	// Parse environment variables and add to build args
+	for _, envVar := range envVars {
+		if parts := strings.Split(envVar, "="); len(parts) == 2 {
+			buildArgs = append(buildArgs, dagger.BuildArg{
+				Name:  parts[0],
+				Value: parts[1],
+			})
+		}
+	}
+	
 	// Build the container using Dockerfile
 	container := dag.Container().
 		Build(source, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
-			BuildArgs: []dagger.BuildArg{
-				{Name: "ENABLE_CUDA", Value: fmt.Sprintf("%t", enableCuda)},
-				{Name: "REGISTRY", Value: registry},
-			},
+			BuildArgs: buildArgs,
 		})
 	
 	return container, nil
@@ -43,38 +56,33 @@ func (m *Build) BuildLocal(
 
 // GetBuildCommand returns example dagger commands
 func (m *Build) GetBuildCommand(
-	// Enable CUDA support
-	// +default="true"
-	enableCuda bool,
 	// Image tag
 	// +default="v14.1.3"
 	imageTag string,
 ) string {
-	cudaFlag := "true"
-	if !enableCuda {
-		cudaFlag = "false"
-	}
-	
 	return fmt.Sprintf(`Build Commands:
 
 # CPU build (local only):
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=false --image-tag=%s
+dagger call build-local --source="./Riksarkivets-Development-Template" --env-vars="ENABLE_CUDA=false" --image-tag=%s
 
 # CUDA build (local only):
-dagger call build-local --source="./Riksarkivets-Development-Template" --enable-cuda=true --image-tag=%s
+dagger call build-local --source="./Riksarkivets-Development-Template" --env-vars="ENABLE_CUDA=true" --image-tag=%s
+
+# Custom build with multiple environment variables:
+dagger call build-local --source="./Riksarkivets-Development-Template" --env-vars="ENABLE_CUDA=true" --env-vars="PYTHON_VERSION=3.12" --env-vars="CUSTOM_TOOL=enabled" --image-tag=%s
 
 # Build and publish to registry:
-dagger call build-and-publish --source="./Riksarkivets-Development-Template" --username="myuser" --password="mypass" --enable-cuda=%s --image-tag=%s
+dagger call build-and-publish --source="./Riksarkivets-Development-Template" --username="myuser" --password="mypass" --env-vars="ENABLE_CUDA=true" --image-tag=%s
 
 # Quick CPU build:
 dagger call quick-cpu-build --source="./Riksarkivets-Development-Template"
 
 # Quick CUDA build:
 dagger call quick-cuda-build --source="./Riksarkivets-Development-Template"`, 
-		imageTag, imageTag, cudaFlag, imageTag)
+		imageTag, imageTag, imageTag, imageTag)
 }
 
-// BuildAndPublish builds using Dockerfile and publishes to registry
+// BuildAndPublish builds using Dockerfile and publishes to registry with custom environment variables
 func (m *Build) BuildAndPublish(
 	ctx context.Context,
 	// Local directory to build from
@@ -83,9 +91,9 @@ func (m *Build) BuildAndPublish(
 	username string,
 	// Registry password/token (as a secret)
 	password *dagger.Secret,
-	// Enable CUDA support
-	// +default="true"
-	enableCuda bool,
+	// Environment variables for build customization (KEY=VALUE format)
+	// +default=["ENABLE_CUDA=true"]
+	envVars []string,
 	// Image tag
 	// +default="v14.1.3"
 	imageTag string,
@@ -96,22 +104,37 @@ func (m *Build) BuildAndPublish(
 	// +default="riksarkivet/coder-workspace-ml"
 	imageRepository string,
 ) (string, error) {
-	// Determine final tag
+	// Determine final tag based on environment variables
 	finalTag := imageTag
-	if !enableCuda {
-		finalTag = imageTag + "-cpu"
+	for _, envVar := range envVars {
+		if envVar == "ENABLE_CUDA=false" {
+			finalTag = imageTag + "-cpu"
+			break
+		}
 	}
 
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
+	
+	// Convert environment variables to build args
+	buildArgs := []dagger.BuildArg{
+		{Name: "REGISTRY", Value: registry},
+	}
+	
+	// Parse environment variables and add to build args
+	for _, envVar := range envVars {
+		if parts := strings.Split(envVar, "="); len(parts) == 2 {
+			buildArgs = append(buildArgs, dagger.BuildArg{
+				Name:  parts[0],
+				Value: parts[1],
+			})
+		}
+	}
 	
 	// Build the container using Dockerfile
 	container := dag.Container().
 		Build(source, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
-			BuildArgs: []dagger.BuildArg{
-				{Name: "ENABLE_CUDA", Value: fmt.Sprintf("%t", enableCuda)},
-				{Name: "REGISTRY", Value: registry},
-			},
+			BuildArgs: buildArgs,
 		})
 	
 	// Publish to registry with authentication
@@ -129,7 +152,7 @@ func (m *Build) QuickCpuBuild(
 	// Local directory to build from
 	source *dagger.Directory,
 ) (*dagger.Container, error) {
-	return m.BuildLocal(ctx, source, false, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
+	return m.BuildLocal(ctx, source, []string{"ENABLE_CUDA=false"}, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
 }
 
 // QuickCudaBuild is a convenience function for CUDA builds
@@ -138,5 +161,5 @@ func (m *Build) QuickCudaBuild(
 	// Local directory to build from
 	source *dagger.Directory,
 ) (*dagger.Container, error) {
-	return m.BuildLocal(ctx, source, true, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
+	return m.BuildLocal(ctx, source, []string{"ENABLE_CUDA=true"}, "latest", "docker.io", "riksarkivet/coder-workspace-ml")
 }

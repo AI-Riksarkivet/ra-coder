@@ -20,9 +20,9 @@ func (m *Build) BuildPipeline(
 	// Coder Helm chart version
 	// +default="2.19.2"
 	chartVersion string,
-	// Enable CUDA support
-	// +default=false
-	enableCuda bool,
+	// Environment variables for template customization (KEY=VALUE format)
+	// +default=[]
+	envVars []string,
 	// Docker Hub username (required for pushing)
 	dockerUsername string,
 	// Docker Hub password/token (required for pushing, as a secret)
@@ -36,7 +36,7 @@ func (m *Build) BuildPipeline(
 	fmt.Println("")
 	fmt.Printf("📅 Start Time: %s\n", startTime.Format("15:04:05"))
 	fmt.Printf("🎯 Target: K3s cluster with Coder v%s\n", chartVersion)
-	fmt.Printf("🐳 CUDA Support: %v\n", enableCuda)
+	fmt.Printf("🔧 Environment Variables: %v\n", envVars)
 	fmt.Println("")
 
 	// Validate Docker Hub credentials
@@ -113,15 +113,19 @@ EOF`}).
 
 	// Use BuildAndPublish to build and push in one operation
 	fmt.Println("   🐳 Building Docker image (this may take a few minutes)...")
-	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
+	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
 	if err != nil {
 		return nil, fmt.Errorf("❌ Build and publish failed: %w", err)
 	}
 
-	// Construct the full image reference
+	// Construct the full image reference based on environment variables
 	finalImageTag := generatedTag
-	if !enableCuda {
-		finalImageTag = generatedTag + "-cpu"
+	// Check if CUDA is disabled in environment variables
+	for _, envVar := range envVars {
+		if envVar == "ENABLE_CUDA=false" {
+			finalImageTag = generatedTag + "-cpu"
+			break
+		}
 	}
 	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
 
