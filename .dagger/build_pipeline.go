@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"dagger/test/internal/dagger"
 	"fmt"
 	"strings"
-
-	"dagger/test/internal/dagger"
+	"time"
 )
 
 // DeployCoderToK3s deploys Coder to a K3s cluster using Helm and returns the K3s service
@@ -36,15 +36,38 @@ func (m *Build) BuildPipeline(
 		return nil, fmt.Errorf("Docker Hub credentials are required (dockerUsername and dockerPassword)")
 	}
 
-	// Step 1: Start K3s cluster (no local registry needed)
-	fmt.Printf("📦 Step 1/6: Starting K3s cluster '%s'...\n", clusterName)
+	regSvc := dag.Container().From("registry:2.8").
+		WithExposedPort(5000).AsService()
 
-	k3s := dag.K3S(clusterName)
+	_, err := dag.Container().From("quay.io/skopeo/stable").
+		WithServiceBinding("registry", regSvc).
+		WithEnvVariable("BUST", time.Now().String()).
+		WithExec([]string{"copy", "--dest-tls-verify=false", "docker://docker.io/alpine:latest", "docker://registry:5000/alpine:latest"}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).Sync(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	k3s := dag.K3S("test").With(func(k *dagger.K3S) *dagger.K3S {
+		return k.WithContainer(
+			k.Container().
+				WithEnvVariable("BUST", time.Now().String()).
+				WithExec([]string{"sh", "-c", `
+cat <<EOF > /etc/rancher/k3s/registries.yaml
+mirrors:
+  "registry:5000":
+    endpoint:
+      - "http://registry:5000"
+EOF`}).
+				WithServiceBinding("registry", regSvc),
+		)
+	})
+
 	k3sSvc := k3s.Server()
 
-	k3sSvc, err := k3sSvc.Start(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start K3s service: %w", err)
+	k3sSvc, err2 := k3sSvc.Start(ctx)
+
+	if err2 != nil {
+		return nil, fmt.Errorf("failed to start K3s service: %w", err2)
 	}
 
 	// Get K3s endpoint to verify it's running
@@ -57,9 +80,6 @@ func (m *Build) BuildPipeline(
 
 	// Get kubeconfig from K3s
 	kubeconfig := k3s.Config()
-
-	// Step 2: Build and push workspace image to Docker Hub
-	fmt.Println("🔨 Step 2/5: Building and pushing workspace image to Docker Hub...")
 
 	// Use Docker Hub registry for building
 
@@ -75,7 +95,7 @@ func (m *Build) BuildPipeline(
 	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
 
 	// Use BuildAndPublish to build and push in one operation
-	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "docker.io", "riksarkivet/coder-workspace-ml")
+	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, enableCuda, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
 	if err != nil {
 		return nil, fmt.Errorf("build and publish failed: %w", err)
 	}
@@ -89,9 +109,6 @@ func (m *Build) BuildPipeline(
 
 	//fmt.Printf("   ✅ %s\n", publishResult)
 	fmt.Printf("   📌 Image reference: %s\n", pushedRef)
-
-	// Step 3: Create namespace and LakeFS secret
-	fmt.Println("📋 Step 3/5: Creating namespace 'coder' and LakeFS secret...")
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -160,9 +177,6 @@ EOF
 	if err != nil {
 		return nil, fmt.Errorf("failed to create namespace and secret: %w", err)
 	}
-
-	// Step 5: Deploy Coder using Helm
-	fmt.Printf("🚢 Step 5/5: Deploying Coder v%s using Helm...\n", chartVersion)
 
 	// Base container with Helm and kubectl
 	helmContainer := dag.Container().
