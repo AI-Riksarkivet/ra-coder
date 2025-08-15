@@ -373,7 +373,7 @@ EOF
 	}
 	fmt.Println("   ✅ Coder deployed successfully")
 
-	adminResult, err := dag.Container().
+	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
 		WithServiceBinding("k3s", k3sSvc).
@@ -420,83 +420,46 @@ EOF
 		Stdout(ctx)
 
 	if err != nil {
-		fmt.Printf("   ⚠️  Admin user creation had issues: %v\n", err)
-		adminResult = "Admin user creation completed with warnings"
+		fmt.Printf("   ⚠️  Admin user creation and template push had issues: %v\n", err)
 	} else {
-		fmt.Println("   ✅ Admin user created successfully")
+		fmt.Println("   ✅ Admin user created and template pushed successfully")
 	}
 
 	// Print the summary information
-	fmt.Printf(`✨ CODER DEPLOYMENT COMPLETED!
+	fmt.Printf(`
+✨ CODER DEPLOYMENT COMPLETED!
+================================
 
-Results:
-========
-✅ Docker Hub: Image pushed to %s
-✅ K3s cluster: %s running
-✅ Workspace image: %s built and pushed to Docker Hub
-✅ Test pod: workspace-test-pod deployed pulling from Docker Hub
-✅ Namespace: coder created
-✅ Coder version: %s deployed
-✅ Release name: %s
-✅ PostgreSQL: Configured with internal database
-✅ Resources: CPU/Memory limits configured
-✅ Persistence: 10Gi for Coder, 20Gi for PostgreSQL
-✅ Admin user: admin (admin@example.com) created and ready
+📦 Deployed Components:
+- K3s cluster: %s
+- Coder version: %s  
+- Workspace image: %s
+- PostgreSQL database: Internal
+- Admin user: admin (admin@example.com)
 
-Deployment Output:
-==================
+📋 Deployment Log:
 %s
 
-Test Pod Deployment:
-===================
-%s
+🔗 Access Information:
+- Internal URL: http://coder.coder.svc.cluster.local
+- Admin credentials: admin / changeme123
 
-Verification:
-=============
-%s
-
-Admin User Creation:
-===================
-%s
-
-%s
-
-Summary:
-========
-- K3s cluster running with Coder deployed
-- Workspace image pushed to Docker Hub and pulled by K3s
-- Coder accessible within cluster at: http://coder.coder.svc.cluster.local
-- PostgreSQL database provisioned for Coder
-- Admin user 'admin' created with email 'admin@example.com'
-- All services deployed and configured
-- K3s service returned for external access
-
-Next Steps:
-===========
-1. Use the returned K3s service to interact with the cluster
-2. Get kubeconfig: dagger call get-k3s-kubeconfig --cluster-name=%s
-3. Port-forward to access Coder UI:
+🚀 Next Steps:
+1. Get kubeconfig: 
+   dagger call get-k3s-kubeconfig --cluster-name=%s > kubeconfig.yaml
+   
+2. Port-forward to access Coder UI:
    kubectl port-forward -n coder svc/coder 8080:80
-4. Access Coder at http://localhost:8080
-5. Login with username: admin, password: changeme123
-6. Use workspace image: %s for creating Coder templates
-7. Template '%s' automatically pushed to Coder instance
-`,
-		pushedRef,
-		clusterName,
-		pushedRef,
-		chartVersion,
-		"coder",
-		deployResult,
-		"",
-		"",
-		adminResult,
-		"",
-		clusterName,
-		pushedRef,
-		"")
+   
+3. Access Coder at http://localhost:8080
 
-	fmt.Println("   ✅ Template pushed successfully")
+4. Login with username: admin, password: changeme123
+`,
+		clusterName,
+		chartVersion,
+		pushedRef,
+		deployResult,
+		clusterName)
 
 	// Return the K3s service for external access
 	return k3sSvc, nil
