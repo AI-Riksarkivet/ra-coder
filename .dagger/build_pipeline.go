@@ -357,7 +357,7 @@ EOF
 				--namespace coder \
 				--values /tmp/coder-values.yaml \
 				--create-namespace \
-				--quiet 2>&1 || {
+				--wait --timeout=5m 2>&1 | tail -5 || {
 					ERROR_CODE=$?
 					echo "   ❌ Helm install failed with error code: $ERROR_CODE"
 					echo "   🔄 Retrying with stable version 2.17.2..."
@@ -366,7 +366,7 @@ EOF
 						--version 2.17.2 \
 						--values /tmp/coder-values.yaml \
 						--create-namespace \
-						--quiet 2>&1 || echo "   ❌ Installation failed"
+						--wait --timeout=5m 2>&1 | tail -5 || echo "   ❌ Installation failed"
 				}
 			
 			# Verify deployment
