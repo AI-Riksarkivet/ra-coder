@@ -434,7 +434,7 @@ EOF
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
 		`}).
 		WithWorkdir("/template").
-		Terminal().
+		//Terminal().
 		Stdout(ctx)
 
 	if err != nil {
