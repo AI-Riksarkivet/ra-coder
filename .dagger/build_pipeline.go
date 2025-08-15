@@ -60,9 +60,44 @@ func (m *Build) BuildPipeline(
 	}
 	fmt.Println("   ✅ Local registry ready")
 
+	fmt.Println("   ✅ Kubeconfig retrieved")
+
+	fmt.Println("\n[STEP 3/6] 🏗️  Building workspace image...")
+	// Generate SHA-based tag from source directory
+	fmt.Println("   🔍 Generating source hash...")
+	sourceHash, err := source.Digest(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("❌ Failed to generate source hash: %w", err)
+	}
+	// Remove "sha256:" prefix and use first 12 characters of the actual hash
+	hashParts := strings.Split(sourceHash, ":")
+	actualHash := hashParts[len(hashParts)-1]
+	generatedTag := actualHash[:12]
+	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
+
+	// Use BuildAndPublishWithService to build and push to local registry with service binding
+	fmt.Println("   🐳 Building Docker image and pushing to local registry...")
+	localPublishResult, err := m.BuildAndPublishWithService(ctx, source, regSvc, "", nil, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
+	if err != nil {
+		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
+	}
+	fmt.Printf("   ✅ %s\n", localPublishResult)
+
+	// Construct the full image reference based on environment variables
+	finalImageTag := generatedTag
+	// Check if CUDA is disabled in environment variables
+	for _, envVar := range envVars {
+		if envVar == "ENABLE_CUDA=false" {
+			finalImageTag = generatedTag + "-cpu"
+			break
+		}
+	}
+
+	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
+
 	fmt.Println("\n[STEP 2/6] 🌐 Starting K3s cluster...")
 	fmt.Println("   🔧 Configuring K3s with local registry mirror...")
-	k3s := dag.K3S("test").With(func(k *dagger.K3S) *dagger.K3S {
+	k3s := dag.K3S(clusterName).With(func(k *dagger.K3S) *dagger.K3S {
 		return k.WithContainer(
 			k.Container().
 				WithEnvVariable("BUST", time.Now().String()).
@@ -96,39 +131,6 @@ EOF`}).
 
 	// Get kubeconfig from K3s
 	kubeconfig := k3s.Config()
-	fmt.Println("   ✅ Kubeconfig retrieved")
-
-	fmt.Println("\n[STEP 3/6] 🏗️  Building workspace image...")
-	// Generate SHA-based tag from source directory
-	fmt.Println("   🔍 Generating source hash...")
-	sourceHash, err := source.Digest(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to generate source hash: %w", err)
-	}
-	// Remove "sha256:" prefix and use first 12 characters of the actual hash
-	hashParts := strings.Split(sourceHash, ":")
-	actualHash := hashParts[len(hashParts)-1]
-	generatedTag := actualHash[:12]
-	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
-
-	// Use BuildAndPublishWithService to build and push to local registry with service binding
-	fmt.Println("   🐳 Building Docker image and pushing to local registry...")
-	localPublishResult, err := m.BuildAndPublishWithService(ctx, source, regSvc, "", nil, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
-	if err != nil {
-		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
-	}
-	fmt.Printf("   ✅ %s\n", localPublishResult)
-
-	// Construct the full image reference based on environment variables
-	finalImageTag := generatedTag
-	// Check if CUDA is disabled in environment variables
-	for _, envVar := range envVars {
-		if envVar == "ENABLE_CUDA=false" {
-			finalImageTag = generatedTag + "-cpu"
-			break
-		}
-	}
-	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
 
 	//fmt.Printf("   ✅ %s\n", dockerHubResult)
 	fmt.Printf("   📦 Image reference: %s\n", pushedRef)
@@ -432,9 +434,36 @@ EOF
 				coder templates push my-template --directory /tmp/my-template --message "Automated push" --yes > /dev/null 2>&1
 
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
+
+			# Create a test pod with the built image
+			echo "   🚀 Creating test pod with built image..."
+			cat <<POD | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: workspace-test-pod
+  namespace: coder
+  labels:
+    app: workspace-test
+spec:
+  containers:
+  - name: workspace
+    image: registry:5000/riksarkivet/coder-workspace-ml:` + finalImageTag + `
+    command: ["sleep", "300"]
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+  restartPolicy: Never
+POD
+			
+			echo "   ✅ Test pod created successfully!"
 		`}).
 		WithWorkdir("/template").
-		//Terminal().
+		Terminal().
 		Stdout(ctx)
 
 	if err != nil {

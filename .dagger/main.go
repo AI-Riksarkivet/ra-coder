@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"dagger/test/internal/dagger"
 	"fmt"
 	"strings"
-	
-	"dagger/test/internal/dagger"
+	"time"
 )
 
 type Build struct{}
@@ -32,7 +32,7 @@ func (m *Build) BuildLocal(
 	buildArgs := []dagger.BuildArg{
 		{Name: "REGISTRY", Value: registry},
 	}
-	
+
 	// Parse environment variables and add to build args
 	for _, envVar := range envVars {
 		if parts := strings.Split(envVar, "="); len(parts) == 2 {
@@ -42,17 +42,16 @@ func (m *Build) BuildLocal(
 			})
 		}
 	}
-	
+
 	// Build the container using Dockerfile
 	container := dag.Container().
 		Build(source, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
-			BuildArgs: buildArgs,
+			BuildArgs:  buildArgs,
 		})
-	
+
 	return container, nil
 }
-
 
 // GetBuildCommand returns example dagger commands
 func (m *Build) GetBuildCommand(
@@ -78,7 +77,7 @@ dagger call build-and-publish --source="./Riksarkivets-Development-Template" --u
 dagger call quick-cpu-build --source="./Riksarkivets-Development-Template"
 
 # Quick CUDA build:
-dagger call quick-cuda-build --source="./Riksarkivets-Development-Template"`, 
+dagger call quick-cuda-build --source="./Riksarkivets-Development-Template"`,
 		imageTag, imageTag, imageTag, imageTag)
 }
 
@@ -116,12 +115,12 @@ func (m *Build) BuildAndPublishWithService(
 	}
 
 	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
-	
+
 	// Convert environment variables to build args
 	buildArgs := []dagger.BuildArg{
 		{Name: "REGISTRY", Value: strings.Split(registry, ":")[0]}, // Use just the hostname for REGISTRY arg
 	}
-	
+
 	// Parse environment variables and add to build args
 	for _, envVar := range envVars {
 		if parts := strings.Split(envVar, "="); len(parts) == 2 {
@@ -131,33 +130,34 @@ func (m *Build) BuildAndPublishWithService(
 			})
 		}
 	}
-	
+
 	// Build the container using Dockerfile
 	container := dag.Container().
 		Build(source, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
-			BuildArgs: buildArgs,
+			BuildArgs:  buildArgs,
 		})
-	
+
 	// For local registry with service binding, use skopeo to push
 	if registryService != nil && strings.Contains(registry, "registry:5000") {
 		// First export the image to OCI format
 		tarFile := container.AsTarball()
-		
+
 		// Use skopeo to push to the local registry
 		_, err := dag.Container().From("quay.io/skopeo/stable").
 			WithServiceBinding("registry", registryService).
 			WithMountedFile("/tmp/image.tar", tarFile).
+			WithEnvVariable("BUST", time.Now().String()).
 			WithExec([]string{"copy", "--dest-tls-verify=false", "docker-archive:/tmp/image.tar", fmt.Sprintf("docker://%s", destination)}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).
 			Sync(ctx)
-		
+
 		if err != nil {
 			return "", fmt.Errorf("failed to push to local registry: %w", err)
 		}
-		
+
 		return fmt.Sprintf("Successfully built and pushed image to local registry: %s", destination), nil
 	}
-	
+
 	// For external registries, use standard publish
 	var addr string
 	var err error
@@ -168,11 +168,11 @@ func (m *Build) BuildAndPublishWithService(
 		// External registry without authentication
 		addr, err = container.Publish(ctx, destination)
 	}
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to publish image: %w", err)
 	}
-	
+
 	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
 }
 
