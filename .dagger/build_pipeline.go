@@ -388,6 +388,7 @@ EOF
 		From("alpine/k8s:1.28.3").
 		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
 		WithServiceBinding("k3s", k3sSvc).
+		WithServiceBinding("registry", regSvc).
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", kubeconfig).
 		WithDirectory("/template", source).
@@ -428,7 +429,7 @@ EOF
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
 		`}).
 		WithWorkdir("/template").
-		//Terminal().
+		Terminal().
 		Stdout(ctx)
 
 	if err != nil {
@@ -440,7 +441,7 @@ EOF
 	// Print the summary information
 	endTime := time.Now()
 	duration := endTime.Sub(startTime)
-	
+
 	fmt.Println("")
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
 	fmt.Println("║       ✨ DEPLOYMENT COMPLETED SUCCESSFULLY!                  ║")
