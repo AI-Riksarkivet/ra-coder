@@ -1228,3 +1228,22 @@ resource "coder_script" "coder_cli_config" {
     ""
   )
 }
+
+resource "coder_script" "argo_token_setup" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Argo Workflows Token Setup"
+  icon               = "/icon/argo-workflows.svg"
+  run_on_start       = true
+  start_blocks_login = false
+ 
+  script = <<-EOT
+    #!/usr/bin/env bash
+    
+    if [ -f "$HOME/.kube/config" ] && command -v kubectl &> /dev/null; then
+      if kubectl auth can-i get pods -n argo-workflow &> /dev/null 2>&1; then
+        ARGO_TOKEN="Bearer $(kubectl create token argo-workflows-server -n argo-workflow 2>/dev/null)" || exit 0
+        echo "export ARGO_TOKEN=\"$ARGO_TOKEN\"" >> "$HOME/.bashrc"
+      fi
+    fi
+  EOT
+}
