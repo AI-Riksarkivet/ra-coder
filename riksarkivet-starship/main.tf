@@ -602,7 +602,7 @@ resource "coder_agent" "main" {
     vscode                    = false
     vscode_insiders          = false
     ssh_helper               = false
-    port_forwarding_helper   = true
+    port_forwarding_helper   = false
     web_terminal             = true
   }
 }
@@ -610,49 +610,14 @@ resource "coder_agent" "main" {
 # ========================================
 # Coder Apps
 # ========================================
-
 module "code-server" {
   count      = data.coder_workspace.me.start_count
   source     = "registry.coder.com/coder/code-server/coder"
   version    = "1.3.1"
   agent_id   = coder_agent.main.id
-  settings = {
-    "workbench.colorTheme": "poimandres",
-    "keyboard.layout": "0000041D",
-    "workbench.sideBar.location": "right",
-    "breadcrumbs.enabled": false,
-    "workbench.activityBar.location": "top",
-    "editor.cursorBlinking": "expand",
-    "editor.cursorSmoothCaretAnimation": "on",
-    "editor.wordWrap": "on",
-    "chat.commandCenter.enabled": false,
-    "workbench.navigationControl.enabled": false,
-    "window.menuBarVisibility": "compact"
-    "workbench.layoutControl.enabled": false,
-    "workbench.iconTheme": "material-icon-theme",
-    "editor.fontFamily": "jetbrains-mono-nerd-font, 'JetBrains Mono NL', Consolas, 'Courier New', monospace",
-    "window.title": "Riksarkivet IDE",
-    "recommendations": [
-        "astral-sh.ty",
-        "4ops.terraform"
-    ],
-    "workbench.startupEditor": "terminal"
-  }
-
+  use_cached = true
   subdomain     = false
-  extensions    = [
-    "ms-python.python",
-    "golang.Go",
-    "fowind.material-icon-theme-with-jb-nf",
-    "flvffy.poimandres",
-    "charliermarsh.ruff",
-    "marimo-team.vscode-marimo",
-    "redhat.vscode-yaml",
-    "tamasfe.even-better-toml",
-    "ms-ossdata.vscode-pgsql"
-  ]
 }
-
 
 module "filebrowser" {
   count         = data.coder_workspace.me.start_count
@@ -661,14 +626,14 @@ module "filebrowser" {
   agent_id      = coder_agent.main.id
   subdomain     = false
   database_path = ".config/filebrowser.db"
-  folder        = "/mnt"  # This gives access to entire filesystem
+  folder        = "/"
 }
 
 module "dotfiles" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/modules/dotfiles/coder"
   version  = "1.0.29"
-  default_dotfiles_uri = ""
+  default_dotfiles_uri = "https://github.com/AI-Riksarkivet/dotfiles"
   agent_id = coder_agent.main.id
 }
 
