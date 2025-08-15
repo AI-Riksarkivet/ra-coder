@@ -82,6 +82,100 @@ dagger call quick-cuda-build --source="./Riksarkivets-Development-Template"`,
 		imageTag, imageTag, imageTag, imageTag)
 }
 
+// BuildAndPublishWithService builds using Dockerfile and publishes to a registry service with custom environment variables
+func (m *Build) BuildAndPublishWithService(
+	ctx context.Context,
+	// Local directory to build from
+	source *dagger.Directory,
+	// Registry service to bind
+	registryService *dagger.Service,
+	// Registry username (optional for local registry)
+	username string,
+	// Registry password/token (optional for local registry)
+	password *dagger.Secret,
+	// Environment variables for build customization (KEY=VALUE format)
+	// +default=["ENABLE_CUDA=true"]
+	envVars []string,
+	// Image tag
+	// +default="v14.1.3"
+	imageTag string,
+	// Registry URL
+	// +default="registry:5000"
+	registry string,
+	// Image repository name
+	// +default="riksarkivet/coder-workspace-ml"
+	imageRepository string,
+) (string, error) {
+	// Determine final tag based on environment variables
+	finalTag := imageTag
+	for _, envVar := range envVars {
+		if envVar == "ENABLE_CUDA=false" {
+			finalTag = imageTag + "-cpu"
+			break
+		}
+	}
+
+	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
+	
+	// Convert environment variables to build args
+	buildArgs := []dagger.BuildArg{
+		{Name: "REGISTRY", Value: strings.Split(registry, ":")[0]}, // Use just the hostname for REGISTRY arg
+	}
+	
+	// Parse environment variables and add to build args
+	for _, envVar := range envVars {
+		if parts := strings.Split(envVar, "="); len(parts) == 2 {
+			buildArgs = append(buildArgs, dagger.BuildArg{
+				Name:  parts[0],
+				Value: parts[1],
+			})
+		}
+	}
+	
+	// Build the container using Dockerfile
+	container := dag.Container().
+		Build(source, dagger.ContainerBuildOpts{
+			Dockerfile: "Dockerfile",
+			BuildArgs: buildArgs,
+		})
+	
+	// For local registry with service binding, use skopeo to push
+	if registryService != nil && strings.Contains(registry, "registry:5000") {
+		// First export the image to OCI format
+		tarFile := container.AsTarball()
+		
+		// Use skopeo to push to the local registry
+		_, err := dag.Container().From("quay.io/skopeo/stable").
+			WithServiceBinding("registry", registryService).
+			WithMountedFile("/tmp/image.tar", tarFile).
+			WithExec([]string{"copy", "--dest-tls-verify=false", "docker-archive:/tmp/image.tar", fmt.Sprintf("docker://%s", destination)}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).
+			Sync(ctx)
+		
+		if err != nil {
+			return "", fmt.Errorf("failed to push to local registry: %w", err)
+		}
+		
+		return fmt.Sprintf("Successfully built and pushed image to local registry: %s", destination), nil
+	}
+	
+	// For external registries, use standard publish
+	var addr string
+	var err error
+	if username != "" && password != nil {
+		// External registry with authentication
+		addr, err = container.WithRegistryAuth(registry, username, password).Publish(ctx, destination)
+	} else {
+		// External registry without authentication
+		addr, err = container.Publish(ctx, destination)
+	}
+	
+	if err != nil {
+		return "", fmt.Errorf("failed to publish image: %w", err)
+	}
+	
+	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
+}
+
 // BuildAndPublish builds using Dockerfile and publishes to registry with custom environment variables
 func (m *Build) BuildAndPublish(
 	ctx context.Context,
@@ -104,46 +198,8 @@ func (m *Build) BuildAndPublish(
 	// +default="riksarkivet/coder-workspace-ml"
 	imageRepository string,
 ) (string, error) {
-	// Determine final tag based on environment variables
-	finalTag := imageTag
-	for _, envVar := range envVars {
-		if envVar == "ENABLE_CUDA=false" {
-			finalTag = imageTag + "-cpu"
-			break
-		}
-	}
-
-	destination := fmt.Sprintf("%s/%s:%s", registry, imageRepository, finalTag)
-	
-	// Convert environment variables to build args
-	buildArgs := []dagger.BuildArg{
-		{Name: "REGISTRY", Value: registry},
-	}
-	
-	// Parse environment variables and add to build args
-	for _, envVar := range envVars {
-		if parts := strings.Split(envVar, "="); len(parts) == 2 {
-			buildArgs = append(buildArgs, dagger.BuildArg{
-				Name:  parts[0],
-				Value: parts[1],
-			})
-		}
-	}
-	
-	// Build the container using Dockerfile
-	container := dag.Container().
-		Build(source, dagger.ContainerBuildOpts{
-			Dockerfile: "Dockerfile",
-			BuildArgs: buildArgs,
-		})
-	
-	// Publish to registry with authentication
-	addr, err := container.WithRegistryAuth(registry, username, password).Publish(ctx, destination)
-	if err != nil {
-		return "", fmt.Errorf("failed to publish image: %w", err)
-	}
-	
-	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
+	// Call the new function with nil service for backward compatibility
+	return m.BuildAndPublishWithService(ctx, source, nil, username, password, envVars, imageTag, registry, imageRepository)
 }
 
 // QuickCpuBuild is a convenience function for CPU-only builds

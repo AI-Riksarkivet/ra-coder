@@ -111,12 +111,13 @@ EOF`}).
 	generatedTag := actualHash[:12]
 	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
 
-	// Use BuildAndPublish to build and push in one operation
-	fmt.Println("   🐳 Building Docker image (this may take a few minutes)...")
-	//publishResult, err := m.BuildAndPublish(ctx, source, dockerUsername, dockerPassword, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
+	// Use BuildAndPublishWithService to build and push to local registry with service binding
+	fmt.Println("   🐳 Building Docker image and pushing to local registry...")
+	localPublishResult, err := m.BuildAndPublishWithService(ctx, source, regSvc, "", nil, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
 	if err != nil {
-		return nil, fmt.Errorf("❌ Build and publish failed: %w", err)
+		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
 	}
+	fmt.Printf("   ✅ %s\n", localPublishResult)
 
 	// Construct the full image reference based on environment variables
 	finalImageTag := generatedTag
@@ -129,9 +130,9 @@ EOF`}).
 	}
 	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
 
-	//fmt.Printf("   ✅ %s\n", publishResult)
+	//fmt.Printf("   ✅ %s\n", dockerHubResult)
 	fmt.Printf("   📦 Image reference: %s\n", pushedRef)
-	fmt.Println("   ✅ Image built and pushed successfully")
+	fmt.Println("   ✅ Image built and pushed to both local registry and Docker Hub")
 
 	fmt.Println("\n[STEP 4/6] 🔧 Configuring Kubernetes resources...")
 	_, err = dag.Container().
