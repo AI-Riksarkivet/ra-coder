@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"dagger/test/internal/dagger"
 )
@@ -12,40 +13,26 @@ func (m *Build) BuildPipeline(
 	ctx context.Context,
 	// Template source directory
 	source *dagger.Directory,
-	// Template directory name within source (e.g., "riksarkivet-starship")
-	// +default="riksarkivet-starship"
-	templateDirName string,
+
 	// K3s cluster name
 	// +default="coder-cluster"
 	clusterName string,
-	// Coder namespace
-	// +default="coder"
-	namespace string,
 	// Coder Helm chart version
 	// +default="2.19.2"
 	chartVersion string,
-	// Admin username to create
-	// +default="admin"
-	adminUsername string,
-	// Admin email to create
-	// +default="admin@example.com"
-	adminEmail string,
-	// Admin password to set
-	// +default="changeme123"
-	adminPassword string,
 	// Enable CUDA support
 	// +default=false
 	enableCuda bool,
 	// Docker Hub username (required for pushing)
 	dockerUsername string,
-	// Docker Hub password/token (required for pushing)
-	dockerPassword string,
+	// Docker Hub password/token (required for pushing, as a secret)
+	dockerPassword *dagger.Secret,
 ) (*dagger.Service, error) {
 	fmt.Println("🚀 DEPLOYING CODER TO K3S CLUSTER")
 	fmt.Println("==================================")
 
 	// Validate Docker Hub credentials
-	if dockerUsername == "" || dockerPassword == "" {
+	if dockerUsername == "" || dockerPassword == nil {
 		return nil, fmt.Errorf("Docker Hub credentials are required (dockerUsername and dockerPassword)")
 	}
 
@@ -77,14 +64,14 @@ func (m *Build) BuildPipeline(
 	// Use Docker Hub registry for building
 
 	// Generate SHA-based tag from source directory
-	//sourceHash, err := source.Digest(ctx)
+	sourceHash, err := source.Digest(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate source hash: %w", err)
 	}
 	// Remove "sha256:" prefix and use first 12 characters of the actual hash
-	//hashParts := strings.Split(sourceHash, ":")
-	//actualHash := hashParts[len(hashParts)-1]
-	generatedTag := "temp" //actualHash[:12]
+	hashParts := strings.Split(sourceHash, ":")
+	actualHash := hashParts[len(hashParts)-1]
+	generatedTag := actualHash[:12]
 	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
 
 	// Use BuildAndPublish to build and push in one operation
@@ -104,7 +91,7 @@ func (m *Build) BuildPipeline(
 	fmt.Printf("   📌 Image reference: %s\n", pushedRef)
 
 	// Step 3: Create namespace and LakeFS secret
-	fmt.Printf("📋 Step 3/5: Creating namespace '%s' and LakeFS secret...\n", namespace)
+	fmt.Println("📋 Step 3/5: Creating namespace 'coder' and LakeFS secret...")
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -124,8 +111,8 @@ func (m *Build) BuildPipeline(
 			done
 			
 			# Create namespace
-			kubectl create namespace %s 2>/dev/null || echo "Namespace %s already exists"
-			kubectl get namespace %s
+			kubectl create namespace coder 2>/dev/null || echo "Namespace coder already exists"
+			kubectl get namespace coder
 			
 			# Create LakeFS secret in coder namespace (hardcoded)
 			echo "🔐 Creating LakeFS secret in coder namespace..."
@@ -167,7 +154,7 @@ stringData:
 EOF
 			echo "✅ Default kubeconfig secret created"
 			kubectl get secret -n coder default-kubeconfig
-		`, namespace, namespace, namespace)}).
+		`)}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -188,7 +175,7 @@ EOF
 	// Create values for Coder deployment with RBAC permissions
 	coderValues := fmt.Sprintf(`
 # First deploy a simple PostgreSQL
-kubectl apply -n %s -f - <<PSQL
+kubectl apply -n coder -f - <<PSQL
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -280,7 +267,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: coder
-  namespace: %s
+  namespace: coder
 RBAC
 
 # Create Helm values with enhanced permissions
@@ -290,7 +277,7 @@ coder:
     - name: CODER_ACCESS_URL
       value: "http://localhost:8080"
     - name: CODER_PG_CONNECTION_URL
-      value: "postgresql://coder:coder@postgres.%s.svc.cluster.local:5432/coder?sslmode=disable"
+      value: "postgresql://coder:coder@postgres.coder.svc.cluster.local:5432/coder?sslmode=disable"
     - name: CODER_TELEMETRY_ENABLE
       value: "false"
   service:
@@ -303,7 +290,7 @@ coder:
     create: true
     clusterRoleName: coder-workspace-manager
 EOF
-`, namespace, namespace, namespace)
+`)
 
 	// Deploy PostgreSQL and Coder with Helm
 	deployResult, err := helmContainer.
@@ -342,7 +329,7 @@ EOF
 			echo ""
 			echo "🚀 Installing Coder with release name: coder"
 			helm upgrade --install coder coder/coder \
-				--namespace %s \
+				--namespace coder \
 				--values /tmp/coder-values.yaml \
 				--create-namespace \
 				--debug 2>&1 || {
@@ -351,7 +338,7 @@ EOF
 					echo ""
 					echo "Trying with latest stable version explicitly..."
 					helm upgrade --install coder coder/coder \
-						--namespace %s \
+						--namespace coder \
 						--version 2.17.2 \
 						--values /tmp/coder-values.yaml \
 						--create-namespace \
@@ -360,11 +347,11 @@ EOF
 			
 			echo ""
 			echo "📊 Checking Helm release status..."
-			helm list -n %s
+			helm list -n coder
 			
 			echo ""
 			echo "✅ Helm deployment command completed (check status above)"
-		`, namespace, namespace, namespace)}).
+		`)}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -415,7 +402,7 @@ EOF
 			'		
 		`}).
 		WithWorkdir("/template").
-		Terminal().
+		//Terminal().
 		Stdout(ctx)
 
 	if err != nil {
@@ -434,13 +421,13 @@ Results:
 ✅ K3s cluster: %s running
 ✅ Workspace image: %s built and pushed to Docker Hub
 ✅ Test pod: workspace-test-pod deployed pulling from Docker Hub
-✅ Namespace: %s created
+✅ Namespace: coder created
 ✅ Coder version: %s deployed
 ✅ Release name: %s
 ✅ PostgreSQL: Configured with internal database
 ✅ Resources: CPU/Memory limits configured
 ✅ Persistence: 10Gi for Coder, 20Gi for PostgreSQL
-✅ Admin user: %s (%s) created and ready
+✅ Admin user: admin (admin@example.com) created and ready
 
 Deployment Output:
 ==================
@@ -464,9 +451,9 @@ Summary:
 ========
 - K3s cluster running with Coder deployed
 - Workspace image pushed to Docker Hub and pulled by K3s
-- Coder accessible within cluster at: http://coder.%s.svc.cluster.local
+- Coder accessible within cluster at: http://coder.coder.svc.cluster.local
 - PostgreSQL database provisioned for Coder
-- Admin user '%s' created with email '%s'
+- Admin user 'admin' created with email 'admin@example.com'
 - All services deployed and configured
 - K3s service returned for external access
 
@@ -475,46 +462,25 @@ Next Steps:
 1. Use the returned K3s service to interact with the cluster
 2. Get kubeconfig: dagger call get-k3s-kubeconfig --cluster-name=%s
 3. Port-forward to access Coder UI:
-   kubectl port-forward -n %s svc/coder 8080:80
+   kubectl port-forward -n coder svc/coder 8080:80
 4. Access Coder at http://localhost:8080
-5. Login with username: %s, password: %s
+5. Login with username: admin, password: changeme123
 6. Use workspace image: %s for creating Coder templates
 7. Template '%s' automatically pushed to Coder instance
 `,
-		"",
+		pushedRef,
 		clusterName,
-		"",
-		namespace,
+		pushedRef,
 		chartVersion,
-		"",
-		adminUsername,
-		adminEmail,
+		"coder",
 		deployResult,
 		"",
 		"",
 		adminResult,
 		"",
-		namespace,
-		adminUsername,
-		adminEmail,
 		clusterName,
-		namespace,
-		adminUsername,
-		adminPassword,
-		"",
-		templateDirName)
-
-	// Step 6: Push template to Coder
-	fmt.Printf("📋 Step 6/6: Pushing template '%s' to Coder...\n", templateDirName)
-
-	// Use the entire source directory as the template
-	// This copies everything from the folder that's being passed
-	fmt.Printf("   📁 Using source directory as template: %s\n", templateDirName)
-
-	if err != nil {
-		fmt.Printf("   ⚠️  Template push failed: %v\n", err)
-
-	}
+		pushedRef,
+		"")
 
 	fmt.Println("   ✅ Template pushed successfully")
 

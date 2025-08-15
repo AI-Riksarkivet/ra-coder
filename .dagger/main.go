@@ -81,8 +81,8 @@ func (m *Build) BuildAndPublish(
 	source *dagger.Directory,
 	// Registry username
 	username string,
-	// Registry password/token
-	password string,
+	// Registry password/token (as a secret)
+	password *dagger.Secret,
 	// Enable CUDA support
 	// +default="true"
 	enableCuda bool,
@@ -115,7 +115,7 @@ func (m *Build) BuildAndPublish(
 		})
 	
 	// Publish to registry with authentication
-	addr, err := container.WithRegistryAuth(registry, username, dag.SetSecret("registry-password", password)).Publish(ctx, destination)
+	addr, err := container.WithRegistryAuth(registry, username, password).Publish(ctx, destination)
 	if err != nil {
 		return "", fmt.Errorf("failed to publish image: %w", err)
 	}
