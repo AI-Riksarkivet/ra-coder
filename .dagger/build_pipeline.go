@@ -351,6 +351,8 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 		WithFile("/.kube/config", cluster.Kubeconfig).
 		WithDirectory("/template", source).
 		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+			set -e  # Exit on any error - make the whole script blocking
+			
 			# Install k9s
 			echo "   🔧 Installing k9s for cluster management..."
 			K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
@@ -360,17 +362,29 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 
 			# Wait for Coder deployment
 			echo "   ⏳ Waiting for Coder deployment to be ready..."
-			kubectl wait --for=condition=available --timeout=300s deployment/coder -n coder > /dev/null 2>&1 || true
+			kubectl wait --for=condition=available --timeout=300s deployment/coder -n coder || {
+				echo "   ❌ Coder deployment not ready after 5 minutes"
+				exit 1
+			}
 
 			# Get pod name, copy template and push
 			echo "   📦 Copying template to Coder pod..."
 			CODER_POD=$(kubectl get pod -n coder -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}')
-			kubectl cp /template coder/$CODER_POD:/tmp/my-template 2>/dev/null
+			if [ -z "$CODER_POD" ]; then
+				echo "   ❌ No Coder pod found"
+				exit 1
+			fi
+			kubectl cp /template coder/$CODER_POD:/tmp/my-template || {
+				echo "   ❌ Failed to copy template to Coder pod"
+				exit 1
+			}
 			echo "   ✅ Template copied"
 
 			# push the template
 			echo "   👤 Creating admin user..."
 		    kubectl exec -n coder deployment/coder -- sh -c '
+				set -e  # Exit on any error
+				
 				# Create admin user (if not exists)
 				coder server create-admin-user --username admin --email admin@example.com --password changeme123 2>&1 | grep -v "duplicate key" || true
 
@@ -379,24 +393,65 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 					-d "{\"email\":\"admin@example.com\",\"password\":\"changeme123\"}" \
 					"http://localhost:8080/api/v2/users/login" | grep -o "\"session_token\":\"[^\"]*\"" | cut -d"\"" -f4)
 				
-				echo "$SESSION_TOKEN" | coder login http://localhost:8080 > /dev/null 2>&1
+				if [ -z "$SESSION_TOKEN" ]; then
+					echo "   ❌ Failed to get session token"
+					exit 1
+				fi
+				
+				echo "$SESSION_TOKEN" | coder login http://localhost:8080 || {
+					echo "   ❌ Failed to login to Coder"
+					exit 1
+				}
 
 				# Now push the template
-				coder templates push my-template --directory /tmp/my-template --message "Automated push" --yes > /dev/null 2>&1
+				echo "   📦 Pushing template..."
+				coder templates push my-template --directory /tmp/my-template --message "Automated push" --yes || {
+					echo "   ❌ Failed to push template"
+					exit 1
+				}
+				echo "   ✅ Template pushed successfully"
+				
+				# Create a workspace from the template with a timeout (blocking)
+				echo "   🚀 Creating workspace from template (timeout: 2 minutes)..."
+				timeout 120 coder create test-workspace --template my-template --yes || {
+					EXIT_CODE=$?
+					if [ $EXIT_CODE -eq 124 ]; then
+						echo "   ⏱️  Workspace creation timed out after 2 minutes"
+						echo "   ❌ Failing due to timeout (exit code: 124)"
+						exit 124
+					else
+						echo "   ⚠️  Workspace creation failed with exit code: $EXIT_CODE"
+						echo "   ❌ Failing due to workspace creation error"
+						exit $EXIT_CODE
+					fi
+				}
+				
+				# Verify workspace was created successfully
+				if coder list | grep -q test-workspace; then
+					echo "   ✅ Workspace 'test-workspace' created successfully"
+				else
+					echo "   ❌ Workspace 'test-workspace' not found after creation"
+					exit 2
+				fi
 
-			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
+			' || {
+				echo "   ❌ Critical failure in admin/template/workspace setup"
+				exit 1
+			}
 
 			# Create a test pod with the built image
 			echo "   🚀 Creating test pod with built image..."
-			cat <<POD | kubectl apply -f -
+			cat <<POD | kubectl apply -f - || {
+				echo "   ❌ Failed to create test pod"
+				exit 1
+			}
 %s
 POD
 			
 			echo "   ✅ Test pod created successfully!"
 		`, generateTestPodYAML(imageRepository, finalImageTag))}).
 		WithWorkdir("/template").
-		Terminal().
-		Stdout(ctx)
+		Sync(ctx)
 
 	if err != nil {
 		return fmt.Errorf("❌ Failed to setup admin user and template: %w", err)
@@ -489,10 +544,9 @@ func (m *Build) BuildPipeline(
 
 	err = m.SetupAdminUserAndTemplate(ctx, cluster, regSvc, source, imageRepository, finalImageTag)
 	if err != nil {
-		fmt.Printf("   ⚠️  Some admin configuration steps had issues: %v\n", err)
-	} else {
-		fmt.Println("   ✅ Admin user and template setup completed successfully")
+		return nil, fmt.Errorf("❌ Failed to setup admin user and template: %w", err)
 	}
+	fmt.Println("   ✅ Admin user and template setup completed successfully")
 
 	// Conditional registry push
 	var pushedRef string
