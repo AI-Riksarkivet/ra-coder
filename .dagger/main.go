@@ -227,3 +227,51 @@ func (m *Build) QuickCudaBuild(
 ) (*dagger.Container, error) {
 	return m.BuildLocal(ctx, source, imageRepository, []string{"ENABLE_CUDA=true"}, "latest", "docker.io")
 }
+
+// buildContainer builds a container with environment variables as build args
+func (m *Build) BuildContainer(ctx context.Context, source *dagger.Directory, envVars []string) *dagger.Container {
+	fmt.Println("   🏗️  Building container image...")
+
+	buildArgs := []dagger.BuildArg{
+		{Name: "REGISTRY", Value: "registry"}, // Use just the hostname for REGISTRY arg
+	}
+
+	// Parse environment variables and add to build args
+	for _, envVar := range envVars {
+		if parts := strings.Split(envVar, "="); len(parts) == 2 {
+			buildArgs = append(buildArgs, dagger.BuildArg{
+				Name:  parts[0],
+				Value: parts[1],
+			})
+		}
+	}
+
+	// Build the container using Dockerfile
+	return dag.Container().
+		Build(source, dagger.ContainerBuildOpts{
+			Dockerfile: "Dockerfile",
+			BuildArgs:  buildArgs,
+		})
+}
+
+// pushToLocalRegistry pushes a built container to the local registry using skopeo
+func (m *Build) PushToLocalRegistry(ctx context.Context, builtContainer *dagger.Container, imageRepository, finalImageTag string, regSvc *dagger.Service) error {
+	localDestination := fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
+	fmt.Printf("   📤 Pushing to local registry: %s\n", localDestination)
+
+	tarFile := builtContainer.AsTarball()
+
+	_, err := dag.Container().From("quay.io/skopeo/stable").
+		WithServiceBinding("registry", regSvc).
+		WithMountedFile("/tmp/image.tar", tarFile).
+		WithEnvVariable("BUST", time.Now().String()).
+		WithExec([]string{"copy", "--dest-tls-verify=false", "docker-archive:/tmp/image.tar", fmt.Sprintf("docker://%s", localDestination)}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).
+		Sync(ctx)
+
+	if err != nil {
+		return fmt.Errorf("❌ Failed to push to local registry: %w", err)
+	}
+
+	fmt.Printf("   ✅ Successfully pushed image to local registry: %s\n", localDestination)
+	return nil
+}

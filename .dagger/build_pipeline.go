@@ -4,7 +4,6 @@ import (
 	"context"
 	"dagger/test/internal/dagger"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -463,51 +462,18 @@ func (m *Build) BuildPipeline(
 		WithExposedPort(5000).AsService()
 	fmt.Println("   🔄 Starting registry service on port 5000...")
 
-	fmt.Println("   ✅ Kubeconfig retrieved")
-
 	// Generate final image tag using default calculator
 	fmt.Println("   🔍 Calculating final image tag...")
 	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
 
 	// Build the container once
-	fmt.Println("   🏗️  Building container image...")
-	buildArgs := []dagger.BuildArg{
-		{Name: "REGISTRY", Value: "registry"}, // Use just the hostname for REGISTRY arg
-	}
-
-	// Parse environment variables and add to build args
-	for _, envVar := range envVars {
-		if parts := strings.Split(envVar, "="); len(parts) == 2 {
-			buildArgs = append(buildArgs, dagger.BuildArg{
-				Name:  parts[0],
-				Value: parts[1],
-			})
-		}
-	}
-
-	// Build the container using Dockerfile
-	builtContainer := dag.Container().
-		Build(source, dagger.ContainerBuildOpts{
-			Dockerfile: "Dockerfile",
-			BuildArgs:  buildArgs,
-		})
+	builtContainer := m.BuildContainer(ctx, source, envVars)
 
 	// Push to local registry using skopeo
-	localDestination := fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
-	tarFile := builtContainer.AsTarball()
-
-	_, err := dag.Container().From("quay.io/skopeo/stable").
-		WithServiceBinding("registry", regSvc).
-		WithMountedFile("/tmp/image.tar", tarFile).
-		WithEnvVariable("BUST", time.Now().String()).
-		WithExec([]string{"copy", "--dest-tls-verify=false", "docker-archive:/tmp/image.tar", fmt.Sprintf("docker://%s", localDestination)}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).
-		Sync(ctx)
-
+	err := m.PushToLocalRegistry(ctx, builtContainer, imageRepository, finalImageTag, regSvc)
 	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to push to local registry: %w", err)
+		return nil, err
 	}
-
-	fmt.Printf("   ✅ Successfully built and pushed image to local registry: %s\n", localDestination)
 
 	cluster, err := m.SetupK3sCluster(ctx, clusterName, regSvc)
 	if err != nil {
