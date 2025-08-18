@@ -33,7 +33,7 @@ spec:
 
 // installCoderAndComponents installs Coder and its required components (PostgreSQL, RBAC, etc.)
 func (m *Build) InstallCoderAndComponents(ctx context.Context, k3sSvc *dagger.Service, kubeconfig *dagger.File, chartVersion string) error {
-
+	fmt.Println("   🔧 Configuring Kubernetes resources...")
 	_, err := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithServiceBinding("k3s", k3sSvc).
@@ -102,7 +102,6 @@ EOF
 	if err != nil {
 		return fmt.Errorf("❌ Failed to create namespace and secrets: %w", err)
 	}
-	fmt.Println("   ✅ All Kubernetes resources configured")
 
 	// Base container with Helm and kubectl
 	helmContainer := dag.Container().
@@ -231,6 +230,8 @@ coder:
     clusterRoleName: coder-workspace-manager
 EOF
 `
+	fmt.Println("   ✅ Kubernetes resources configured")
+	fmt.Println("   ⚙️  Deploying Coder with Helm...")
 	fmt.Printf("   🎯 Target version: %s\n", chartVersion)
 	// Deploy PostgreSQL and Coder with Helm
 	_, err = helmContainer.
@@ -290,7 +291,6 @@ EOF
 
 // setupK3sCluster configures and starts a K3s cluster with registry mirror
 func (m *Build) SetupK3sCluster(ctx context.Context, clusterName string, regSvc *dagger.Service) (*dagger.Service, *dagger.File, error) {
-
 	fmt.Println("   🔧 Configuring K3s with local registry mirror...")
 
 	k3s := dag.K3S(clusterName).With(func(k *dagger.K3S) *dagger.K3S {
@@ -392,17 +392,19 @@ func (m *Build) BuildPipeline(
 	}
 	fmt.Printf("   ✅ %s\n", localPublishResult)
 
-	// Setup K3s cluster
+
 	k3sSvc, kubeconfig, err := m.SetupK3sCluster(ctx, clusterName, regSvc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("❌ Failed to setup K3s cluster: %w", err)
 	}
+	fmt.Println("   ✅ K3s cluster setup completed successfully")
 
-	// Install Coder and its components
+
 	err = m.InstallCoderAndComponents(ctx, k3sSvc, kubeconfig, chartVersion)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("❌ Failed to install Coder and components: %w", err)
 	}
+	fmt.Println("   ✅ Coder and components installation completed successfully")
 
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
