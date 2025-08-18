@@ -4,7 +4,6 @@ import (
 	"context"
 	"dagger/test/internal/dagger"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -20,13 +19,23 @@ func (m *Build) BuildPipeline(
 	// Coder Helm chart version
 	// +default="2.19.2"
 	chartVersion string,
+
+	// riksarkivet/coderworkspacename
+	imageRepository string,
+
+	// The tag of the image we want to build
+	imageTag string,
+
+	// Docker Hub username (required for pushing)
+	dockerUsername string,
+
+	// Docker Hub password/token (required for pushing, as a secret)
+	dockerPassword *dagger.Secret,
+
 	// Environment variables for template customization (KEY=VALUE format)
 	// +default=[]
 	envVars []string,
-	// Docker Hub username (required for pushing)
-	dockerUsername string,
-	// Docker Hub password/token (required for pushing, as a secret)
-	dockerPassword *dagger.Secret,
+
 ) (*dagger.Service, error) {
 	startTime := time.Now()
 	fmt.Println("")
@@ -51,49 +60,22 @@ func (m *Build) BuildPipeline(
 		WithExposedPort(5000).AsService()
 	fmt.Println("   🔄 Starting registry service on port 5000...")
 
-	_, err := dag.Container().From("quay.io/skopeo/stable").
-		WithServiceBinding("registry", regSvc).
-		WithEnvVariable("BUST", time.Now().String()).
-		WithExec([]string{"copy", "--dest-tls-verify=false", "docker://docker.io/alpine:latest", "docker://registry:5000/alpine:latest"}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).Sync(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to setup local registry: %w", err)
-	}
-	fmt.Println("   ✅ Local registry ready")
 
 	fmt.Println("   ✅ Kubeconfig retrieved")
 
 	fmt.Println("\n[STEP 3/6] 🏗️  Building workspace image...")
-	// Generate SHA-based tag from source directory
-	fmt.Println("   🔍 Generating source hash...")
-	sourceHash, err := source.Digest(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to generate source hash: %w", err)
-	}
-	// Remove "sha256:" prefix and use first 12 characters of the actual hash
-	hashParts := strings.Split(sourceHash, ":")
-	actualHash := hashParts[len(hashParts)-1]
-	generatedTag := actualHash[:12]
-	fmt.Printf("   📌 Generated SHA tag: %s\n", generatedTag)
+	// Generate final image tag using default calculator
+	fmt.Println("   🔍 Calculating final image tag...")
+	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
 
-	// Use BuildAndPublishWithService to build and push to local registry with service binding
-	fmt.Println("   🐳 Building Docker image and pushing to local registry...")
-	localPublishResult, err := m.BuildAndPublishWithService(ctx, source, regSvc, "", nil, envVars, generatedTag, "registry:5000", "riksarkivet/coder-workspace-ml")
+	localPublishResult, err := m.BuildAndPublish(ctx, source, imageRepository, "", nil, envVars, imageTag, "registry:5000", regSvc)
 	if err != nil {
 		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
 	}
 	fmt.Printf("   ✅ %s\n", localPublishResult)
 
-	// Construct the full image reference based on environment variables
-	finalImageTag := generatedTag
-	// Check if CUDA is disabled in environment variables
-	for _, envVar := range envVars {
-		if envVar == "ENABLE_CUDA=false" {
-			finalImageTag = generatedTag + "-cpu"
-			break
-		}
-	}
-
-	pushedRef := fmt.Sprintf("docker.io/riksarkivet/coder-workspace-ml:%s", finalImageTag)
+	
+	pushedRef := fmt.Sprintf("docker.io/%s:%s", imageRepository, finalImageTag)
 
 	fmt.Println("\n[STEP 2/6] 🌐 Starting K3s cluster...")
 	fmt.Println("   🔧 Configuring K3s with local registry mirror...")
@@ -448,7 +430,7 @@ metadata:
 spec:
   containers:
   - name: workspace
-    image: registry:5000/riksarkivet/coder-workspace-ml:` + finalImageTag + `
+    image: registry:5000/` + imageRepository + `:` + finalImageTag + `
     command: ["sleep", "300"]
     resources:
       requests:
