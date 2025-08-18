@@ -7,124 +7,39 @@ import (
 	"time"
 )
 
-// DeployCoderToK3s deploys Coder to a K3s cluster using Helm and returns the K3s service
-func (m *Build) BuildPipeline(
-	ctx context.Context,
-	// Template source directory
-	source *dagger.Directory,
+// generateTestPodYAML creates a test pod YAML specification for the workspace image
+func generateTestPodYAML(imageRepository, finalImageTag string) string {
+	return fmt.Sprintf(`apiVersion: v1
+kind: Pod
+metadata:
+  name: workspace-test-pod
+  namespace: coder
+  labels:
+    app: workspace-test
+spec:
+  containers:
+  - name: workspace
+    image: registry:5000/%s:%s
+    command: ["sleep", "300"]
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+  restartPolicy: Never`, imageRepository, finalImageTag)
+}
 
-	// K3s cluster name
-	// +default="coder-cluster"
-	clusterName string,
-	// Coder Helm chart version
-	// +default="2.19.2"
-	chartVersion string,
+// installCoderAndComponents installs Coder and its required components (PostgreSQL, RBAC, etc.)
+func (m *Build) InstallCoderAndComponents(ctx context.Context, k3sSvc *dagger.Service, kubeconfig *dagger.File, chartVersion string) error {
 
-	// riksarkivet/coderworkspacename
-	imageRepository string,
-
-	// The tag of the image we want to build
-	imageTag string,
-
-	// Docker Hub username (required for pushing)
-	dockerUsername string,
-
-	// Docker Hub password/token (required for pushing, as a secret)
-	dockerPassword *dagger.Secret,
-
-	// Environment variables for template customization (KEY=VALUE format)
-	// +default=[]
-	envVars []string,
-
-) (*dagger.Service, error) {
-	startTime := time.Now()
-	fmt.Println("")
-	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║       🚀 CODER DEPLOYMENT PIPELINE STARTING                  ║")
-	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
-	fmt.Println("")
-	fmt.Printf("📅 Start Time: %s\n", startTime.Format("15:04:05"))
-	fmt.Printf("🎯 Target: K3s cluster with Coder v%s\n", chartVersion)
-	fmt.Printf("🔧 Environment Variables: %v\n", envVars)
-	fmt.Println("")
-
-	// Validate Docker Hub credentials
-	fmt.Println("[STEP 0/6] 🔐 Validating credentials...")
-	if dockerUsername == "" || dockerPassword == nil {
-		return nil, fmt.Errorf("❌ Docker Hub credentials are required (dockerUsername and dockerPassword)")
-	}
-	fmt.Println("   ✅ Docker credentials validated")
-
-	fmt.Println("\n[STEP 1/6] 📦 Setting up local registry...")
-	regSvc := dag.Container().From("registry:2.8").
-		WithExposedPort(5000).AsService()
-	fmt.Println("   🔄 Starting registry service on port 5000...")
-
-
-	fmt.Println("   ✅ Kubeconfig retrieved")
-
-	fmt.Println("\n[STEP 3/6] 🏗️  Building workspace image...")
-	// Generate final image tag using default calculator
-	fmt.Println("   🔍 Calculating final image tag...")
-	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
-
-	localPublishResult, err := m.BuildAndPublish(ctx, source, imageRepository, "", nil, envVars, imageTag, "registry:5000", regSvc)
-	if err != nil {
-		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
-	}
-	fmt.Printf("   ✅ %s\n", localPublishResult)
-
-	
-	pushedRef := fmt.Sprintf("docker.io/%s:%s", imageRepository, finalImageTag)
-
-	fmt.Println("\n[STEP 2/6] 🌐 Starting K3s cluster...")
-	fmt.Println("   🔧 Configuring K3s with local registry mirror...")
-	k3s := dag.K3S(clusterName).With(func(k *dagger.K3S) *dagger.K3S {
-		return k.WithContainer(
-			k.Container().
-				WithEnvVariable("BUST", time.Now().String()).
-				WithExec([]string{"sh", "-c", `
-cat <<EOF > /etc/rancher/k3s/registries.yaml
-mirrors:
-  "registry:5000":
-    endpoint:
-      - "http://registry:5000"
-EOF`}).
-				WithServiceBinding("registry", regSvc),
-		)
-	})
-
-	k3sSvc := k3s.Server()
-	fmt.Println("   🚀 Starting K3s server...")
-
-	k3sSvc, err2 := k3sSvc.Start(ctx)
-
-	if err2 != nil {
-		return nil, fmt.Errorf("❌ Failed to start K3s service: %w", err2)
-	}
-
-	// Get K3s endpoint to verify it's running
-	ep, err := k3sSvc.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: 6443, Scheme: "https"})
-	if err != nil {
-		fmt.Printf("   ⚠️  Could not get K3s endpoint (continuing anyway): %v\n", err)
-	} else {
-		fmt.Printf("   ✅ K3s cluster running at: %s\n", ep)
-	}
-
-	// Get kubeconfig from K3s
-	kubeconfig := k3s.Config()
-
-	//fmt.Printf("   ✅ %s\n", dockerHubResult)
-	fmt.Printf("   📦 Image reference: %s\n", pushedRef)
-	fmt.Println("   ✅ Image built and pushed to both local registry and Docker Hub")
-
-	fmt.Println("\n[STEP 4/6] 🔧 Configuring Kubernetes resources...")
-	_, err = dag.Container().
+	_, err := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithServiceBinding("k3s", k3sSvc).
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", kubeconfig).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+		WithExec([]string{"sh", "-c", `
 			# Wait for K3s API to be ready
 			echo "   ⏳ Waiting for K3s API to be ready..."
 			for i in $(seq 1 30); do
@@ -181,11 +96,11 @@ stringData:
 EOF
 			echo "   ✅ Default kubeconfig secret created"
 			kubectl get secret -n coder default-kubeconfig > /dev/null
-		`)}).
+		`}).
 		Stdout(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to create namespace and secrets: %w", err)
+		return fmt.Errorf("❌ Failed to create namespace and secrets: %w", err)
 	}
 	fmt.Println("   ✅ All Kubernetes resources configured")
 
@@ -198,7 +113,7 @@ EOF
 		WithFile("/.kube/config", kubeconfig)
 
 	// Create values for Coder deployment with RBAC permissions
-	coderValues := fmt.Sprintf(`
+	coderValues := `
 # First deploy a simple PostgreSQL
 kubectl apply -n coder -f - <<PSQL
 apiVersion: v1
@@ -315,9 +230,7 @@ coder:
     create: true
     clusterRoleName: coder-workspace-manager
 EOF
-`)
-
-	fmt.Println("\n[STEP 5/6] ⚙️  Deploying Coder with Helm...")
+`
 	fmt.Printf("   🎯 Target version: %s\n", chartVersion)
 	// Deploy PostgreSQL and Coder with Helm
 	_, err = helmContainer.
@@ -368,11 +281,129 @@ EOF
 		Stdout(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("❌ Failed to deploy Coder: %w", err)
+		return fmt.Errorf("❌ Failed to deploy Coder: %w", err)
 	}
 	fmt.Println("   ✅ Helm deployment completed")
 
-	fmt.Println("\n[STEP 6/6] 👥 Setting up admin user and template...")
+	return nil
+}
+
+// setupK3sCluster configures and starts a K3s cluster with registry mirror
+func (m *Build) SetupK3sCluster(ctx context.Context, clusterName string, regSvc *dagger.Service) (*dagger.Service, *dagger.File, error) {
+
+	fmt.Println("   🔧 Configuring K3s with local registry mirror...")
+
+	k3s := dag.K3S(clusterName).With(func(k *dagger.K3S) *dagger.K3S {
+		return k.WithContainer(
+			k.Container().
+				WithEnvVariable("BUST", time.Now().String()).
+				WithExec([]string{"sh", "-c", `
+cat <<EOF > /etc/rancher/k3s/registries.yaml
+mirrors:
+  "registry:5000":
+    endpoint:
+      - "http://registry:5000"
+EOF`}).
+				WithServiceBinding("registry", regSvc),
+		)
+	})
+
+	k3sSvc := k3s.Server()
+	fmt.Println("   🚀 Starting K3s server...")
+
+	k3sSvc, err := k3sSvc.Start(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("❌ Failed to start K3s service: %w", err)
+	}
+
+	// Get K3s endpoint to verify it's running
+	ep, err := k3sSvc.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: 6443, Scheme: "https"})
+	if err != nil {
+		fmt.Printf("   ⚠️  Could not get K3s endpoint (continuing anyway): %v\n", err)
+	} else {
+		fmt.Printf("   ✅ K3s cluster running at: %s\n", ep)
+	}
+
+	// Get kubeconfig from K3s
+	kubeconfig := k3s.Config()
+
+	return k3sSvc, kubeconfig, nil
+}
+
+// DeployCoderToK3s deploys Coder to a K3s cluster using Helm and returns the K3s service
+func (m *Build) BuildPipeline(
+	ctx context.Context,
+	// Template source directory
+	source *dagger.Directory,
+
+	// K3s cluster name
+	// +default="coder-cluster"
+	clusterName string,
+	// Coder Helm chart version
+	// +default="2.19.2"
+	chartVersion string,
+
+	// riksarkivet/coderworkspacename
+	imageRepository string,
+
+	// The tag of the image we want to build
+	imageTag string,
+
+	// Docker Hub username (required for pushing)
+	dockerUsername string,
+
+	// Docker Hub password/token (required for pushing, as a secret)
+	dockerPassword *dagger.Secret,
+
+	// Environment variables for template customization (KEY=VALUE format)
+	// +default=[]
+	envVars []string,
+
+) (*dagger.Service, error) {
+	startTime := time.Now()
+	fmt.Println("")
+	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
+	fmt.Println("║       🚀 CODER DEPLOYMENT PIPELINE STARTING                  ║")
+	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
+	fmt.Println("")
+	fmt.Printf("📅 Start Time: %s\n", startTime.Format("15:04:05"))
+	fmt.Printf("🎯 Target: K3s cluster with Coder v%s\n", chartVersion)
+	fmt.Printf("🔧 Environment Variables: %v\n", envVars)
+	fmt.Println("")
+
+	if dockerUsername == "" || dockerPassword == nil {
+		return nil, fmt.Errorf("❌ Docker Hub credentials are required (dockerUsername and dockerPassword)")
+	}
+	fmt.Println("   ✅ Docker credentials validated")
+
+	regSvc := dag.Container().From("registry:2.8").
+		WithExposedPort(5000).AsService()
+	fmt.Println("   🔄 Starting registry service on port 5000...")
+
+	fmt.Println("   ✅ Kubeconfig retrieved")
+
+	// Generate final image tag using default calculator
+	fmt.Println("   🔍 Calculating final image tag...")
+	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
+
+	localPublishResult, err := m.BuildAndPublish(ctx, source, imageRepository, "", nil, envVars, imageTag, "registry:5000", regSvc)
+	if err != nil {
+		return nil, fmt.Errorf("❌ Build and publish to local registry failed: %w", err)
+	}
+	fmt.Printf("   ✅ %s\n", localPublishResult)
+
+	// Setup K3s cluster
+	k3sSvc, kubeconfig, err := m.SetupK3sCluster(ctx, clusterName, regSvc)
+	if err != nil {
+		return nil, err
+	}
+
+	// Install Coder and its components
+	err = m.InstallCoderAndComponents(ctx, k3sSvc, kubeconfig, chartVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
@@ -420,26 +451,7 @@ EOF
 			# Create a test pod with the built image
 			echo "   🚀 Creating test pod with built image..."
 			cat <<POD | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: workspace-test-pod
-  namespace: coder
-  labels:
-    app: workspace-test
-spec:
-  containers:
-  - name: workspace
-    image: registry:5000/` + imageRepository + `:` + finalImageTag + `
-    command: ["sleep", "300"]
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "250m"
-      limits:
-        memory: "1Gi"
-        cpu: "500m"
-  restartPolicy: Never
+` + generateTestPodYAML(imageRepository, finalImageTag) + `
 POD
 			
 			echo "   ✅ Test pod created successfully!"
@@ -453,6 +465,12 @@ POD
 	} else {
 		fmt.Println("   ✅ Configuration completed")
 	}
+
+	//fmt.Printf("   ✅ %s\n", dockerHubResult)
+	pushedRef := fmt.Sprintf("docker.io/%s:%s", imageRepository, finalImageTag)
+
+	fmt.Printf("   📦 Image reference: %s\n", pushedRef)
+	fmt.Println("   ✅ Image built and pushed to both local registry and Docker Hub")
 
 	// Print the summary information
 	endTime := time.Now()
