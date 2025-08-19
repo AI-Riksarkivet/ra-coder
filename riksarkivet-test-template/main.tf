@@ -11,6 +11,25 @@ terraform {
   }
 }
 
+# Variables for container image configuration
+variable "image_registry" {
+  description = "Container registry URL"
+  type        = string
+  default     = "docker.io"
+}
+
+variable "image_repository" {
+  description = "Container image repository"
+  type        = string
+  default     = "riksarkivet/coder-workspace-ml"
+}
+
+variable "image_tag" {
+  description = "Container image tag"
+  type        = string
+  default     = "latest"
+}
+
 # Simple workspace template for testing
 data "coder_workspace" "me" {}
 
@@ -28,8 +47,8 @@ resource "kubernetes_pod" "workspace" {
   spec {
     container {
       name    = "workspace"
-      # This will be replaced with local registry during testing
-      image   = "docker.io/riksarkivet/coder-workspace-ml:test"
+      # Use the variables to construct the image URL
+      image   = "${var.image_registry}/${var.image_repository}:${var.image_tag}"
       command = ["/bin/bash", "-c", "sleep infinity"]
       
       env {
