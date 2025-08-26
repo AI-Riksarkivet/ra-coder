@@ -242,7 +242,7 @@ EOF
 	// Deploy PostgreSQL and Coder with Helm
 	_, err = helmContainer.
 		WithExec([]string{"sh", "-c", coderValues}).
-		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+		WithExec([]string{"sh", "-c", `
 			set -e
 			
 			# Check if values file was created
@@ -284,7 +284,7 @@ EOF
 			else
 				echo "   ⚠️  Coder deployment status unclear"
 			fi
-		`)}).
+		`}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -381,19 +381,22 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 				
 				echo "$SESSION_TOKEN" | coder login http://localhost:8080 > /dev/null 2>&1
 
-				# Now push the template
-				coder templates push my-template --directory /tmp/my-template --message "Automated push" --yes > /dev/null 2>&1
+				# Now push the template with image variables
+				coder templates push my-template \
+					--directory /tmp/my-template \
+					--message "Automated push" \
+					--variable image_registry=registry:5000 \
+					--variable image_repository='` + imageRepository + `' \
+					--variable image_tag='` + finalImageTag + `' \
+					--yes > /dev/null 2>&1
+
+
+				coder create my-workspace --template my-template --yes  > /dev/null 2>&1
 
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
-
-			# Create a test pod with the built image
-			echo "   🚀 Creating test pod with built image..."
-			cat <<POD | kubectl apply -f -
-` + generateTestPodYAML(imageRepository, finalImageTag) + `
-POD
 			
-			echo "   ✅ Test pod created successfully!"
 		`}).
+		Terminal().
 		WithWorkdir("/template").
 		Sync(ctx)
 
@@ -457,18 +460,18 @@ func (m *Build) BuildPipeline(
 		fmt.Println("   ℹ️  No registry credentials provided - building locally only")
 	}
 
-	regSvc := dag.Container().From("registry:2.8").
-		WithExposedPort(5000).AsService()
 	fmt.Println("   🔄 Starting registry service on port 5000...")
+	regSvc := dag.Container().
+		From("registry:2.8").
+		WithExposedPort(5000).
+		AsService()
 
-	// Generate final image tag using default calculator
+
 	fmt.Println("   🔍 Calculating final image tag...")
 	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
 
-	// Build the container once
 	builtContainer := m.BuildContainer(ctx, source, envVars)
 
-	// Push to local registry using skopeo
 	err := m.PushToLocalRegistry(ctx, builtContainer, imageRepository, finalImageTag, regSvc)
 	if err != nil {
 		return nil, err

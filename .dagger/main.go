@@ -121,7 +121,6 @@ func (m *Build) BuildAndPublish(
 	source *dagger.Directory,
 	// Image repository name
 	imageRepository string,
-
 	// Registry username (optional for local registry)
 	username string,
 	// Registry password/token (optional for local registry)
@@ -135,7 +134,6 @@ func (m *Build) BuildAndPublish(
 	// Registry URL
 	// +default="registry:5000"
 	registry string,
-
 	// Registry service to bind
 	registryService *dagger.Service,
 ) (string, error) {

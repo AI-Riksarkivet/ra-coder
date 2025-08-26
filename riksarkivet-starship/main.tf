@@ -40,12 +40,17 @@ variable "namespace" {
   default     = "coder"
 }
 
+variable "image_registry" {
+  type        = string
+  description = "Container registry URL (e.g., docker.io, ghcr.io, registry:5000)"
+  default     = "docker.io"
+}
+
 variable "main_image_name" {
   type        = string
   description = "The base container image name for workspace. Note -cpu suffix is added if no GPU to image name."
   default     = "riksarkivet/coder-workspace-ml"
 }
-
 
 variable "main_image_tag" {
   type        = string
@@ -59,7 +64,6 @@ variable "temp_ip" {
   default     = "http://10.100.127.31:30256"
 
 }
-
 
 variable "mlflow_external_address" {
   type        = string
