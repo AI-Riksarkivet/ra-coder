@@ -197,6 +197,24 @@ data "coder_workspace_preset" "standard-dev" {
 }
 
 
+data "coder_workspace_preset" "small-dev" {
+  name        = "Small Development"
+  description = "CI + general development work (without GPU)"
+  icon        = "/emojis/1f435.png"
+  parameters = {
+    "cpu"                      = "2"
+    "memory"                   = "4"
+    "home_disk_size"           = "10"
+    "shared_memory_percentage" = "50"
+    "gpu_type"                 = "None"
+    "use_dagger"               = "true"
+    "enable_advanced_tools"    = "false"
+  }
+}
+
+
+
+
 # ========================================
 # Parameters
 # ========================================
@@ -214,7 +232,7 @@ data "coder_parameter" "cpu" {
   order        = 1
 
   validation {
-    min   = 2
+    min   = 1
     max   = 36
     error = "CPU cores must be between {min} and {max}"
   }
@@ -232,7 +250,7 @@ data "coder_parameter" "memory" {
   order        = 2
 
   validation {
-    min   = 8
+    min   = 3
     max   = 180
     error = "Memory must be between {min} and {max} GB"
   }
@@ -250,7 +268,7 @@ data "coder_parameter" "home_disk_size" {
   order        = 3
 
   validation {
-    min   = 50
+    min   = 5
     max   = 1000
     error = "Disk size must be between {min} and {max} GB"
   }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"dagger/test/internal/dagger"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -11,6 +12,43 @@ import (
 type KubernetesCluster struct {
 	Service    *dagger.Service
 	Kubeconfig *dagger.File
+}
+
+// buildParameterString converts templateParams slice into shell commands for adding parameters
+func buildParameterString(templateParams []string) string {
+	if len(templateParams) == 0 {
+		return ""
+	}
+
+	// Instead of trying to create a single string with all parameters,
+	// we'll generate individual --parameter additions to CREATE_CMD
+	var commands []string
+	for _, param := range templateParams {
+		// Split into key=value
+		parts := strings.SplitN(param, "=", 2)
+		if len(parts) == 2 {
+			key := parts[0]
+			value := parts[1]
+
+			// If key contains spaces, we need to quote it
+			if strings.Contains(key, " ") {
+				// For keys with spaces like "AI Prompt"
+				commands = append(commands, fmt.Sprintf(`CREATE_CMD="$CREATE_CMD --parameter \"%s\"=\"%s\""`, key, value))
+			} else {
+				// For simple keys without spaces
+				commands = append(commands, fmt.Sprintf(`CREATE_CMD="$CREATE_CMD --parameter %s=%s"`, key, value))
+			}
+		} else {
+			// If no '=' found, just pass as is
+			commands = append(commands, fmt.Sprintf(`CREATE_CMD="$CREATE_CMD --parameter %s"`, param))
+		}
+	}
+
+	// Return the commands joined with newlines and proper indentation
+	if len(commands) > 0 {
+		return strings.Join(commands, "\n\t\t\t\t")
+	}
+	return ""
 }
 
 // generateTestPodYAML creates a test pod YAML specification for the workspace image
@@ -340,7 +378,7 @@ EOF`}).
 }
 
 // setupAdminUserAndTemplate configures admin user, pushes template, and creates test pod
-func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *KubernetesCluster, regSvc *dagger.Service, source *dagger.Directory, imageRepository, finalImageTag string) error {
+func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *KubernetesCluster, regSvc *dagger.Service, source *dagger.Directory, imageRepository, finalImageTag string, templateParams []string, preset string) error {
 	fmt.Println("   🔧 Installing k9s and configuring admin user...")
 	_, err := dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -391,7 +429,8 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 					--yes > /dev/null 2>&1
 
 
-				coder create my-workspace --template my-template --yes  > /dev/null 2>&1
+				
+			 coder create --preset "Small Development" --parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles --parameter "AI Prompt"="" --template my-template test --yes
 
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
 			
@@ -440,6 +479,14 @@ func (m *Build) BuildPipeline(
 	// +default=[]
 	envVars []string,
 
+	// Template parameters for coder create command (KEY=VALUE format)
+	// +default=[]
+	templateParams []string,
+
+	// Preset name for coder create command
+	// +default=""
+	preset string,
+
 ) (*dagger.Service, error) {
 	startTime := time.Now()
 	fmt.Println("")
@@ -466,7 +513,6 @@ func (m *Build) BuildPipeline(
 		WithExposedPort(5000).
 		AsService()
 
-
 	fmt.Println("   🔍 Calculating final image tag...")
 	finalImageTag := DefaultTagCalculator(imageTag, envVars, imageRepository)
 
@@ -489,7 +535,7 @@ func (m *Build) BuildPipeline(
 	}
 	fmt.Println("   ✅ Coder and components installation completed successfully")
 
-	err = m.SetupAdminUserAndTemplate(ctx, cluster, regSvc, source, imageRepository, finalImageTag)
+	err = m.SetupAdminUserAndTemplate(ctx, cluster, regSvc, source, imageRepository, finalImageTag, templateParams, preset)
 	if err != nil {
 		return nil, fmt.Errorf("❌ Failed to setup admin user and template: %w", err)
 	}
