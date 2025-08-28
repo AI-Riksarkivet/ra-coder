@@ -380,64 +380,80 @@ EOF`}).
 // setupAdminUserAndTemplate configures admin user, pushes template, and creates test pod
 func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *KubernetesCluster, regSvc *dagger.Service, source *dagger.Directory, imageRepository, finalImageTag string, templateParams []string, preset string) error {
 	fmt.Println("   🔧 Installing k9s and configuring admin user...")
-	_, err := dag.Container().
+	
+	// Start with base container with all dependencies
+	container := dag.Container().
 		From("alpine/k8s:1.28.3").
 		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
 		WithServiceBinding("k3s", cluster.Service).
 		WithServiceBinding("registry", regSvc).
 		WithEnvVariable("KUBECONFIG", "/.kube/config").
 		WithFile("/.kube/config", cluster.Kubeconfig).
-		WithDirectory("/template", source).
-		WithExec([]string{"sh", "-c", `
-			# Install k9s
-			echo "   🔧 Installing k9s for cluster management..."
-			K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-			curl -sL "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz" | tar xz -C /usr/local/bin k9s 2>/dev/null
-			chmod +x /usr/local/bin/k9s
-			echo "   ✅ k9s installed"
+		WithDirectory("/template", source)
 
-			# Wait for Coder deployment
-			echo "   ⏳ Waiting for Coder deployment to be ready..."
-			kubectl wait --for=condition=available --timeout=300s deployment/coder -n coder > /dev/null 2>&1 || true
+	// Step 1: Install k9s
+	container = container.WithExec([]string{"sh", "-c", `
+		echo "   🔧 Installing k9s for cluster management..."
+		K9S_VERSION=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+		curl -sL "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_amd64.tar.gz" | tar xz -C /usr/local/bin k9s 2>/dev/null
+		chmod +x /usr/local/bin/k9s
+		echo "   ✅ k9s installed"
+	`})
 
-			# Get pod name, copy template and push
-			echo "   📦 Copying template to Coder pod..."
-			CODER_POD=$(kubectl get pod -n coder -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}')
-			kubectl cp /template coder/$CODER_POD:/tmp/my-template 2>/dev/null
-			echo "   ✅ Template copied"
+	// Step 2: Wait for Coder deployment
+	container = container.WithExec([]string{"sh", "-c", `
+		echo "   ⏳ Waiting for Coder deployment to be ready..."
+		kubectl wait --for=condition=available --timeout=300s deployment/coder -n coder > /dev/null 2>&1 || true
+	`})
 
-			# push the template
-			echo "   👤 Creating admin user..."
-		    kubectl exec -n coder deployment/coder -- sh -c '
-				# Create admin user (if not exists)
-				coder server create-admin-user --username admin --email admin@example.com --password changeme123 2>&1 | grep -v "duplicate key" || true
+	// Step 3: Copy template to Coder pod
+	container = container.WithExec([]string{"sh", "-c", `
+		echo "   📦 Copying template to Coder pod..."
+		CODER_POD=$(kubectl get pod -n coder -l app.kubernetes.io/name=coder -o jsonpath='{.items[0].metadata.name}')
+		kubectl cp /template coder/$CODER_POD:/tmp/my-template 2>/dev/null
+		echo "   ✅ Template copied"
+	`})
 
-				# Login using session token method
-				SESSION_TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
-					-d "{\"email\":\"admin@example.com\",\"password\":\"changeme123\"}" \
-					"http://localhost:8080/api/v2/users/login" | grep -o "\"session_token\":\"[^\"]*\"" | cut -d"\"" -f4)
-				
-				echo "$SESSION_TOKEN" | coder login http://localhost:8080 > /dev/null 2>&1
+	// Step 4: Create admin user and push template
+	container = container.WithExec([]string{"sh", "-c", fmt.Sprintf(`
+		echo "   👤 Creating admin user and pushing template..."
+		kubectl exec -n coder deployment/coder -- sh -c '
+			# Create admin user (if not exists)
+			coder server create-admin-user --username admin --email admin@example.com --password changeme123 2>&1 | grep -v "duplicate key" || true
 
-				# Now push the template with image variables
-				coder templates push my-template \
-					--directory /tmp/my-template \
-					--message "Automated push" \
-					--variable image_registry=registry:5000 \
-					--variable image_repository='` + imageRepository + `' \
-					--variable image_tag='` + finalImageTag + `' \
-					--yes > /dev/null 2>&1
-
-
-				
-			 coder create --preset "Small Development" --parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles --parameter "AI Prompt"="" --template my-template test --yes
-
-			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
+			# Login using session token method
+			SESSION_TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
+				-d "{\"email\":\"admin@example.com\",\"password\":\"changeme123\"}" \
+				"http://localhost:8080/api/v2/users/login" | grep -o "\"session_token\":\"[^\"]*\"" | cut -d"\"" -f4)
 			
-		`}).
-		//Terminal().
-		WithWorkdir("/template").
-		Sync(ctx)
+			echo "$SESSION_TOKEN" | coder login http://localhost:8080 > /dev/null 2>&1
+
+			# Push the template with image variables
+			coder templates push my-template \
+				--directory /tmp/my-template \
+				--message "Automated push" \
+				--variable image_registry=registry:5000 \
+				--variable image_repository=%s \
+				--variable image_tag=%s \
+				--yes > /dev/null 2>&1
+		' 2>/dev/null
+		echo "   ✅ Admin user configured and template pushed"
+	`, imageRepository, finalImageTag)})
+
+	// Step 5: Create test workspace
+	container = container.WithExec([]string{"sh", "-c", `
+		echo "   🚀 Creating test workspace..."
+		kubectl exec -n coder deployment/coder -- sh -c '
+			coder create --preset "Small Development" \
+				--parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles \
+				--parameter "AI Prompt"="" \
+				--template my-template test --yes
+		' 2>/dev/null || echo "   ⚠️  Test workspace creation may have failed"
+		echo "   ✅ Setup completed"
+	`})
+
+	// Execute the final container
+	_, err := container.WithWorkdir("/template").Sync(ctx)
 
 	if err != nil {
 		return fmt.Errorf("❌ Failed to setup admin user and template: %w", err)
