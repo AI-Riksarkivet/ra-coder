@@ -1,35 +1,41 @@
-# Riksarkivet Starship Template
+# Riksarkivet Developer Template
 
-A modern, lightweight Coder template featuring a beautiful Starship prompt and optimized development environment. This template provides a streamlined workspace with modern CLI tools and excellent performance characteristics.
+A comprehensive, production-ready Coder template featuring GPU acceleration, AI-powered coding assistance, containerized build systems with Dagger, and intelligent resource management that adapts from lightweight CI/CD workflows to intensive ML training environments.
 
 ## Overview
 
 This template creates a comprehensive development environment with:
 
-- **Modern Shell Experience**: Starship prompt with Git integration and beautiful customization
+- **Smart Resource Management**: Conditionally mounts volumes based on preset selection
+- **Modern Shell Experience**: Starship prompt with Git integration
+- **AI Integration**: Claude Code assistant with customizable prompts
+- **Efficient Storage**: Skips scratch and work volumes for small development setups
 - **Performance Optimized**: Fast startup times and low resource usage
-- **Development Ready**: Essential tools and utilities for general development work
-- **Flexible Configuration**: Easy customization through workspace parameters
 
 ## Features
 
+### Conditional Volume Mounting
+- **Small Development Preset**: Skips mounting `/mnt/scratch` and `/mnt/work` volumes
+- **Other Presets**: Mounts full volume set for comprehensive development
+- **Storage Optimization**: Reduces overhead for lightweight development workflows
+
 ### Development Environment
-- **Base OS**: Ubuntu-based container with modern tooling
-- **Shell**: Starship prompt with Git status, branch info, and customizable themes
+- **Base OS**: Ubuntu 22.04 with conditional CUDA support
+- **Shell**: Starship prompt with Git status and customizable themes
 - **Python**: Modern Python environment with package management
-- **Development Tools**: Git, essential CLI utilities, and development libraries
+- **Development Tools**: Git, essential CLI utilities, and modern development libraries
 
 ### Modern CLI Tools
 - **Package Management**: Homebrew for easy tool installation
 - **Shell Enhancement**: Starship prompt with rich Git integration
-- **Development Utilities**: Modern alternatives to traditional CLI tools
+- **AI Coding**: Claude Code integration with custom prompt support
 - **Build Tools**: Support for various development workflows
 
 ### IDE & Extensions
 - **VS Code Web**: Browser-based development environment
 - **Code Server**: Full VS Code experience accessible via web
-- **Extensions**: Pre-configured with essential development extensions
 - **File Browser**: Web-based file management interface
+- **Claude Code**: AI-powered coding assistant
 
 ## Prerequisites
 
@@ -47,9 +53,9 @@ Before using this template, ensure you have:
 Configure your workspace at creation time:
 
 ### Resource Allocation
-- **CPU Cores**: 2-36 cores (default: 4)
-- **Memory**: 8-180 GB RAM (default: 16 GB)
-- **Home Disk**: 50-1000 GB persistent storage (default: 100 GB, immutable)
+- **CPU Cores**: 1-36 cores (default: 4)
+- **Memory**: 3-180 GB RAM (default: 16 GB)
+- **Home Disk**: 5-1000 GB persistent storage (default: 100 GB, immutable)
 - **Shared Memory**: 0-80% of RAM for `/dev/shm` (default: 20%)
 
 ### GPU Configuration
@@ -58,9 +64,9 @@ Configure your workspace at creation time:
 - **Note**: GPU selection affects image variant (CPU vs GPU-enabled)
 
 ### Development Features
+- **AI Prompt**: Custom prompt for Claude Code AI assistant
 - **Dagger Engine**: Enable containerized build system (optional)
 - **Advanced Tools**: Enable API tokens and SSH configuration
-- **AI Integration**: Custom prompts for Claude Code assistant
 
 ### API Integration (Optional)
 When "Advanced Tools" is enabled:
@@ -72,53 +78,56 @@ When "Advanced Tools" is enabled:
 
 ## Template Variables
 
-Configure these at the template level:
+These variables are automatically set by the Dagger build pipeline:
 
-| Variable | Description | Default |
+| Variable | Description | Example |
 |----------|-------------|---------|
+| `image_registry` | Container registry URL | `"docker.io"` |
+| `image_repository` | Container image repository | `"riksarkivet/workspace-developer"` |
+| `image_tag` | Container image tag | `"v1.0.0"` |
 | `use_kubeconfig` | Use host kubeconfig vs in-cluster auth | `false` |
 | `namespace` | Kubernetes namespace for workspaces | `"coder"` |
-| `main_image_name` | Base container image name | `"riksarkivet/coder-workspace-ml"` |
-| `main_image_tag` | Container image version | `"v14.3.0"` |
-| `container_registry` | Registry URL for images | `"docker.io"` |
-| `mlflow_external_address` | MLflow UI URL (optional) | `""` |
-| `argowf_external_address` | Argo Workflows UI URL (optional) | `""` |
 
 ## Getting Started
 
-### 1. Deploy Template
-1. Import this template into your Coder deployment
-2. Configure template variables for your environment
-3. Ensure the container image is available in your registry
+### 1. Build and Deploy with Dagger
 
-### 2. Build Container Image
-Use the Dagger build system from the repository root:
+Use the main build pipeline to build the image and deploy the template:
 
 ```bash
-# Build and publish GPU-enabled image
-dagger call build-and-publish \
-  --source="./riksarkivet-starship" \
-  --username="your-username" \
-  --password=env:DOCKER_PASSWORD \
-  --env-vars="ENABLE_CUDA=true" \
-  --image-tag="v14.3.0"
+# Set environment variables
+export DOCKER_PASSWORD="your-docker-hub-password"
+export CODER_TOKEN="your-coder-api-token"
 
-# Build and publish CPU-only image
-dagger call build-and-publish \
-  --source="./riksarkivet-starship" \
-  --username="your-username" \
-  --password=env:DOCKER_PASSWORD \
-  --env-vars="ENABLE_CUDA=false" \
-  --image-tag="v14.3.0"
+# Build and deploy everything
+dagger call build-pipeline \
+  --cluster-name="developer" \
+  --source=./riksarkivet-developer-template \
+  --docker-password=env:DOCKER_PASSWORD \
+  --docker-username=airiksarkivet \
+  --image-repository=riksarkivet/workspace-developer \
+  --image-tag=v1.0.0 \
+  --preset "Small Development" \
+  --coder-url=http://coder.coder.svc.cluster.local \
+  --coder-token=env:CODER_TOKEN \
+  --template-name="Riksarkivets-Developer-Template" \
+  --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
+  --template-params "AI Prompt=" \
+  --env-vars="ENABLE_CUDA=false"
 ```
 
-### 3. Create Workspace
+This will:
+1. Build the Docker image (CPU-optimized for ENABLE_CUDA=false)
+2. Push to Docker Hub
+3. Upload template to your Coder instance with correct image reference
+
+### 2. Create Workspace
 1. Navigate to Coder dashboard
-2. Create new workspace using this template
-3. Configure resource allocation and features
+2. Create new workspace using "Riksarkivets-Developer-Template"
+3. Select "Small Development" preset for optimized resource usage
 4. Launch workspace and connect via web IDE
 
-### 4. Access Environment
+### 3. Access Environment
 - **VS Code Web**: Primary development interface
 - **File Browser**: Web-based file management
 - **Terminal**: Direct shell access with Starship prompt
@@ -126,25 +135,47 @@ dagger call build-and-publish \
 
 ## Workspace Presets
 
-The template includes pre-configured workspace presets:
+The template includes pre-configured workspace presets with smart volume mounting:
 
-### Intense ML Training
-- **Purpose**: High-performance ML/AI training
-- **Resources**: 20 CPU, 96GB RAM, 500GB storage
-- **Features**: Dual Ada GPUs, Dagger enabled
-- **Use Case**: Large model training, intensive compute workloads
+### Small Development (Optimized)
+- **Purpose**: Lightweight development and CI/CD
+- **Resources**: 2 CPU, 4GB RAM, 10GB storage
+- **Features**: No scratch/work volumes, efficient storage
+- **Use Case**: Small projects, testing, CI workflows
 
 ### Standard Data Science  
 - **Purpose**: General data science work
 - **Resources**: 8 CPU, 32GB RAM, 100GB storage
-- **Features**: CPU-only, basic tooling
-- **Use Case**: Data analysis, small-scale ML experiments
+- **Features**: Full volume mounts, CPU-only
+- **Use Case**: Data analysis, ML experiments
 
 ### Standard Development
-- **Purpose**: General development with CI/CD
+- **Purpose**: General development with full toolset
 - **Resources**: 8 CPU, 32GB RAM, 100GB storage  
-- **Features**: Dagger enabled, advanced tools
+- **Features**: Dagger enabled, full volume mounts
 - **Use Case**: Software development, build automation
+
+### Intense ML Training
+- **Purpose**: High-performance ML/AI training
+- **Resources**: 20 CPU, 96GB RAM, 500GB storage
+- **Features**: Dual Ada GPUs, Dagger enabled, full volumes
+- **Use Case**: Large model training, intensive compute workloads
+
+## Volume Management
+
+The template intelligently manages volume mounts based on your preset:
+
+### Small Development Preset
+- ✅ Home directory: `/home/coder` (persistent)
+- ✅ Shared memory: `/dev/shm` (temporary)
+- ✅ Kubeconfig: `/home/coder/.kube` (from secret)
+- ❌ Scratch volume: `/mnt/scratch` (not mounted)
+- ❌ Work volume: `/mnt/work` (not mounted)
+
+### Other Presets
+- ✅ All volumes from Small Development preset
+- ✅ Scratch volume: `/mnt/scratch` (host path)
+- ✅ Work volume: `/mnt/work` (host path)
 
 ## Customization
 
@@ -152,13 +183,16 @@ The template includes pre-configured workspace presets:
 1. Update the `Dockerfile` in this directory
 2. Rebuild using Dagger:
    ```bash
-   dagger call build-and-publish \
-     --source="./riksarkivet-starship" \
-     --username="your-username" \
-     --password=env:DOCKER_PASSWORD \
-     --image-tag="custom-v1.0.0"
+   dagger call build-pipeline \
+     --source=./riksarkivet-developer-template \
+     --docker-password=env:DOCKER_PASSWORD \
+     --docker-username=your-username \
+     --image-repository=your-org/workspace-developer \
+     --image-tag=custom-v1.0.0 \
+     --coder-url=http://your-coder-server \
+     --coder-token=env:CODER_TOKEN \
+     --template-name="Your-Custom-Template"
    ```
-3. Update `main_image_tag` variable in template
 
 ### Adding Software
 - **System Packages**: Modify Dockerfile to add `apt install` commands
@@ -169,7 +203,7 @@ The template includes pre-configured workspace presets:
 ### Environment Configuration
 - **Shell Prompt**: Customize Starship configuration in startup scripts
 - **Git Settings**: Automatically configured from Coder user information
-- **Environment Variables**: Add through template parameters or startup scripts
+- **AI Prompts**: Set custom prompts via workspace parameters
 
 ## Monitoring & Resource Usage
 
@@ -207,13 +241,12 @@ The workspace includes comprehensive monitoring:
 - Verify namespace exists and has sufficient resources
 - Review Kubernetes events for the deployment
 
-**GPU not available**:
-- Ensure GPU nodes are properly labeled
-- Verify NVIDIA runtime is configured
-- Check resource limits and requests
+**Volume mount errors**:
+- Ensure host paths exist for scratch/work volumes (non-small-dev presets)
+- Check node labeling and storage availability
 
 **Build failures**:
-- Verify Dagger installation and configuration
+- Verify Dagger installation and Docker access
 - Check registry credentials and permissions
 - Review build logs for specific errors
 
@@ -222,18 +255,18 @@ The workspace includes comprehensive monitoring:
 - **Template Issues**: Check container logs and Kubernetes events
 - **Resource Problems**: Monitor workspace metrics and node capacity
 - **Build Issues**: Review Dagger logs and build output
-- **Access Problems**: Verify network connectivity and authentication
+- **Volume Issues**: Check preset selection and host path availability
 
 ## Version Information
 
-**Current Versions**:
-- **Container Image**: `v14.3.0`
+**Current Template**:
+- **Image Variables**: Dynamic via Dagger build pipeline
 - **Terraform Providers**: Coder >=2.4.0, Kubernetes latest
 - **VS Code Modules**: Latest stable versions
 - **Extensions**: Auto-updated from marketplace
 
 ## Related Documentation
 
-- **Main Repository**: `../README.md` - Build system and template overview
-- **Development Template**: `../riksarkivet-development-template/README.md` - Full ML/MLOps environment
-- **Test Template**: `../riksarkivet-test-template/README.md` - Minimal testing environment
+- **Main Repository**: `../README.md` - Build system and primary build command
+- **Argo Workflows**: `../argo-workflows/README.md` - Automated build setup
+- **Build Pipeline**: Uses Dagger for image building and template deployment
