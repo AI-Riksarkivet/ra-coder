@@ -46,18 +46,6 @@ variable "image_registry" {
   default     = "docker.io"
 }
 
-variable "main_image_name" {
-  type        = string
-  description = "The base container image name for workspace. Note -cpu suffix is added if no GPU to image name."
-  default     = "riksarkivet/coder-workspace-ml"
-}
-
-variable "main_image_tag" {
-  type        = string
-  description = "The container image tag version"
-  default     = "v14.3.0"
-}
-
 variable "temp_ip" {
   type        = string
   description = "The Kubernetes iP."
@@ -77,16 +65,22 @@ variable "argowf_external_address" {
   default     = ""
 }
 
-variable "container_registry" {
-  type        = string
-  description = "The container registry URL for workspace images (e.g., registry.example.com:5000). Used for both base images and workspace container images."
-  default     = "docker.io"
-}
-
 variable "docker_registry_secret" {
   type        = string
   description = "The name of the Kubernetes secret containing Docker registry credentials for pulling private images."
   default     = "dockerhub-secret"
+}
+
+variable "image_repository" {
+  type        = string
+  description = "Container image repository name (e.g., riksarkivet/workspace-developer)"
+  default     = "riksarkivet/workspace-developer"
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Container image tag"
+  default     = "latest"
 }
 
 # ========================================
@@ -105,7 +99,7 @@ locals {
   git_author_email = data.coder_workspace_owner.me.email
 
   # --- Images ---
-  main_image = local.actual_gpu_count > 0 ? "${var.container_registry}/${var.main_image_name}:${var.main_image_tag}" : "${var.container_registry}/${var.main_image_name}:${var.main_image_tag}-cpu"
+  main_image = local.actual_gpu_count > 0 ? "${var.image_registry}/${var.image_repository}:${var.image_tag}" : "${var.image_registry}/${var.image_repository}:${var.image_tag}-cpu"
 
   # --- GPU Logic ---
   selected_gpu             = data.coder_parameter.gpu_type.value

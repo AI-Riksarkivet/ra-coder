@@ -45,9 +45,40 @@ kubectl apply -f cron-workflow.yaml
 
 ## Usage
 
-### Manual Trigger
+### Local Development and Testing
 
-You can manually trigger a build using the WorkflowTemplate:
+The primary way to test and run the build pipeline is using Dagger directly:
+
+```bash
+# Set required environment variables
+export DOCKER_PASSWORD="your-docker-hub-password-or-token"
+export CODER_TOKEN="your-coder-api-token"
+
+# Run the complete build pipeline with Coder template upload
+dagger call build-pipeline \
+  --cluster-name="developer" \
+  --source=./riksarkivet-developer-template \
+  --docker-password=env:DOCKER_PASSWORD \
+  --docker-username=airiksarkivet \
+  --image-repository=riksarkivet/workspace-developer \
+  --image-tag=v1.0.0 \
+  --preset "Small Development" \
+  --coder-url=http://coder.coder.svc.cluster.local \
+  --coder-token=env:CODER_TOKEN \
+  --template-name="Riksarkivets-Developer-Template" \
+  --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
+  --template-params "AI Prompt=" \
+  --env-vars="ENABLE_CUDA=false"
+```
+
+This command will:
+1. Build the Docker image with the specified parameters
+2. Push the image to Docker Hub
+3. Upload the template to your Coder instance with the new image reference
+
+### Manual Trigger via Argo Workflows
+
+You can also trigger a build using the WorkflowTemplate:
 
 ```bash
 argo submit --from workflowtemplate/coder-template-build \
@@ -57,6 +88,8 @@ argo submit --from workflowtemplate/coder-template-build \
   -p docker-username=airiksarkivet \
   -p preset="Small Development" \
   -p git-branch=main \
+  -p template-name="Riksarkivets-Developer-Template" \
+  -p coder-url="http://coder.coder.svc.cluster.local" \
   -p template-params='["dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles","AI Prompt="]' \
   -p env-vars='["ENABLE_CUDA=false"]' \
   -n argo-workflow

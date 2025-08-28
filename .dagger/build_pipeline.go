@@ -614,7 +614,7 @@ func (m *Build) BuildPipeline(
 					
 					# Push the template with the new image tag
 					echo "   📦 Pushing template to Coder..."
-					coder templates push %s \
+					coder templates push '%s' \
 						--directory /template \
 						--message "Automated push - Image: %s:%s" \
 						--variable image_registry=%s \
@@ -624,7 +624,6 @@ func (m *Build) BuildPipeline(
 					
 					echo "   ✅ Template successfully uploaded to Coder"
 				`, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry, imageRepository, finalImageTag)}).
-				Terminal().
 				WithWorkdir("/template").
 				Sync(ctx)
 				//Stdout(ctx)

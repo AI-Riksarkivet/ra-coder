@@ -38,7 +38,7 @@ spec:
       - name: git-branch
         value: "main"
       - name: template-name
-        value: "riksarkivet-developer-template"
+        value: "Riksarkivets-Developer-Template"
       - name: coder-url
         value: "http://coder.coder.svc.cluster.local"
       # JSON array of template params as key=value pairs
