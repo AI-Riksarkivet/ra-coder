@@ -493,7 +493,7 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 	// Execute the final container
 	_, err := container.
 		WithWorkdir("/template").
-		Terminal().
+		//Terminal().
 		Sync(ctx)
 
 	if err != nil {
@@ -658,7 +658,7 @@ func (m *Build) BuildPipeline(
 					curl -L "https://github.com/coder/coder/releases/download/v${CODER_VERSION}/coder_${CODER_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin
 					chmod +x /usr/local/bin/coder
 				`}).
-				WithEnvVariable("CODER_SESSION_TOKEN", tokenValue).
+				WithSecretVariable("CODER_SESSION_TOKEN", dag.SetSecret("coder-session", tokenValue)).
 				WithDirectory("/template", source).
 				WithExec([]string{"bash", "-c", fmt.Sprintf(`
 					set -e
