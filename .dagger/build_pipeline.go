@@ -380,7 +380,7 @@ EOF`}).
 // setupAdminUserAndTemplate configures admin user, pushes template, and creates test pod
 func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *KubernetesCluster, regSvc *dagger.Service, source *dagger.Directory, imageRepository, finalImageTag string, templateParams []string, preset string) error {
 	fmt.Println("   🔧 Installing k9s and configuring admin user...")
-	
+
 	// Start with base container with all dependencies
 	container := dag.Container().
 		From("alpine/k8s:1.28.3").
@@ -440,20 +440,61 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 		echo "   ✅ Admin user configured and template pushed"
 	`, imageRepository, finalImageTag)})
 
-	// Step 5: Create test workspace
-	container = container.WithExec([]string{"sh", "-c", `
+	// Step 5: Create test workspace (with 5 minute timeout using shell timeout command)
+	presetCmd := ""
+	if preset != "" {
+		presetCmd = fmt.Sprintf(`--preset "%s"`, preset)
+	}
+	container = container.WithExec([]string{"sh", "-c", fmt.Sprintf(`
 		echo "   🚀 Creating test workspace..."
 		kubectl exec -n coder deployment/coder -- sh -c '
-			coder create --preset "Small Development" \
+			coder create %s \
 				--parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles \
 				--parameter "AI Prompt"="" \
+				--parameter is_ci=true \
 				--template my-template test --yes
-		' 2>/dev/null || echo "   ⚠️  Test workspace creation may have failed"
-		echo "   ✅ Setup completed"
+		' || echo "   ⚠️  Test workspace creation failed"
+		echo "   ✅ Workspace created"
+	`, presetCmd)})
+
+	// Step 6: Health check workspace
+	container = container.WithExec([]string{"sh", "-c", `
+		echo "   🔍 Health checking workspace..."
+		#for i in $(seq 1 30); do
+		#	echo "   📊 Checking workspace status (attempt $i/30)..."
+		#	WORKSPACE_STATUS=$(kubectl exec -n coder deployment/coder -- coder show admin/test --output json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+		#	echo "   🔍 Status: $WORKSPACE_STATUS"
+		#	
+		#	if [ "$WORKSPACE_STATUS" = "running" ]; then
+		#		echo "   ✅ Workspace is running"
+		#		break
+		#	elif [ "$WORKSPACE_STATUS" = "failed" ]; then
+		#		echo "   ❌ Workspace failed"
+		#		break
+		#	fi
+		#	sleep 10
+		#done
+		
+		#echo "   📋 Final status:"
+		kubectl exec -n coder deployment/coder -- coder show admin/test
+		
+		echo "   🔍 Pod status:"
+		kubectl get pods -n coder -l com.coder.workspace.name=test -o wide || true
+		
+		echo "   📊 Pod logs (last 50 lines):"
+		POD_NAME=$(kubectl get pod -n coder -l com.coder.workspace.name=test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+		if [ -n "$POD_NAME" ]; then
+			kubectl logs "$POD_NAME" -n coder --tail=50 || true
+		fi
+		
+		echo "   ✅ Health check completed"
 	`})
 
 	// Execute the final container
-	_, err := container.WithWorkdir("/template").Sync(ctx)
+	_, err := container.
+		WithWorkdir("/template").
+		Terminal().
+		Sync(ctx)
 
 	if err != nil {
 		return fmt.Errorf("❌ Failed to setup admin user and template: %w", err)

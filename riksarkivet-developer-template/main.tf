@@ -56,13 +56,13 @@ variable "temp_ip" {
 variable "mlflow_external_address" {
   type        = string
   description = "The external address for the MLflow Tracking Server UI (e.g., http://mlflow.example.com or http://<IP>:<Port>). Leave empty to disable the MLflow App and environment variable injection."
-  default     = ""
+  default     = "http://10.100.127.31:30025"
 }
 
 variable "argowf_external_address" {
   type        = string
   description = "The external address for the Argo Workflow Server UI (e.g., http://argo.example.com or http://<IP>:<Port>). Leave empty to disable the Argo Workflow App and environment variable injection."
-  default     = ""
+  default     = "http://10.100.127.31:32746"
 }
 
 variable "docker_registry_secret" {
@@ -99,7 +99,7 @@ locals {
   git_author_email = data.coder_workspace_owner.me.email
 
   # --- Images ---
-  main_image = local.actual_gpu_count > 0 ? "${var.image_registry}/${var.image_repository}:${var.image_tag}" : "${var.image_registry}/${var.image_repository}:${var.image_tag}-cpu"
+  main_image = local.actual_gpu_count > 0 ? "${var.image_registry}/${var.image_repository}:${var.image_tag}" : "${var.image_registry}/${var.image_repository}:${var.image_tag}${endswith(var.image_tag, "-cpu") ? "" : "-cpu"}"
 
   # --- GPU Logic ---
   selected_gpu             = data.coder_parameter.gpu_type.value
@@ -126,8 +126,8 @@ locals {
   dagger_cpu_request  = "${floor(local.dagger_cpu_limit * 250)}m"    # 25% of limit in millicores
   dagger_memory_request = "${floor(local.dagger_memory_limit * 0.25)}Gi"  # 25% of limit
 
-  # --- Check if small-dev preset is selected by parameter values ---
-  is_small_dev = data.coder_parameter.cpu.value == 2 && data.coder_parameter.memory.value == 4 && data.coder_parameter.home_disk_size.value == 10
+  # --- Check if running in CI mode ---
+  is_ci = data.coder_parameter.is_ci.value
   
   # --- Parameter Options for Readability ---
   gpu_types = [
@@ -332,6 +332,18 @@ data "coder_parameter" "gpu_count" {
       description = option.value.description
     }
   }
+}
+
+# --- CI Mode Configuration ---
+data "coder_parameter" "is_ci" {
+  name         = "is_ci"
+  display_name = "CI Mode"
+  description  = "Enable CI mode (disables work/scratch mounts for testing)"
+  type         = "bool"
+  default      = false
+  form_type    = "checkbox"
+  mutable      = false
+  order        = 15
 }
 
 # --- Development Tools Configuration ---
@@ -893,9 +905,9 @@ resource "kubernetes_deployment" "main" {
             read_only  = true
           }
 
-          # Conditionally mount scratch volume (not for small-dev preset)
+          # Conditionally mount scratch volume (not in CI mode)
           dynamic "volume_mount" {
-            for_each = local.is_small_dev ? [] : [1]
+            for_each = local.is_ci ? [] : [1]
             content {
               mount_path = "/mnt/scratch"
               name       = "scratch"
@@ -903,9 +915,9 @@ resource "kubernetes_deployment" "main" {
             }
           }
 
-          # Conditionally mount work volume (not for small-dev preset)
+          # Conditionally mount work volume (not in CI mode)
           dynamic "volume_mount" {
-            for_each = local.is_small_dev ? [] : [1]
+            for_each = local.is_ci ? [] : [1]
             content {
               mount_path = "/mnt/work"
               name       = "work"
@@ -1035,9 +1047,9 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-        # Conditionally define scratch volume (not for small-dev preset)
+        # Conditionally define scratch volume (not in CI mode)
         dynamic "volume" {
-          for_each = local.is_small_dev ? [] : [1]
+          for_each = local.is_ci ? [] : [1]
           content {
             name = "scratch"
             host_path {
@@ -1047,9 +1059,9 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-        # Conditionally define work volume (not for small-dev preset)
+        # Conditionally define work volume (not in CI mode)
         dynamic "volume" {
-          for_each = local.is_small_dev ? [] : [1]
+          for_each = local.is_ci ? [] : [1]
           content {
             name = "work"
             host_path {
@@ -1134,7 +1146,7 @@ resource "kubernetes_deployment" "main" {
 resource "coder_metadata" "resources" {
   count       = data.coder_workspace.me.start_count
   resource_id = kubernetes_deployment.main[0].id
-  icon        = "/icon/memory.svg"
+  icon        = "/emojis/1f9be.png"
   
   item {
     key   = "volume_claim"
