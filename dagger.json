@@ -14,6 +14,11 @@
       "name": "k3s",
       "source": "github.com/marcosnils/daggerverse/k3s@k3s/v0.1.10",
       "pin": "28eea1fcf3b6ecb38a628186107760acd717442f"
+    },
+    {
+      "name": "syft",
+      "source": "github.com/fluent-ci-templates/syft-pipeline@df565f93d4fcb72ba8561549f66bfd65380929ac",
+      "pin": "df565f93d4fcb72ba8561549f66bfd65380929ac"
     }
   ],
   "source": ".dagger"

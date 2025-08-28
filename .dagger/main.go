@@ -273,3 +273,104 @@ func (m *Build) PushToLocalRegistry(ctx context.Context, builtContainer *dagger.
 	fmt.Printf("   ✅ Successfully pushed image to local registry: %s\n", localDestination)
 	return nil
 }
+
+// TestSecurityScan is a simplified function to test SecurityScanWithSyft with any Docker Hub image
+func (m *Build) TestSecurityScan(ctx context.Context,
+	// Docker Hub image to scan (e.g., "alpine:latest", "nginx:latest")
+	// +default="alpine:latest"
+	dockerImage string,
+) (string, error) {
+	fmt.Println("")
+	fmt.Println("╔═══════════════════════════════════════════════════════════╗")
+	fmt.Println("║           🔍 SECURITY SCAN TEST WITH SYFT                ║")
+	fmt.Println("╚═══════════════════════════════════════════════════════════╝")
+	fmt.Println("")
+	fmt.Printf("🎯 Target Image: %s\n", dockerImage)
+	fmt.Println("📋 Generating SBOM (Software Bill of Materials)...")
+	fmt.Println("")
+
+	startTime := time.Now()
+
+	// Use Syft directly to scan the Docker Hub image  
+	syftContainer := dag.Container().
+		From("anchore/syft:latest")
+
+	// Generate SBOM in JSON format
+	fmt.Printf("   🔍 Scanning image: %s\n", dockerImage)
+	sbomJson, err := syftContainer.
+		WithExec([]string{"/syft", dockerImage, "-o", "json"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("❌ Failed to generate SBOM JSON: %w", err)
+	}
+
+	// Generate SBOM in table format for display
+	sbomTable, err := syftContainer.
+		WithExec([]string{"/syft", dockerImage, "-o", "table"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("❌ Failed to generate SBOM table: %w", err)
+	}
+
+	// Display SBOM summary
+	fmt.Println("   📊 SBOM Summary (Software Bill of Materials):")
+	fmt.Println("   " + strings.Repeat("─", 60))
+	lines := strings.Split(sbomTable, "\n")
+	displayLines := 25 // Show more lines for better visibility
+	for i, line := range lines {
+		if i >= displayLines && len(lines) > displayLines {
+			fmt.Printf("   ... (%d more packages)\n", len(lines)-displayLines)
+			break
+		}
+		if strings.TrimSpace(line) != "" {
+			fmt.Printf("   %s\n", line)
+		}
+	}
+
+	// Count packages and provide statistics
+	fmt.Println("")
+	fmt.Println("   📈 Package Statistics:")
+	fmt.Println("   " + strings.Repeat("─", 30))
+
+	// Count different package types
+	packageCount := strings.Count(sbomJson, `"type":"`)
+	fmt.Printf("   📦 Total packages found: %d\n", packageCount)
+
+	// Count by language/ecosystem
+	pythonCount := strings.Count(sbomJson, `"language":"python"`)
+	jsCount := strings.Count(sbomJson, `"language":"javascript"`)
+	goCount := strings.Count(sbomJson, `"language":"go"`)
+	javaCount := strings.Count(sbomJson, `"language":"java"`)
+
+	if pythonCount > 0 {
+		fmt.Printf("   🐍 Python packages: %d\n", pythonCount)
+	}
+	if jsCount > 0 {
+		fmt.Printf("   📦 JavaScript packages: %d\n", jsCount)
+	}
+	if goCount > 0 {
+		fmt.Printf("   🔷 Go packages: %d\n", goCount)
+	}
+	if javaCount > 0 {
+		fmt.Printf("   ☕ Java packages: %d\n", javaCount)
+	}
+
+	// Show SBOM size
+	sbomSizeKB := len(sbomJson) / 1024
+	fmt.Printf("   📄 SBOM JSON size: %d KB (%d bytes)\n", sbomSizeKB, len(sbomJson))
+
+	// Performance metrics
+	duration := time.Since(startTime)
+	fmt.Printf("   ⏱️  Scan duration: %v\n", duration.Round(time.Millisecond))
+
+	fmt.Println("")
+	fmt.Println("✅ Security scan completed successfully!")
+	fmt.Println("")
+	fmt.Println("💡 Tips:")
+	fmt.Println("   • Try different images: alpine:latest, nginx:latest, node:18")
+	fmt.Println("   • The JSON SBOM can be used with vulnerability scanners")
+	fmt.Println("   • This function tests the same Syft integration used in the main pipeline")
+	fmt.Println("")
+
+	return sbomJson, nil
+}

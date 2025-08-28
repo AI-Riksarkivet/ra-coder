@@ -445,50 +445,52 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 	if preset != "" {
 		presetCmd = fmt.Sprintf(`--preset "%s"`, preset)
 	}
-	container = container.WithExec([]string{"sh", "-c", fmt.Sprintf(`
-		echo "   🚀 Creating test workspace..."
-		kubectl exec -n coder deployment/coder -- sh -c '
-			coder create %s \
-				--parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles \
-				--parameter "AI Prompt"="" \
-				--parameter is_ci=true \
-				--template my-template test --yes
-		' || echo "   ⚠️  Test workspace creation failed"
-		echo "   ✅ Workspace created"
-	`, presetCmd)})
 
-	// Step 6: Health check workspace
-	container = container.WithExec([]string{"sh", "-c", `
-		echo "   🔍 Health checking workspace..."
-		#for i in $(seq 1 30); do
-		#	echo "   📊 Checking workspace status (attempt $i/30)..."
-		#	WORKSPACE_STATUS=$(kubectl exec -n coder deployment/coder -- coder show admin/test --output json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-		#	echo "   🔍 Status: $WORKSPACE_STATUS"
-		#	
-		#	if [ "$WORKSPACE_STATUS" = "running" ]; then
-		#		echo "   ✅ Workspace is running"
-		#		break
-		#	elif [ "$WORKSPACE_STATUS" = "failed" ]; then
-		#		echo "   ❌ Workspace failed"
-		#		break
-		#	fi
-		#	sleep 10
-		#done
-		
-		#echo "   📋 Final status:"
-		kubectl exec -n coder deployment/coder -- coder show admin/test
-		
-		echo "   🔍 Pod status:"
-		kubectl get pods -n coder -l com.coder.workspace.name=test -o wide || true
-		
-		echo "   📊 Pod logs (last 50 lines):"
-		POD_NAME=$(kubectl get pod -n coder -l com.coder.workspace.name=test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-		if [ -n "$POD_NAME" ]; then
-			kubectl logs "$POD_NAME" -n coder --tail=50 || true
-		fi
-		
-		echo "   ✅ Health check completed"
-	`})
+	
+		container = container.WithExec([]string{"sh", "-c", fmt.Sprintf(`
+			echo "   🚀 Creating test workspace..."
+			kubectl exec -n coder deployment/coder -- sh -c '
+				coder create %s \
+					--parameter dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles \
+					--parameter "AI Prompt"="" \
+					--parameter is_ci=true \
+					--template my-template test --yes
+			' || echo "   ⚠️  Test workspace creation failed"
+			echo "   ✅ Workspace created"
+		`, presetCmd)})
+
+		// Step 6: Health check workspace
+		container = container.WithExec([]string{"sh", "-c", `
+			echo "   🔍 Health checking workspace..."
+			#for i in $(seq 1 30); do
+			#	echo "   📊 Checking workspace status (attempt $i/30)..."
+			#	WORKSPACE_STATUS=$(kubectl exec -n coder deployment/coder -- coder show admin/test --output json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+			#	echo "   🔍 Status: $WORKSPACE_STATUS"
+			#
+			#	if [ "$WORKSPACE_STATUS" = "running" ]; then
+			#		echo "   ✅ Workspace is running"
+			#		break
+			#	elif [ "$WORKSPACE_STATUS" = "failed" ]; then
+			#		echo "   ❌ Workspace failed"
+			#		break
+			#	fi
+			#	sleep 10
+			#done
+
+			#echo "   📋 Final status:"
+			kubectl exec -n coder deployment/coder -- coder show admin/test
+
+			echo "   🔍 Pod status:"
+			kubectl get pods -n coder -l com.coder.workspace.name=test -o wide || true
+
+			echo "   📊 Pod logs (last 50 lines):"
+			POD_NAME=$(kubectl get pod -n coder -l com.coder.workspace.name=test -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+			if [ -n "$POD_NAME" ]; then
+				kubectl logs "$POD_NAME" -n coder --tail=50 || true
+			fi
+
+			echo "   ✅ Health check completed"
+		`})
 
 	// Execute the final container
 	_, err := container.
@@ -500,6 +502,79 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 		return fmt.Errorf("❌ Failed to setup admin user and template: %w", err)
 	}
 
+	return nil
+}
+
+// pushImageToRegistry handles pushing the built image to external registry if credentials are provided
+func (m *Build) pushImageToRegistry(ctx context.Context, builtContainer *dagger.Container, imageRepository, finalImageTag, targetRegistry, dockerUsername string, dockerPassword *dagger.Secret) (string, error) {
+	targetRef := fmt.Sprintf("%s/%s:%s", targetRegistry, imageRepository, finalImageTag)
+	localRef := fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
+
+	fmt.Println("   📤 Pushing to external registry...")
+	_, err := builtContainer.
+		WithRegistryAuth(targetRegistry, dockerUsername, dockerPassword).
+		Publish(ctx, targetRef)
+
+	if err != nil {
+		fmt.Printf("   ⚠️  Failed to push to %s: %v\n", targetRegistry, err)
+		fmt.Printf("   📦 Image available locally: %s\n", localRef)
+		return localRef, nil
+	}
+
+	fmt.Printf("   📦 Image reference: %s\n", targetRef)
+	fmt.Printf("   ✅ Image built locally and pushed to %s\n", targetRegistry)
+	return targetRef, nil
+}
+
+// uploadTemplateToCoderServer handles uploading template to a Coder server if credentials are provided
+func (m *Build) uploadTemplateToCoderServer(ctx context.Context, source *dagger.Directory, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry string, coderToken *dagger.Secret) error {
+	fmt.Println("")
+	fmt.Println("   🚀 Uploading template to Coder server...")
+
+	// Create a container with Coder CLI installed
+	_, err := dag.Container().
+		From("alpine:latest").
+		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar", "bash", "jq"}).
+		WithExec([]string{"sh", "-c", `
+			set -e
+			# Install Coder CLI - need to get version first
+			CODER_VERSION=$(curl -s https://api.github.com/repos/coder/coder/releases/latest | jq -r .tag_name | sed 's/^v//')
+			echo "Installing Coder CLI version: ${CODER_VERSION}"
+			curl -L "https://github.com/coder/coder/releases/download/v${CODER_VERSION}/coder_${CODER_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin
+			chmod +x /usr/local/bin/coder
+		`}).
+		WithSecretVariable("CODER_SESSION_TOKEN", coderToken).
+		WithDirectory("/template", source).
+		WithExec([]string{"bash", "-c", fmt.Sprintf(`
+			set -e
+			
+			# Setup Coder environment
+			export CODER_URL="%s"
+			export CODER_SESSION_TOKEN="$CODER_SESSION_TOKEN"
+			echo "   🔐 Logging into Coder server..."
+			coder login $CODER_URL
+			
+			# Push the template with the new image tag
+			echo "   📦 Pushing template to Coder..."
+			coder templates push '%s' \
+				--directory /template \
+				--message "Automated push - Image: %s:%s" \
+				--variable image_registry=%s \
+				--variable image_repository=%s \
+				--variable image_tag=%s \
+				--yes
+			
+			echo "   ✅ Template successfully uploaded to Coder"
+		`, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry, imageRepository, finalImageTag)}).
+		WithWorkdir("/template").
+		Sync(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to upload template to Coder: %w", err)
+	}
+
+	fmt.Println("   ✅ Template successfully uploaded to Coder server")
+	fmt.Printf("   📍 Template URL: %s/templates/%s\n", coderUrl, templateName)
 	return nil
 }
 
@@ -612,23 +687,10 @@ func (m *Build) BuildPipeline(
 	// Conditional registry push
 	var pushedRef string
 	if pushToRegistry {
-
-		// Push the already-built container to the target registry
-		targetRef := fmt.Sprintf("%s/%s:%s", targetRegistry, imageRepository, finalImageTag)
-
-		fmt.Println("   📤 Pushing to external registry...")
-		_, err := builtContainer.
-			WithRegistryAuth(targetRegistry, dockerUsername, dockerPassword).
-			Publish(ctx, targetRef)
-
+		var err error
+		pushedRef, err = m.pushImageToRegistry(ctx, builtContainer, imageRepository, finalImageTag, targetRegistry, dockerUsername, dockerPassword)
 		if err != nil {
-			fmt.Printf("   ⚠️  Failed to push to %s: %v\n", targetRegistry, err)
-			pushedRef = fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
-			fmt.Printf("   📦 Image available locally: %s\n", pushedRef)
-		} else {
-			pushedRef = targetRef
-			fmt.Printf("   📦 Image reference: %s\n", pushedRef)
-			fmt.Printf("   ✅ Image built locally and pushed to %s\n", targetRegistry)
+			return nil, fmt.Errorf("❌ Failed to push image to registry: %w", err)
 		}
 	} else {
 		pushedRef = fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
@@ -638,59 +700,9 @@ func (m *Build) BuildPipeline(
 
 	// Upload template to Coder server if credentials provided
 	if coderUrl != "" && coderToken != nil && templateName != "" {
-		fmt.Println("")
-		fmt.Println("   🚀 Uploading template to Coder server...")
-
-		// Get token value
-		tokenValue, err := coderToken.Plaintext(ctx)
+		err := m.uploadTemplateToCoderServer(ctx, source, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry, coderToken)
 		if err != nil {
-			fmt.Printf("   ⚠️  Failed to get Coder token: %v\n", err)
-		} else {
-			// Create a container with Coder CLI installed
-			_, err = dag.Container().
-				From("alpine:latest").
-				WithExec([]string{"apk", "add", "--no-cache", "curl", "tar", "bash", "jq"}).
-				WithExec([]string{"sh", "-c", `
-					set -e
-					# Install Coder CLI - need to get version first
-					CODER_VERSION=$(curl -s https://api.github.com/repos/coder/coder/releases/latest | jq -r .tag_name | sed 's/^v//')
-					echo "Installing Coder CLI version: ${CODER_VERSION}"
-					curl -L "https://github.com/coder/coder/releases/download/v${CODER_VERSION}/coder_${CODER_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin
-					chmod +x /usr/local/bin/coder
-				`}).
-				WithSecretVariable("CODER_SESSION_TOKEN", dag.SetSecret("coder-session", tokenValue)).
-				WithDirectory("/template", source).
-				WithExec([]string{"bash", "-c", fmt.Sprintf(`
-					set -e
-					
-					# Setup Coder environment
-					export CODER_URL="%s"
-					export CODER_SESSION_TOKEN="$CODER_SESSION_TOKEN"
-					echo "   🔐 Logging into Coder server..."
-					coder login $CODER_URL
-					
-					# Push the template with the new image tag
-					echo "   📦 Pushing template to Coder..."
-					coder templates push '%s' \
-						--directory /template \
-						--message "Automated push - Image: %s:%s" \
-						--variable image_registry=%s \
-						--variable image_repository=%s \
-						--variable image_tag=%s \
-						--yes
-					
-					echo "   ✅ Template successfully uploaded to Coder"
-				`, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry, imageRepository, finalImageTag)}).
-				WithWorkdir("/template").
-				Sync(ctx)
-				//Stdout(ctx)
-
-			if err != nil {
-				fmt.Printf("   ⚠️  Failed to upload template to Coder: %v\n", err)
-			} else {
-				fmt.Println("   ✅ Template successfully uploaded to Coder server")
-				fmt.Printf("   📍 Template URL: %s/templates/%s\n", coderUrl, templateName)
-			}
+			fmt.Printf("   ⚠️  Failed to upload template to Coder: %v\n", err)
 		}
 	}
 
