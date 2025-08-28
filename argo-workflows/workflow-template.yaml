@@ -1,0 +1,141 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: coder-template-build
+  namespace: argo-workflow
+spec:
+  entrypoint: build-coder-template
+  
+  # Volume claims for Dagger
+  volumeClaimTemplates:
+  - metadata:
+      name: dagger-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+          
+  volumes:
+  - name: dagger-socket
+    emptyDir: {}
+      
+  templates:
+  - name: build-coder-template
+    inputs:
+      parameters:
+      - name: cluster-name
+        value: "developer"
+      - name: image-repository
+        value: "riksarkivet/workspace-developer"
+      - name: image-tag
+        value: "v1.0.0"
+      - name: docker-username
+        value: "airiksarkivet"
+      - name: preset
+        value: "Small Development"
+      - name: git-branch
+        value: "main"
+      # JSON array of template params as key=value pairs
+      - name: template-params
+        value: |
+          [
+            "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles",
+            "AI Prompt="
+          ]
+      # JSON array of env vars as key=value pairs  
+      - name: env-vars
+        value: |
+          [
+            "ENABLE_CUDA=false"
+          ]
+      artifacts:
+      - name: source
+        path: /workspace
+        git:
+          repo: git@github.com:AI-Riksarkivet/coder-templates.git
+          branch: "{{inputs.parameters.git-branch}}"
+          sshPrivateKeySecret:
+            name: github-ssh-key
+            key: ssh-privatekey
+          depth: 1
+        
+    sidecars:
+    - name: dagger-engine
+      image: registry.dagger.io/engine:v0.18.14-gpu
+      securityContext:
+        privileged: true
+        capabilities:
+          add:
+          - ALL
+      env:
+      - name: _EXPERIMENTAL_DAGGER_GPU_SUPPORT
+        value: "true"
+      - name: DO_NOT_TRACK
+        value: "1"
+      - name: DAGGER_CLOUD_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: dagger-cloud-token
+            key: token
+            optional: true
+      volumeMounts:
+      - name: dagger-socket
+        mountPath: /run/dagger
+      - name: dagger-storage
+        mountPath: /var/lib/dagger
+      readinessProbe:
+        exec:
+          command: ["dagger", "core", "version"]
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+        
+    container:
+      image: ghcr.io/dagger/dagger:latest
+      env:
+      - name: _EXPERIMENTAL_DAGGER_RUNNER_HOST
+        value: "unix:///run/dagger/engine.sock"
+      - name: DOCKER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: docker-registry-credentials
+            key: password
+      volumeMounts:
+      - name: dagger-socket
+        mountPath: /run/dagger
+        
+      script: |
+        #!/bin/sh
+        set -e
+        
+        cd /workspace
+        
+        # Build the dagger command with dynamic parameters
+        DAGGER_CMD="dagger call build-pipeline"
+        DAGGER_CMD="$DAGGER_CMD --cluster-name={{inputs.parameters.cluster-name}}"
+        DAGGER_CMD="$DAGGER_CMD --source=./riksarkivet-developer-template"
+        DAGGER_CMD="$DAGGER_CMD --docker-password=env:DOCKER_PASSWORD"
+        DAGGER_CMD="$DAGGER_CMD --docker-username={{inputs.parameters.docker-username}}"
+        DAGGER_CMD="$DAGGER_CMD --image-repository={{inputs.parameters.image-repository}}"
+        DAGGER_CMD="$DAGGER_CMD --image-tag={{inputs.parameters.image-tag}}"
+        DAGGER_CMD="$DAGGER_CMD --preset \"{{inputs.parameters.preset}}\""
+        
+        # Parse and add template-params
+        echo '{{inputs.parameters.template-params}}' | jq -r '.[]' | while IFS= read -r param; do
+          DAGGER_CMD="$DAGGER_CMD --template-params \"$param\""
+        done
+        
+        # Parse and add env-vars
+        echo '{{inputs.parameters.env-vars}}' | jq -r '.[]' | while IFS= read -r var; do
+          DAGGER_CMD="$DAGGER_CMD --env-vars=\"$var\""
+        done
+        
+        echo "Executing command: $DAGGER_CMD"
+        
+        # Execute the built command
+        eval "$DAGGER_CMD"
+        
+        echo "Build completed successfully!"

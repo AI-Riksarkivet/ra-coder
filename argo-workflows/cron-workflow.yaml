@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: coder-template-nightly-build
+  namespace: argo-workflow
+spec:
+  schedule: "0 2 * * *"  # Run at 2 AM UTC every day
+  timezone: "UTC"
+  suspend: false
+  concurrencyPolicy: "Replace"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  workflowSpec:
+    workflowTemplateRef:
+      name: coder-template-build
+    arguments:
+      parameters:
+      - name: cluster-name
+        value: "developer"
+      - name: image-repository
+        value: "riksarkivet/workspace-developer"
+      - name: image-tag
+        value: "nightly-{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+      - name: docker-username
+        value: "airiksarkivet"
+      - name: preset
+        value: "Small Development"
+      - name: git-branch
+        value: "main"
+      - name: template-params
+        value: |
+          [
+            "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles",
+            "AI Prompt="
+          ]
+      - name: env-vars
+        value: |
+          [
+            "ENABLE_CUDA=false"
+          ]
