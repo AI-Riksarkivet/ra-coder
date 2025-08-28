@@ -37,6 +37,10 @@ spec:
         value: "Small Development"
       - name: git-branch
         value: "main"
+      - name: template-name
+        value: "riksarkivet-developer-template"
+      - name: coder-url
+        value: "http://coder.coder.svc.cluster.local"
       # JSON array of template params as key=value pairs
       - name: template-params
         value: |
@@ -103,6 +107,11 @@ spec:
           secretKeyRef:
             name: docker-registry-credentials
             key: password
+      - name: CODER_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: coder-credentials
+            key: token
       volumeMounts:
       - name: dagger-socket
         mountPath: /run/dagger
@@ -122,6 +131,9 @@ spec:
         DAGGER_CMD="$DAGGER_CMD --image-repository={{inputs.parameters.image-repository}}"
         DAGGER_CMD="$DAGGER_CMD --image-tag={{inputs.parameters.image-tag}}"
         DAGGER_CMD="$DAGGER_CMD --preset \"{{inputs.parameters.preset}}\""
+        DAGGER_CMD="$DAGGER_CMD --coder-url={{inputs.parameters.coder-url}}"
+        DAGGER_CMD="$DAGGER_CMD --coder-token=env:CODER_TOKEN"
+        DAGGER_CMD="$DAGGER_CMD --template-name={{inputs.parameters.template-name}}"
         
         # Parse and add template-params
         echo '{{inputs.parameters.template-params}}' | jq -r '.[]' | while IFS= read -r param; do

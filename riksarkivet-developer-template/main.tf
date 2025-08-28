@@ -132,8 +132,8 @@ locals {
   dagger_cpu_request  = "${floor(local.dagger_cpu_limit * 250)}m"    # 25% of limit in millicores
   dagger_memory_request = "${floor(local.dagger_memory_limit * 0.25)}Gi"  # 25% of limit
 
-  # --- Check if small-dev preset is selected by name ---
-  is_small_dev = data.coder_workspace.me.template_variables["preset_name"] == "Small Development"
+  # --- Check if small-dev preset is selected by parameter values ---
+  is_small_dev = data.coder_parameter.cpu.value == 2 && data.coder_parameter.memory.value == 4 && data.coder_parameter.home_disk_size.value == 10
   
   # --- Parameter Options for Readability ---
   gpu_types = [

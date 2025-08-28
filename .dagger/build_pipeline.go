@@ -435,7 +435,7 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 			' 2>/dev/null && echo "   ✅ Admin user configured and template pushed" || echo "   ⚠️  Some configuration steps may have failed"
 			
 		`}).
-		Terminal().
+		//Terminal().
 		WithWorkdir("/template").
 		Sync(ctx)
 
@@ -486,6 +486,17 @@ func (m *Build) BuildPipeline(
 	// Preset name for coder create command
 	// +default=""
 	preset string,
+
+	// Coder server URL for template upload (optional)
+	// +default=""
+	coderUrl string,
+
+	// Coder access token for authentication (optional, as a secret)
+	coderToken *dagger.Secret,
+
+	// Template name in Coder
+	// +default=""
+	templateName string,
 
 ) (*dagger.Service, error) {
 	startTime := time.Now()
@@ -566,6 +577,65 @@ func (m *Build) BuildPipeline(
 		pushedRef = fmt.Sprintf("registry:5000/%s:%s", imageRepository, finalImageTag)
 		fmt.Printf("   📦 Image available locally: %s\n", pushedRef)
 		fmt.Println("   ✅ Image built and available in local registry")
+	}
+
+	// Upload template to Coder server if credentials provided
+	if coderUrl != "" && coderToken != nil && templateName != "" {
+		fmt.Println("")
+		fmt.Println("   🚀 Uploading template to Coder server...")
+
+		// Get token value
+		tokenValue, err := coderToken.Plaintext(ctx)
+		if err != nil {
+			fmt.Printf("   ⚠️  Failed to get Coder token: %v\n", err)
+		} else {
+			// Create a container with Coder CLI installed
+			_, err = dag.Container().
+				From("alpine:latest").
+				WithExec([]string{"apk", "add", "--no-cache", "curl", "tar", "bash", "jq"}).
+				WithExec([]string{"sh", "-c", `
+					set -e
+					# Install Coder CLI - need to get version first
+					CODER_VERSION=$(curl -s https://api.github.com/repos/coder/coder/releases/latest | jq -r .tag_name | sed 's/^v//')
+					echo "Installing Coder CLI version: ${CODER_VERSION}"
+					curl -L "https://github.com/coder/coder/releases/download/v${CODER_VERSION}/coder_${CODER_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin
+					chmod +x /usr/local/bin/coder
+				`}).
+				WithEnvVariable("CODER_SESSION_TOKEN", tokenValue).
+				WithDirectory("/template", source).
+				WithExec([]string{"bash", "-c", fmt.Sprintf(`
+					set -e
+					
+					# Setup Coder environment
+					export CODER_URL="%s"
+					export CODER_SESSION_TOKEN="$CODER_SESSION_TOKEN"
+					echo "   🔐 Logging into Coder server..."
+					coder login $CODER_URL
+					
+					# Push the template with the new image tag
+					echo "   📦 Pushing template to Coder..."
+					coder templates push %s \
+						--directory /template \
+						--message "Automated push - Image: %s:%s" \
+						--variable image_registry=%s \
+						--variable image_repository=%s \
+						--variable image_tag=%s \
+						--yes
+					
+					echo "   ✅ Template successfully uploaded to Coder"
+				`, coderUrl, templateName, imageRepository, finalImageTag, targetRegistry, imageRepository, finalImageTag)}).
+				Terminal().
+				WithWorkdir("/template").
+				Sync(ctx)
+				//Stdout(ctx)
+
+			if err != nil {
+				fmt.Printf("   ⚠️  Failed to upload template to Coder: %v\n", err)
+			} else {
+				fmt.Println("   ✅ Template successfully uploaded to Coder server")
+				fmt.Printf("   📍 Template URL: %s/templates/%s\n", coderUrl, templateName)
+			}
+		}
 	}
 
 	// Print the summary information
