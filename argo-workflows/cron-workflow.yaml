@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
   name: coder-template-nightly-build
-  namespace: argo-workflow
+  namespace: ci
 spec:
   schedule: "0 2 * * *"  # Run at 2 AM UTC every day
   timezone: "UTC"

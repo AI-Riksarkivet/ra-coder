@@ -7,6 +7,16 @@ metadata:
 spec:
   serviceAccountName: ci-service-account
   entrypoint: build-coder-template
+  
+  # Volume claims for Dagger
+  volumeClaimTemplates:
+  - metadata:
+      name: dagger-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
           
   volumes:
   - name: dagger-socket
@@ -32,8 +42,6 @@ spec:
         value: "carpelan"
       - name: template-name
         value: "Riksarkivets-Developer-Template"
-      - name: coder-url
-        value: "http://coder.coder.svc.cluster.local"
       # JSON array of template params as key=value pairs
       - name: template-params
         value: |
@@ -62,10 +70,16 @@ spec:
         value: "true"
       - name: DO_NOT_TRACK
         value: "1"
-
+      - name: DAGGER_CLOUD_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: dagger-cloud-token
+            key: token
       volumeMounts:
       - name: dagger-socket
         mountPath: /run/dagger
+      - name: dagger-storage
+        mountPath: /var/lib/dagger
       #readinessProbe:
       #  exec:
       #    command: ["dagger", "core", "version"]
@@ -85,11 +99,18 @@ spec:
           secretKeyRef:
             name: docker-registry-credentials
             key: password
-      - name: CODER_TOKEN
+      - name: CODER_URL
+        value: "http://coder.coder.svc.cluster.local"
+      - name: CODER_USERNAME
         valueFrom:
           secretKeyRef:
             name: coder-credentials
-            key: token
+            key: username
+      - name: CODER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: coder-credentials  
+            key: password
       - name: GITHUB_TOKEN
         valueFrom:
           secretKeyRef:
@@ -121,7 +142,7 @@ spec:
         
         # Install required tools
         echo "=== Installing curl and jq ==="
-        apk add --no-cache curl jq git openssh-client
+        apk add --no-cache curl jq git openssh-client bash
         
         # Clone the repository using HTTPS with token authentication
         echo "=== Cloning repository ==="
@@ -152,6 +173,29 @@ spec:
         fi
         export PATH="/usr/local/bin:$PATH"
         
+        # Install Coder CLI
+        echo "=== Installing Coder CLI ==="
+        curl -fsSL "${CODER_URL}/install.sh" | sh
+        if [ -f "./bin/coder" ]; then
+          mv ./bin/coder /usr/local/bin/coder
+          chmod +x /usr/local/bin/coder
+          echo "Coder CLI moved to /usr/local/bin/"
+        fi
+        
+        # Generate Coder token via API
+        echo "=== Generating Coder API token via API ==="
+        CODER_TOKEN=$(curl -X POST "${CODER_URL}/api/v2/users/login" \
+          -H "Content-Type: application/json" \
+          -d "{\"email\":\"buildagent@riksarkivet.se\",\"password\":\"${CODER_PASSWORD}\"}" \
+          -s | jq -r '.session_token')
+        
+        if [ -z "$CODER_TOKEN" ] || [ "$CODER_TOKEN" = "null" ]; then
+          echo "ERROR: Failed to authenticate with Coder"
+          exit 1
+        fi
+        
+        export CODER_TOKEN
+        echo "Coder token generated successfully: token starts with ${CODER_TOKEN:0:10}..."
         
         echo "=== Verifying workspace setup ==="
         echo "Current directory: $(pwd)"
@@ -167,7 +211,7 @@ spec:
         DAGGER_CMD="$DAGGER_CMD --image-repository={{inputs.parameters.image-repository}}"
         DAGGER_CMD="$DAGGER_CMD --image-tag={{inputs.parameters.image-tag}}"
         DAGGER_CMD="$DAGGER_CMD --preset \"{{inputs.parameters.preset}}\""
-        DAGGER_CMD="$DAGGER_CMD --coder-url={{inputs.parameters.coder-url}}"
+        DAGGER_CMD="$DAGGER_CMD --coder-url=${CODER_URL}"
         DAGGER_CMD="$DAGGER_CMD --coder-token=env:CODER_TOKEN"
         DAGGER_CMD="$DAGGER_CMD --template-name={{inputs.parameters.template-name}}"
         
