@@ -216,14 +216,14 @@ spec:
         DAGGER_CMD="$DAGGER_CMD --template-name={{inputs.parameters.template-name}}"
         
         # Parse and add template-params
-        echo '{{inputs.parameters.template-params}}' | jq -r '.[]' | while IFS= read -r param; do
+        while IFS= read -r param; do
           DAGGER_CMD="$DAGGER_CMD --template-params \"$param\""
-        done
+        done < <(echo '{{inputs.parameters.template-params}}' | jq -r '.[]')
         
         # Parse and add env-vars
-        echo '{{inputs.parameters.env-vars}}' | jq -r '.[]' | while IFS= read -r var; do
+        while IFS= read -r var; do
           DAGGER_CMD="$DAGGER_CMD --env-vars=\"$var\""
-        done
+        done < <(echo '{{inputs.parameters.env-vars}}' | jq -r '.[]')
         
         echo "=== Executing Dagger command ==="
         echo "Command: $DAGGER_CMD"
