@@ -3,19 +3,10 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: coder-template-build
-  namespace: argo-workflow
+  namespace: ci
 spec:
+  serviceAccountName: ci-service-account
   entrypoint: build-coder-template
-  
-  # Volume claims for Dagger
-  volumeClaimTemplates:
-  - metadata:
-      name: dagger-storage
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
           
   volumes:
   - name: dagger-socket
@@ -37,6 +28,8 @@ spec:
         value: "Small Development"
       - name: git-branch
         value: "main"
+      - name: git-username
+        value: "carpelan"
       - name: template-name
         value: "Riksarkivets-Developer-Template"
       - name: coder-url
@@ -54,20 +47,11 @@ spec:
           [
             "ENABLE_CUDA=false"
           ]
-      artifacts:
-      - name: source
-        path: /workspace
-        git:
-          repo: git@github.com:AI-Riksarkivet/coder-templates.git
-          branch: "{{inputs.parameters.git-branch}}"
-          sshPrivateKeySecret:
-            name: github-ssh-key
-            key: ssh-privatekey
-          depth: 1
         
     sidecars:
     - name: dagger-engine
       image: registry.dagger.io/engine:v0.18.14-gpu
+      command: ["/usr/local/bin/dagger-engine"]
       securityContext:
         privileged: true
         capabilities:
@@ -78,27 +62,21 @@ spec:
         value: "true"
       - name: DO_NOT_TRACK
         value: "1"
-      - name: DAGGER_CLOUD_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: dagger-cloud-token
-            key: token
-            optional: true
+
       volumeMounts:
       - name: dagger-socket
         mountPath: /run/dagger
-      - name: dagger-storage
-        mountPath: /var/lib/dagger
-      readinessProbe:
-        exec:
-          command: ["dagger", "core", "version"]
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
+      #readinessProbe:
+      #  exec:
+      #    command: ["dagger", "core", "version"]
+      #  initialDelaySeconds: 10
+      #  periodSeconds: 10
+      #  timeoutSeconds: 5
+      #  failureThreshold: 3
         
-    container:
-      image: ghcr.io/dagger/dagger:latest
+    script:
+      image: alpine:latest
+      command: [sh]
       env:
       - name: _EXPERIMENTAL_DAGGER_RUNNER_HOST
         value: "unix:///run/dagger/engine.sock"
@@ -112,15 +90,73 @@ spec:
           secretKeyRef:
             name: coder-credentials
             key: token
+      - name: GITHUB_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: github-credentials
+            key: token
+      - name: DAGGER_CLOUD_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: dagger-cloud-token
+            key: token
+            optional: true
       volumeMounts:
       - name: dagger-socket
         mountPath: /run/dagger
         
-      script: |
+      source: |
         #!/bin/sh
-        set -e
+        set -ex  # Enable verbose mode and exit on error
         
+        echo "=== Starting Dagger Build Pipeline ==="
+        echo "Workflow started at: $(date)"
+        echo "Current user: $(whoami)"
+        echo "Current directory: $(pwd)"
+        
+        echo "=== Creating workspace directory ==="
+        mkdir -p /workspace
         cd /workspace
+        echo "Changed to workspace directory: $(pwd)"
+        
+        # Install required tools
+        echo "=== Installing curl and jq ==="
+        apk add --no-cache curl jq git openssh-client
+        
+        # Clone the repository using HTTPS with token authentication
+        echo "=== Cloning repository ==="
+        GIT_USERNAME="{{inputs.parameters.git-username}}"
+        REPO_URL="https://${GIT_USERNAME}:${GITHUB_TOKEN}@github.com/AI-Riksarkivet/coder-templates.git"
+        GIT_BRANCH="{{inputs.parameters.git-branch}}"
+        echo "Cloning repository with authentication (branch: $GIT_BRANCH)"
+        git clone --depth 1 --branch "$GIT_BRANCH" "$REPO_URL" . || {
+          echo "Failed to clone repository, trying without branch specification"
+          git clone --depth 1 "$REPO_URL" . || {
+            echo "ERROR: Failed to clone repository completely"
+            exit 1
+          }
+        }
+        
+        echo "Repository cloned successfully!"
+        echo "Repository contents:"
+        ls -la
+        
+        # Install dagger CLI
+        echo "=== Installing Dagger CLI ==="
+        curl -L https://dl.dagger.io/dagger/install.sh | sh
+        # Move dagger from ./bin to /usr/local/bin
+        if [ -f "./bin/dagger" ]; then
+          mv ./bin/dagger /usr/local/bin/dagger
+          chmod +x /usr/local/bin/dagger
+          echo "Dagger CLI moved to /usr/local/bin/"
+        fi
+        export PATH="/usr/local/bin:$PATH"
+        
+        
+        echo "=== Verifying workspace setup ==="
+        echo "Current directory: $(pwd)"
+        echo "Workspace contents after clone:"
+        ls -la
         
         # Build the dagger command with dynamic parameters
         DAGGER_CMD="dagger call build-pipeline"
@@ -145,9 +181,26 @@ spec:
           DAGGER_CMD="$DAGGER_CMD --env-vars=\"$var\""
         done
         
-        echo "Executing command: $DAGGER_CMD"
+        echo "=== Executing Dagger command ==="
+        echo "Command: $DAGGER_CMD"
+        
+        # Check if .dagger directory exists
+        echo "=== Checking for .dagger directory ==="
+        if [ -d ".dagger" ]; then
+          echo ".dagger directory found"
+          ls -la .dagger/
+        else
+          echo "ERROR: .dagger directory not found!"
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        fi
         
         # Execute the built command
-        eval "$DAGGER_CMD"
+        echo "=== Running Dagger pipeline ==="
+        eval "$DAGGER_CMD" || {
+          echo "ERROR: Dagger command failed with exit code $?"
+          exit 1
+        }
         
-        echo "Build completed successfully!"
+        echo "=== Build completed successfully! ==="
