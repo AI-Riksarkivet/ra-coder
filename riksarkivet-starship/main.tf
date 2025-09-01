@@ -715,6 +715,7 @@ resource "kubernetes_persistent_volume_claim" "home" {
 # --- Kubernetes Deployment for the Workspace Pod ---
 resource "kubernetes_deployment" "main" {
   count      = data.coder_workspace.me.start_count
+  wait_for_rollout = false
   depends_on = [kubernetes_persistent_volume_claim.home]
 
   metadata {
