@@ -670,6 +670,7 @@ module "claude-code" {
   count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
   version             = "2.2.0"
+  agentapi_version    = "v0.6.1"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
   install_claude_code = true
