@@ -675,6 +675,16 @@ module "coder-login" {
   agent_id = coder_agent.main.id
 }
 
+module "slackme" {
+  count            = data.coder_workspace.me.start_count
+  source = "git::https://github.com/AI-Riksarkivet/coder-modules.git//slackme?ref=main"
+  agent_id         = coder_agent.main.id
+  auth_provider_id = "slack"
+  slack_message    = <<EOF
+$COMMAND took $DURATION to execute!
+EOF
+}
+
 module "claude-code" {
   count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
@@ -1294,4 +1304,55 @@ resource "coder_script" "argo_token_setup" {
       [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"$ARGO_TOKEN\"" >> "$HOME/.bashrc"
     fi
   EOT
+}
+
+resource "coder_script" "gpu_claim_notify" {
+  agent_id           = coder_agent.main.id
+  display_name       = "GPU Claim Notification"
+  run_on_start       = true
+  start_blocks_login = false
+  icon               = "/icon/gpu.svg"
+  script             = <<EOF
+#!/bin/bash
+# Notify when GPU is claimed
+HOSTNAME=$(hostname)
+POD_GPU=$(kubectl get pod -n coder $HOSTNAME -o json 2>/dev/null | jq -r '
+  select(.spec.containers | any(.resources.requests."nvidia.com/gpu" != null)) |
+  {
+    user: (.metadata.labels."com.coder.user.username" // "unknown"),
+    workspace: (.metadata.labels."com.coder.workspace.name" // "N/A"),
+    gpu_type: (try (.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[] | select(.key == "nvidia.com/gpu.product") | .values[0]) catch "any"),
+    hostname: "'"$HOSTNAME"'"
+  } |
+  "🔴 *\(.user)* claimed \(.gpu_type) on workspace: \(.workspace) (\(.hostname))"')
+
+if [ -n "$POD_GPU" ]; then
+  slackme -c "ml-team" -m "$POD_GPU"
+fi
+EOF
+}
+
+# GPU release notification on stop
+resource "coder_script" "gpu_release_notify" {
+  agent_id     = coder_agent.main.id
+  display_name = "GPU Release Notification"
+  run_on_stop  = true
+  icon         = "/icon/gpu.svg"
+  script       = <<EOF
+#!/bin/bash
+# Notify when GPU is released
+HOSTNAME=$(hostname)
+POD_GPU=$(kubectl get pod -n coder $HOSTNAME -o json 2>/dev/null | jq -r '
+  select(.spec.containers | any(.resources.requests."nvidia.com/gpu" != null)) |
+  {
+    user: (.metadata.labels."com.coder.user.username" // "unknown"),
+    workspace: (.metadata.labels."com.coder.workspace.name" // "N/A"),
+    gpu_type: (try (.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[] | select(.key == "nvidia.com/gpu.product") | .values[0]) catch "any")
+  } |
+  "🟢 *\(.user)* released \(.gpu_type) from workspace: \(.workspace) - GPU now available!"')
+
+if [ -n "$POD_GPU" ]; then
+  slackme -c "ml-team" -m "$POD_GPU"
+fi
+EOF
 }
