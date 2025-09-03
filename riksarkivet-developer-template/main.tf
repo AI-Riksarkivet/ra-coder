@@ -1289,11 +1289,9 @@ resource "coder_script" "argo_token_setup" {
   script = <<-EOT
     #!/usr/bin/env bash
     
-    if [ -f "$HOME/.kube/config" ] && command -v kubectl &> /dev/null; then
-      if kubectl auth can-i get secrets -n argo-workflow &> /dev/null 2>&1; then
-        ARGO_TOKEN=$(kubectl get secret argo-workflows-server-token -n argo-workflow -o jsonpath='{.data.token}' 2>/dev/null | base64 -d) || exit 0
-        [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"Bearer $ARGO_TOKEN\"" >> "$HOME/.bashrc"
-      fi
+    if command -v argo &> /dev/null; then
+      ARGO_TOKEN=$(argo auth token 2>/dev/null) || exit 0
+      [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"$ARGO_TOKEN\"" >> "$HOME/.bashrc"
     fi
   EOT
 }
