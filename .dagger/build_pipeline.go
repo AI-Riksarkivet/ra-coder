@@ -460,6 +460,7 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 		`, presetCmd)})
 
 		// Step 6: Health check workspace
+	
 		container = container.WithExec([]string{"sh", "-c", `
 			echo "   🔍 Health checking workspace..."
 			#for i in $(seq 1 30); do
@@ -503,6 +504,64 @@ func (m *Build) SetupAdminUserAndTemplate(ctx context.Context, cluster *Kubernet
 	}
 
 	return nil
+}
+
+// generateSBOM generates a Software Bill of Materials (SBOM) for a container using Syft
+func (m *Build) generateSBOM(ctx context.Context, builtContainer *dagger.Container, imageRepository, finalImageTag string) (*dagger.File, error) {
+	fmt.Println("   📋 Generating SBOM (Software Bill of Materials)...")
+	
+	// Export container as tarball for Syft scanning
+	tarFile := builtContainer.AsTarball()
+	
+	// Generate SBOM using Syft
+	sbomContainer := dag.Container().
+		From("anchore/syft:latest").
+		WithMountedFile("/tmp/image.tar", tarFile)
+	
+	// Generate SBOM in SPDX JSON format (widely supported)
+	sbomOutput, err := sbomContainer.
+		WithExec([]string{"/syft", "docker-archive:/tmp/image.tar", "-o", "spdx-json"}).
+		Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate SBOM: %w", err)
+	}
+	
+	// Create SBOM file
+	sbomFile := dag.Directory().
+		WithNewFile("sbom.spdx.json", sbomOutput).
+		File("sbom.spdx.json")
+	
+	fmt.Printf("   ✅ SBOM generated for %s:%s\n", imageRepository, finalImageTag)
+	return sbomFile, nil
+}
+
+// attachSBOMToRegistry attaches the SBOM to the registry as an OCI artifact using ORAS
+func (m *Build) attachSBOMToRegistry(ctx context.Context, sbomFile *dagger.File, imageRepository, finalImageTag, targetRegistry, dockerUsername string, dockerPassword *dagger.Secret) error {
+	targetRef := fmt.Sprintf("%s/%s:%s", targetRegistry, imageRepository, finalImageTag)
+	
+	fmt.Println("   📤 Attempting to attach SBOM as OCI artifact...")
+	
+	// Try to attach SBOM using ORAS (this may fail on registries that don't support OCI artifacts)
+	_, err := dag.Container().
+		From("alpine:latest").
+		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
+		WithExec([]string{"sh", "-c", `
+			# Install ORAS
+			curl -LO "https://github.com/oras-project/oras/releases/download/v1.1.0/oras_1.1.0_linux_amd64.tar.gz"
+			tar -xzf oras_1.1.0_linux_amd64.tar.gz
+			mv oras /usr/local/bin/
+			chmod +x /usr/local/bin/oras
+		`}).
+		WithFile("/workspace/sbom.spdx.json", sbomFile).
+		WithWorkdir("/workspace").
+		WithSecretVariable("DOCKER_PASSWORD", dockerPassword).
+		WithExec([]string{"sh", "-c", fmt.Sprintf(`
+			echo "$DOCKER_PASSWORD" | oras login %s -u %s --password-stdin
+			oras attach %s --artifact-type application/spdx+json ./sbom.spdx.json:application/spdx+json
+		`, targetRegistry, dockerUsername, targetRef)}).
+		Sync(ctx)
+	
+	return err
 }
 
 // pushImageToRegistry handles pushing the built image to external registry if credentials are provided
