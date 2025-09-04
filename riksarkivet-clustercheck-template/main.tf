@@ -53,17 +53,7 @@ variable "temp_ip" {
 
 }
 
-variable "mlflow_external_address" {
-  type        = string
-  description = "The external address for the MLflow Tracking Server UI (e.g., http://mlflow.example.com or http://<IP>:<Port>). Leave empty to disable the MLflow App and environment variable injection."
-  default     = "http://10.100.127.31:30025"
-}
 
-variable "argowf_external_address" {
-  type        = string
-  description = "The external address for the Argo Workflow Server UI (e.g., http://argo.example.com or http://<IP>:<Port>). Leave empty to disable the Argo Workflow App and environment variable injection."
-  default     = "http://10.100.127.31:32746"
-}
 
 variable "docker_registry_secret" {
   type        = string
@@ -99,112 +89,27 @@ locals {
   git_author_email = data.coder_workspace_owner.me.email
 
   # --- Images ---
-  main_image = local.actual_gpu_count > 0 ? "${var.image_registry}/${var.image_repository}:${var.image_tag}" : "${var.image_registry}/${var.image_repository}:${var.image_tag}${endswith(var.image_tag, "-cpu") ? "" : "-cpu"}"
+  main_image = "${var.image_registry}/${var.image_repository}:${var.image_tag}"
 
-  # --- GPU Logic ---
-  selected_gpu             = data.coder_parameter.gpu_type.value
-  # Handle conditional GPU count parameter - only exists for Ada Generation GPUs
-  selected_gpu_count_param = data.coder_parameter.gpu_type.value == "NVIDIA-RTX-6000-Ada-Generation" ? data.coder_parameter.gpu_count[0].value : "1"
-  # For non-Ada GPUs, default to 1 GPU if not "None"
-  actual_gpu_count         = (local.selected_gpu == "None" || local.selected_gpu == "") ? 0 : tonumber(local.selected_gpu_count_param)
-  gpu_resources            = local.actual_gpu_count > 0 ? { "nvidia.com/gpu" = format("%d", local.actual_gpu_count) } : {}
-  gpu_label_key            = "nvidia.com/gpu.product"
 
-  # --- External Service Environment Variables ---
-  internal_service_env_vars = merge(
-    var.mlflow_external_address != "" ? { "MLFLOW_TRACKING_URI" = var.mlflow_external_address } : {},
-    var.argowf_external_address != "" ? { "ARGO_BASE_HREF" = var.argowf_external_address } : {},
-  )
 
-  # Define the LakeFS secret name
-  lakefs_secret_name = "lakefs-secrets"
 
-  # --- Dagger Engine Resources (configurable and conditional) ---
-  dagger_enabled      = data.coder_parameter.use_dagger.value
-  dagger_cpu_limit    = local.dagger_enabled && length(data.coder_parameter.dagger_cpu_limit) > 0 ? data.coder_parameter.dagger_cpu_limit[0].value : 2
-  dagger_memory_limit = local.dagger_enabled && length(data.coder_parameter.dagger_memory_limit) > 0 ? data.coder_parameter.dagger_memory_limit[0].value : 8
-  dagger_cpu_request  = "${floor(local.dagger_cpu_limit * 250)}m"    # 25% of limit in millicores
-  dagger_memory_request = "${floor(local.dagger_memory_limit * 0.25)}Gi"  # 25% of limit
-
-  # --- Check if running in CI mode ---
-  is_ci = data.coder_parameter.is_ci.value
   
-  # --- Parameter Options for Readability ---
-  gpu_types = [
-    { name = "None", value = "None", description = "CPU-only workspace" },
-    { name = "Quadro RTX 5000", value = "Quadro-RTX-5000", description = "Professional graphics, 16GB VRAM" },
-    { name = "NVIDIA RTX A5000", value = "NVIDIA-RTX-A5000", description = "Workstation GPU, 24GB VRAM" },
-    { name = "NVIDIA RTX 6000 Ada Generation", value = "NVIDIA-RTX-6000-Ada-Generation", description = "Latest generation, 48GB VRAM" }
-  ]
-
-  # Only for NVIDIA RTX 6000 Ada Generation
-  ada_gpu_count_options = [
-    { name = "1 GPU", value = "1", description = "Single Ada GPU for development" },
-    { name = "2 GPUs", value = "2", description = "Dual Ada GPU setup" }
-  ]
 }
 
 # ========================================
 # Workspace Presets
 # ========================================
 
-data "coder_workspace_preset" "intense-ml" {
-  name        = "Intense ML Training"
-  description = "High-performance configuration for intensive ML/AI training with dual Ada GPUs and Dagger"
-  icon        = "/emojis/1f916.png"  # Fire emoji
-  parameters = {
-    "cpu"                      = "20"
-    "memory"                   = "96"
-    "home_disk_size"           = "500"
-    "shared_memory_percentage" = "60"
-    "gpu_type"                 = "NVIDIA-RTX-6000-Ada-Generation"
-    "use_dagger"               = "true"
-    "enable_advanced_tools"    = "true"
-  }
-}
-
-data "coder_workspace_preset" "standard-ds" {
-  name        = "Standard Data Science"
-  description = "Standard configuration for general development work (without GPU)"
+data "coder_workspace_preset" "simple-dev" {
+  name        = "Simple Development"
+  description = "Simple configuration for cluster checking work"
   icon        = "/emojis/1f435.png"
   parameters = {
-    "cpu"                      = "8"
-    "memory"                   = "32"
-    "home_disk_size"           = "100"
+    "cpu"                      = "4"
+    "memory"                   = "8"
+    "home_disk_size"           = "20"
     "shared_memory_percentage" = "20"
-    "gpu_type"                 = "None"
-    "use_dagger"               = "false"
-    "enable_advanced_tools"    = "false"
-  }
-}
-
-data "coder_workspace_preset" "standard-dev" {
-  name        = "Standard Development"
-  description = "CI + general development work (without GPU)"
-  icon        = "/emojis/1f435.png"
-  parameters = {
-    "cpu"                      = "8"
-    "memory"                   = "32"
-    "home_disk_size"           = "100"
-    "shared_memory_percentage" = "20"
-    "gpu_type"                 = "None"
-    "use_dagger"               = "true"
-    "enable_advanced_tools"    = "true"
-  }
-}
-
-
-data "coder_workspace_preset" "small-dev" {
-  name        = "Small Development"
-  description = "CI + general development work (without GPU)"
-  icon        = "/emojis/1f435.png"
-  parameters = {
-    "cpu"                      = "2"
-    "memory"                   = "4"
-    "home_disk_size"           = "10"
-    "shared_memory_percentage" = "50"
-    "gpu_type"                 = "None"
-    "use_dagger"               = "true"
     "enable_advanced_tools"    = "false"
   }
 }
@@ -289,62 +194,7 @@ data "coder_parameter" "shared_memory_percentage" {
   }
 }
 
-# --- GPU Configuration ---
-data "coder_parameter" "gpu_type" {
-  name         = "gpu_type"
-  display_name = "GPU Type"
-  description  = "Select GPU type for ML/AI workloads"
-  type         = "string"
-  default      = "None"
-  icon         = "/emojis/26a1.png"
-  mutable      = false
-  form_type    = "dropdown"
-  order        = 10
 
-  dynamic "option" {
-    for_each = local.gpu_types
-    content {
-      name        = option.value.name
-      value       = option.value.value
-      description = option.value.description
-    }
-  }
-}
-
-data "coder_parameter" "gpu_count" {
-  # Only show if GPU type is "NVIDIA RTX 6000 Ada Generation"
-  count        = data.coder_parameter.gpu_type.value == "NVIDIA-RTX-6000-Ada-Generation" ? 1 : 0
-  name         = "gpu_count"
-  display_name = "Number of Ada GPUs"
-  description  = "Number of NVIDIA RTX 6000 Ada Generation GPUs to allocate"
-  type         = "string"
-  default      = "1"
-  icon         = "/emojis/0023-fe0f-20e3.png"
-  mutable      = false
-  form_type    = "radio"
-  order        = 12
-
-  dynamic "option" {
-    for_each = local.ada_gpu_count_options
-    content {
-      name        = option.value.name
-      value       = option.value.value
-      description = option.value.description
-    }
-  }
-}
-
-# --- CI Mode Configuration ---
-data "coder_parameter" "is_ci" {
-  name         = "is_ci"
-  display_name = "CI Mode"
-  description  = "Enable CI mode (disables work/scratch mounts for testing)"
-  type         = "bool"
-  default      = false
-  form_type    = "checkbox"
-  mutable      = false
-  order        = 15
-}
 
 # --- Development Tools Configuration ---
 data "coder_parameter" "ai_prompt" {
@@ -364,70 +214,6 @@ data "coder_parameter" "ai_prompt" {
 
 
 
-data "coder_parameter" "use_dagger" {
-  name         = "use_dagger"
-  display_name = "Use Dagger Engine"
-  description  = "Enable Dagger container build system as a sidecar. Dagger provides containerized build capabilities without Docker. Requires additional CPU and memory resources. Note that the meomery is shared between the dagger and main container in the pod."
-  type         = "bool"
-  default      = false
-  form_type    = "checkbox"
-  mutable     = false
-  order        = 30
-}
-
-data "coder_parameter" "dagger_cloud_token" {
-  count       = data.coder_parameter.use_dagger.value ? 1 : 0
-  name        = "dagger_cloud_token"
-  display_name = "Docker Cloud Token"
-  description = "For Dagger Traces and debugg"
-  type        = "string"
-  default     = ""
-  mutable     = true
-  form_type   = "input"
-  order       = 31
-  
-  styling = jsonencode({
-    mask_input  = true
-    placeholder = "..."
-  })
-}
-
-# --- Dagger Engine Resource Configuration (conditional) ---
-data "coder_parameter" "dagger_cpu_limit" {
-  count       = data.coder_parameter.use_dagger.value ? 1 : 0
-  name        = "dagger_cpu_limit"
-  display_name = "Dagger Engine CPU"
-  description = "CPU cores for Dagger engine sidecar (additive to main container)"
-  type        = "number"
-  default     = 2
-  mutable     = true
-  form_type   = "slider"
-  order       = 32
-  
-  validation {
-    min   = 2
-    max   = 24
-    error = "Dagger CPU must be between {min} and {max} cores"
-  }
-}
-
-data "coder_parameter" "dagger_memory_limit" {
-  count       = data.coder_parameter.use_dagger.value ? 1 : 0
-  name        = "dagger_memory_limit"
-  display_name = "Dagger Engine Memory"
-  description = "Memory for Dagger engine sidecar in GB (additive to main container)"
-  type        = "number"
-  default     = 8
-  mutable     = true
-  form_type   = "slider"
-  order       = 33
-  
-  validation {
-    min   = 8
-    max   = 128
-    error = "Dagger memory must be between {min} and {max} GB"
-  }
-}
 
 # --- API Keys & Tokens (conditional) ---
 
@@ -493,22 +279,6 @@ data "coder_parameter" "hf_token" {
 }
 
 
-data "coder_parameter" "docker_password" {
-  count       = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
-  name        = "docker_password"
-  display_name = "Docker Registry Password"
-  description = "Password/token for pushing to Docker registries"
-  type        = "string"
-  default     = ""
-  mutable     = true
-  form_type   = "input"
-  order       = 45
-  
-  styling = jsonencode({
-    mask_input  = true
-    placeholder = "Enter Docker Hub password or token"
-  })
-}
 
 data "coder_parameter" "ssh_private_key" {
   count       = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
@@ -584,30 +354,6 @@ resource "coder_agent" "main" {
     timeout      = 1
   }
 
-  dynamic "metadata" {
-    for_each = local.actual_gpu_count > 0 ? range(local.actual_gpu_count) : []
-    content {
-      display_name = "GPU ${metadata.value} Memory"
-      key          = "gpu_${metadata.value}_memory"
-      script       = <<EOT
-        if command -v nvidia-smi >/dev/null 2>&1; then
-          nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits --id=${metadata.value} | awk -F', ' '{
-            used=$1; total=$2; 
-            if (total > 0) {
-              percent=int((used/total)*100); 
-              printf "%.1f/%.1fGB (%d%%)", used/1024, total/1024, percent
-            } else {
-              print "N/A"
-            }
-          }'
-        else
-          echo "nvidia-smi not available"
-        fi
-      EOT
-      interval     = 10
-      timeout      = 5
-    }
-  }
 
   metadata {
     display_name = "Node Info"
@@ -660,13 +406,6 @@ module "filebrowser" {
   folder        = "/"
 }
 
-module "dotfiles" {
-  count    = data.coder_workspace.me.start_count
-  source   = "registry.coder.com/modules/dotfiles/coder"
-  version  = "1.0.29"
-  default_dotfiles_uri = "https://github.com/AI-Riksarkivet/dotfiles"
-  agent_id = coder_agent.main.id
-}
 
 module "coder-login" {
   count    = data.coder_workspace.me.start_count
@@ -770,7 +509,7 @@ resource "kubernetes_deployment" "main" {
       }
       
       spec {
-        runtime_class_name                = local.actual_gpu_count > 0 ? "nvidia" : null
+        runtime_class_name                = null
         termination_grace_period_seconds = 60
 
         security_context {
@@ -837,53 +576,21 @@ resource "kubernetes_deployment" "main" {
             value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.hf_token) > 0 ? data.coder_parameter.hf_token[0].value : ""
           }
           env {
-            name  = "DOCKER_PASSWORD"
-            value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.docker_password) > 0 ? data.coder_parameter.docker_password[0].value : ""
-          }
-          env {
             name  = "KUBECONFIG"
             value = "/home/coder/.kube/config"
           }
-          env {
-            name  = "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
-            value = data.coder_parameter.use_dagger.value ? "unix:///run/dagger/engine.sock" : ""
-          }
-          env {
-            name  = "_EXPERIMENTAL_DAGGER_GPU_SUPPORT"
-            value = "true"
-          }
-          env {
-            name  = "DAGGER_CLOUD_TOKEN"  
-            value = ""
-          }
-          env {
-            name  = "DAGGER_NO_NAG"
-            value = "1"
-          }
-          env {
-            name  = "DAGGER_CLOUD_TOKEN"
-            value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.dagger_cloud_token) > 0 ? data.coder_parameter.dagger_cloud_token[0].value : ""
-          }
 
-          # Dynamic environment variables for external services
-          dynamic "env" {
-            for_each = local.internal_service_env_vars
-            content {
-              name  = env.key
-              value = env.value
-            }
-          }
 
           # Resource allocation
           resources {
-            requests = merge({
+            requests = {
               "cpu"    = "250m"
               "memory" = "512Mi"
-            }, local.gpu_resources)
-            limits = merge({
+            }
+            limits = {
               "cpu"    = "${data.coder_parameter.cpu.value}"
               "memory" = "${data.coder_parameter.memory.value}Gi"
-            }, local.gpu_resources)
+            }
           }
 
           # Volume mounts
@@ -899,31 +606,7 @@ resource "kubernetes_deployment" "main" {
             read_only  = false
           }
 
-          volume_mount {
-            mount_path = "/etc/secrets/lakefs"
-            name       = "lakefs-secrets"
-            read_only  = true
-          }
 
-          # Conditionally mount scratch volume (not in CI mode)
-          dynamic "volume_mount" {
-            for_each = local.is_ci ? [] : [1]
-            content {
-              mount_path = "/mnt/scratch"
-              name       = "scratch"
-              read_only  = false
-            }
-          }
-
-          # Conditionally mount work volume (not in CI mode)
-          dynamic "volume_mount" {
-            for_each = local.is_ci ? [] : [1]
-            content {
-              mount_path = "/mnt/work"
-              name       = "work"
-              read_only  = false
-            }
-          }
 
           volume_mount {
             mount_path = "/home/coder/.kube"
@@ -931,96 +614,8 @@ resource "kubernetes_deployment" "main" {
             read_only  = true
           }
           
-          # Dagger engine communication (conditional)
-          dynamic "volume_mount" {
-            for_each = data.coder_parameter.use_dagger.value ? [1] : []
-            content {
-              mount_path = "/run/dagger"
-              name       = "dagger-socket"
-              read_only  = false
-            }
-          }
         }
 
-        # Dagger Engine Sidecar (conditional)
-        dynamic "container" {
-          for_each = data.coder_parameter.use_dagger.value ? [1] : []
-          content {
-            name  = "dagger-engine"
-            image = "registry.dagger.io/engine:v0.18.14-gpu"
-            
-            command = ["/usr/local/bin/dagger-engine"]
-            args    = ["--config", "/etc/dagger/engine.toml"]
-
-            env {
-            name  = "_EXPERIMENTAL_DAGGER_GPU_SUPPORT"
-            value = "true"
-            }
-
-            env {
-              name  = "NVIDIA_VISIBLE_DEVICES"
-              value = "all"
-            }
-
-            env {
-            name  = "DO_NOT_TRACK"
-            value = "1"
-            }
-
-            env {
-              name  = "DAGGER_CLOUD_TOKEN"
-              value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.dagger_cloud_token) > 0 ? data.coder_parameter.dagger_cloud_token[0].value : ""
-            }
-
-            env {
-              name  = "NVIDIA_DRIVER_CAPABILITIES"
-              value = "compute,utility"
-            }
-            
-            security_context {
-              privileged                = true
-              run_as_user              = 0
-              run_as_group             = 1000
-              run_as_non_root          = false
-              allow_privilege_escalation = true
-              capabilities {
-                add = ["ALL"]
-              }
-            }
-            
-            readiness_probe {
-              exec {
-                command = ["dagger", "core", "version"]
-              }
-              initial_delay_seconds = 10
-              period_seconds       = 10
-              timeout_seconds      = 5
-              failure_threshold    = 3
-            }
-            
-            volume_mount {
-              mount_path = "/run/dagger"
-              name       = "dagger-socket"
-            }
-            
-            volume_mount {
-              mount_path = "/var/lib/dagger"
-              name       = "dagger-storage"
-            }
-
-                    
-            resources {
-              requests = merge({
-                "cpu"    = local.dagger_cpu_request
-                "memory" = local.dagger_memory_request
-              }) 
-              limits = merge({
-                "cpu"    = local.dagger_cpu_limit
-                "memory" = "${local.dagger_memory_limit}Gi"
-              }) 
-            }
-          }
-        }
 
         # Volume definitions
         volume {
@@ -1032,44 +627,7 @@ resource "kubernetes_deployment" "main" {
         }
 
 
-        volume {
-          name = "lakefs-secrets"
-          secret {
-            secret_name = local.lakefs_secret_name
-            items {
-              key  = "access_key_id"
-              path = "access_key_id"
-            }
-            items {
-              key  = "secret_access_key"
-              path = "secret_access_key"
-            }
-          }
-        }
 
-        # Conditionally define scratch volume (not in CI mode)
-        dynamic "volume" {
-          for_each = local.is_ci ? [] : [1]
-          content {
-            name = "scratch"
-            host_path {
-              path = "/mnt/scratch/"
-              type = "Directory"
-            }
-          }
-        }
-
-        # Conditionally define work volume (not in CI mode)
-        dynamic "volume" {
-          for_each = local.is_ci ? [] : [1]
-          content {
-            name = "work"
-            host_path {
-              path = "/mnt/work/"
-              type = "Directory"
-            }
-          }
-        }
 
         volume {
           name = "dshm"
@@ -1091,33 +649,9 @@ resource "kubernetes_deployment" "main" {
           }
         }
 
-        volume {
-          name = "dagger-socket"
-          empty_dir {}
-        }
-
-        volume {
-          name = "dagger-storage"
-          empty_dir {}
-        }
 
         # Pod affinity rules
         affinity {
-          dynamic "node_affinity" {
-            for_each = local.selected_gpu != "None" && local.selected_gpu != "" ? [1] : []
-            content {
-              required_during_scheduling_ignored_during_execution {
-                node_selector_term {
-                  match_expressions {
-                    key      = local.gpu_label_key
-                    operator = "In"
-                    values   = [local.selected_gpu]
-                  }
-                }
-              }
-            }
-          }
-          
           pod_anti_affinity {
             preferred_during_scheduling_ignored_during_execution {
               weight = 100
@@ -1153,23 +687,12 @@ resource "coder_metadata" "resources" {
     value = kubernetes_persistent_volume_claim.home.metadata[0].name
   }
   
-  item {
-    key   = "gpu_type"
-    value = local.selected_gpu == "None" ? "No GPU" : local.selected_gpu
-  }
   
   item {
     key   = "image_id"
     value = local.main_image
   }
 
-  dynamic "item" {
-    for_each = local.dagger_enabled ? [1] : []
-    content {
-      key   = "dagger"
-      value = "Enabled (${local.dagger_cpu_limit} CPU, ${local.dagger_memory_limit}GB RAM)"
-    }
-  }
 }
 
 
@@ -1196,20 +719,6 @@ resource "coder_script" "ssh_setup" {
   )
 }
 
-resource "coder_script" "lakefs_config" {
-  agent_id           = coder_agent.main.id
-  display_name       = "LakeFS Configuration"
-  icon               = "/icon/lakefs.svg"
-  log_path           = "lakefs_config.log"
-  run_on_start       = true
-  start_blocks_login = false
-  
-  script = replace(
-    file("${path.module}/scripts/lakefs_config.sh"),
-    "\r",
-    ""
-  )
-}
 
 resource "coder_script" "git_config" {
   agent_id           = coder_agent.main.id
@@ -1244,20 +753,6 @@ resource "coder_script" "agents_config" {
   )
 }
 
-resource "coder_script" "starship_config" {
-  agent_id           = coder_agent.main.id
-  display_name       = "Starship Prompt"
-  icon               = "/icon/terminal.svg"
-  log_path           = "starship_config.log"
-  run_on_start       = true
-  start_blocks_login = false
-  
-  script = replace(
-    file("${path.module}/scripts/starship_config.sh"),
-    "\r",
-    ""
-  )
-}
 
 resource "coder_script" "coder_cli_config" {
   agent_id           = coder_agent.main.id
@@ -1276,21 +771,3 @@ resource "coder_script" "coder_cli_config" {
   )
 }
 
-resource "coder_script" "argo_token_setup" {
-  agent_id           = coder_agent.main.id
-  display_name       = "Argo Workflows Token Setup"
-  icon               = "/icon/argo-workflows.svg"
-  run_on_start       = true
-  start_blocks_login = false
- 
-  script = <<-EOT
-    #!/usr/bin/env bash
-    
-    if [ -f "$HOME/.kube/config" ] && command -v kubectl &> /dev/null; then
-      if kubectl auth can-i get secrets -n argo-workflow &> /dev/null 2>&1; then
-        ARGO_TOKEN=$(kubectl get secret argo-workflows-server-token -n argo-workflow -o jsonpath='{.data.token}' 2>/dev/null | base64 -d) || exit 0
-        [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"Bearer $ARGO_TOKEN\"" >> "$HOME/.bashrc"
-      fi
-    fi
-  EOT
-}

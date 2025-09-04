@@ -1,0 +1,8 @@
+
+Run k8s_cluster_investigator_v2.py script 
+
+and report back the most importent findings to slack via, slackme -c "ml-team" -m "message"
+
+after report has been sent, self close workspace with
+
+coder stop $CODER_WORKSPACE_NAME -y
