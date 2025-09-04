@@ -1314,28 +1314,28 @@ resource "coder_script" "gpu_claim_notify" {
   run_on_start       = true
   start_blocks_login = false
   icon               = "/icon/gpu.svg"
-  script             = <<EOF
-#!/bin/bash
-# Notify when GPU is claimed and save info for release notification
-HOSTNAME=$(hostname)
-POD_INFO=$(kubectl get pod -n coder $HOSTNAME -o json 2>/dev/null | jq -r '
-  select(.spec.containers | any(.resources.requests."nvidia.com/gpu" != null)) |
-  {
-    user: (.metadata.labels."com.coder.user.username" // "unknown"),
-    workspace: (.metadata.labels."com.coder.workspace.name" // "N/A"),
-    gpu_type: (try (.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[] | select(.key == "nvidia.com/gpu.product") | .values[0]) catch "any"),
-    hostname: "'"$HOSTNAME"'"
-  }')
-
-if [ -n "$POD_INFO" ]; then
-  # Save GPU info for stop script
-  echo "$POD_INFO" > /tmp/gpu_allocation_info.json
-  
-  # Send start notification
-  MESSAGE=$(echo "$POD_INFO" | jq -r '"🔴 *\(.user)* claimed \(.gpu_type) on workspace: \(.workspace) (\(.hostname))"')
-  slackme -c "ml-team" -m "$MESSAGE"
-fi
-EOF
+  script             = <<-EOF
+    #!/bin/bash
+    # Notify when GPU is claimed and save info for release notification
+    HOSTNAME=$(hostname)
+    POD_INFO=$(kubectl get pod -n coder $HOSTNAME -o json 2>/dev/null | jq -r '
+      select(.spec.containers | any(.resources.requests."nvidia.com/gpu" != null)) |
+      {
+        user: (.metadata.labels."com.coder.user.username" // "unknown"),
+        workspace: (.metadata.labels."com.coder.workspace.name" // "N/A"),
+        gpu_type: (try (.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[] | select(.key == "nvidia.com/gpu.product") | .values[0]) catch "any"),
+        hostname: "'"$HOSTNAME"'"
+      }')
+    
+    if [ -n "$POD_INFO" ]; then
+      # Save GPU info for stop script
+      echo "$POD_INFO" > /tmp/gpu_allocation_info.json
+      
+      # Send start notification
+      MESSAGE=$(echo "$POD_INFO" | jq -r '"🔴 *\(.user)* claimed \(.gpu_type) on workspace: \(.workspace) (\(.hostname))"')
+      slackme -c "ml-team" -m "$MESSAGE"
+    fi
+    EOF
 }
 
 # GPU release notification on stop - uses saved info
@@ -1344,16 +1344,16 @@ resource "coder_script" "gpu_release_notify" {
   display_name = "GPU Release Notification"
   run_on_stop  = true
   icon         = "/icon/gpu.svg"
-  script       = <<EOF
-#!/bin/bash
-# Notify when GPU is released using saved info
-if [ -f /tmp/gpu_allocation_info.json ]; then
-  POD_INFO=$(cat /tmp/gpu_allocation_info.json)
-  
-  if [ -n "$POD_INFO" ]; then
-    MESSAGE=$(echo "$POD_INFO" | jq -r '"🟢 *\(.user)* released \(.gpu_type) from workspace: \(.workspace) - GPU now available!"')
-    slackme -c "ml-team" -m "$MESSAGE"
-  fi
-fi
-EOF
+  script       = <<-EOF
+    #!/bin/bash
+    # Notify when GPU is released using saved info
+    if [ -f /tmp/gpu_allocation_info.json ]; then
+      POD_INFO=$(cat /tmp/gpu_allocation_info.json)
+      
+      if [ -n "$POD_INFO" ]; then
+        MESSAGE=$(echo "$POD_INFO" | jq -r '"🟢 *\(.user)* released \(.gpu_type) from workspace: \(.workspace) - GPU now available!"')
+        slackme -c "ml-team" -m "$MESSAGE"
+      fi
+    fi
+    EOF
 }
