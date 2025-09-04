@@ -666,16 +666,29 @@ module "coder-login" {
   agent_id = coder_agent.main.id
 }
 
+module "slackme" {
+  count            = data.coder_workspace.me.start_count
+  source = "git::https://github.com/AI-Riksarkivet/coder-modules.git//slackme?ref=main"
+  agent_id         = coder_agent.main.id
+  auth_provider_id = "slack"
+  slack_message    = <<EOF
+$COMMAND took $DURATION to execute!
+EOF
+}
+
+
 module "claude-code" {
   count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
-  version             = "2.0.3"
+  version             = "2.2.0"
+  agentapi_version    = "v0.6.1"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
   install_claude_code = true
+  subdomain           = false
 
   # Enable experimental features
-  experiment_report_tasks = false
+  experiment_report_tasks = true
 }
 
 # ========================================
@@ -715,6 +728,7 @@ resource "kubernetes_persistent_volume_claim" "home" {
 # --- Kubernetes Deployment for the Workspace Pod ---
 resource "kubernetes_deployment" "main" {
   count      = data.coder_workspace.me.start_count
+  wait_for_rollout = false
   depends_on = [kubernetes_persistent_volume_claim.home]
 
   metadata {
@@ -1261,11 +1275,60 @@ resource "coder_script" "argo_token_setup" {
   script = <<-EOT
     #!/usr/bin/env bash
     
-    if [ -f "$HOME/.kube/config" ] && command -v kubectl &> /dev/null; then
-      if kubectl auth can-i get secrets -n argo-workflow &> /dev/null 2>&1; then
-        ARGO_TOKEN=$(kubectl get secret argo-workflows-server-token -n argo-workflow -o jsonpath='{.data.token}' 2>/dev/null | base64 -d) || exit 0
-        [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"Bearer $ARGO_TOKEN\"" >> "$HOME/.bashrc"
-      fi
+    if command -v argo &> /dev/null; then
+      ARGO_TOKEN=$(argo auth token 2>/dev/null) || exit 0
+      [ -n "$ARGO_TOKEN" ] && echo "export ARGO_TOKEN=\"$ARGO_TOKEN\"" >> "$HOME/.bashrc"
     fi
   EOT
+}
+
+# GPU claim notification on start - also saves info for later
+resource "coder_script" "gpu_claim_notify" {
+  agent_id           = coder_agent.main.id
+  display_name       = "GPU Claim Notification"
+  run_on_start       = true
+  start_blocks_login = false
+  icon               = "/icon/gpu.svg"
+  script             = <<-EOF
+    #!/bin/bash
+    # Notify when GPU is claimed and save info for release notification
+    HOSTNAME=$(hostname)
+    POD_INFO=$(kubectl get pod -n coder $HOSTNAME -o json 2>/dev/null | jq -r '
+      select(.spec.containers | any(.resources.requests."nvidia.com/gpu" != null)) |
+      {
+        user: (.metadata.labels."com.coder.user.username" // "unknown"),
+        workspace: (.metadata.labels."com.coder.workspace.name" // "N/A"),
+        gpu_type: (try (.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[] | select(.key == "nvidia.com/gpu.product") | .values[0]) catch "any"),
+        hostname: "'"$HOSTNAME"'"
+      }')
+    
+    if [ -n "$POD_INFO" ]; then
+      # Save GPU info for stop script
+      echo "$POD_INFO" > /tmp/gpu_allocation_info.json
+      
+      # Send start notification
+      MESSAGE=$(echo "$POD_INFO" | jq -r '"🔴 *\(.user)* claimed \(.gpu_type) on workspace: \(.workspace) (\(.hostname))"')
+      slackme -c "ml-team" -m "$MESSAGE"
+    fi
+    EOF
+}
+
+# GPU release notification on stop - uses saved info
+resource "coder_script" "gpu_release_notify" {
+  agent_id     = coder_agent.main.id
+  display_name = "GPU Release Notification"
+  run_on_stop  = true
+  icon         = "/icon/gpu.svg"
+  script       = <<-EOF
+    #!/bin/bash
+    # Notify when GPU is released using saved info
+    if [ -f /tmp/gpu_allocation_info.json ]; then
+      POD_INFO=$(cat /tmp/gpu_allocation_info.json)
+      
+      if [ -n "$POD_INFO" ]; then
+        MESSAGE=$(echo "$POD_INFO" | jq -r '"🟢 *\(.user)* released \(.gpu_type) from workspace: \(.workspace) - GPU now available!"')
+        slackme -c "ml-team" -m "$MESSAGE"
+      fi
+    fi
+    EOF
 }
