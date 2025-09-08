@@ -16,6 +16,8 @@ spec:
       name: coder-template-build
     arguments:
       parameters:
+      - name: source
+        value: "./riksarkivet-developer-template"
       - name: cluster-name
         value: "developer"
       - name: image-repository

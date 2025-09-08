@@ -16,6 +16,8 @@ spec:
       name: coder-template-build
     arguments:
       parameters:
+      - name: source
+        value: "./riksarkivet-agent-template"
       - name: cluster-name
         value: "agent"
       - name: image-repository

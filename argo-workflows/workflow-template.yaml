@@ -26,6 +26,8 @@ spec:
   - name: build-coder-template
     inputs:
       parameters:
+      - name: source
+        value: "./riksarkivet-developer-template"
       - name: cluster-name
         value: "developer"
       - name: image-repository
@@ -205,7 +207,7 @@ spec:
         # Build the dagger command with dynamic parameters
         DAGGER_CMD="dagger call build-pipeline"
         DAGGER_CMD="$DAGGER_CMD --cluster-name={{inputs.parameters.cluster-name}}"
-        DAGGER_CMD="$DAGGER_CMD --source=./riksarkivet-developer-template"
+        DAGGER_CMD="$DAGGER_CMD --source={{inputs.parameters.source}}"
         DAGGER_CMD="$DAGGER_CMD --docker-password=env:DOCKER_PASSWORD"
         DAGGER_CMD="$DAGGER_CMD --docker-username={{inputs.parameters.docker-username}}"
         DAGGER_CMD="$DAGGER_CMD --image-repository={{inputs.parameters.image-repository}}"
