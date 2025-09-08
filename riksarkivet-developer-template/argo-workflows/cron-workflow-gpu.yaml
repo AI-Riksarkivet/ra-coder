@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: coder-developer-template-gpu-nightly-build
+  namespace: ci
+spec:
+  schedule: "0 2 * * *"  # Run at 2 AM UTC every day (same time as CPU)
+  timezone: "UTC"
+  suspend: false
+  concurrencyPolicy: "Replace"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  workflowSpec:
+    workflowTemplateRef:
+      name: coder-template-build
+    arguments:
+      parameters:
+      - name: cluster-name
+        value: "developer-gpu"
+      - name: image-repository
+        value: "riksarkivet/workspace-developer"
+      - name: image-tag
+        value: "gpu-nightly-{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+      - name: docker-username
+        value: "airiksarkivet"
+      - name: preset
+        value: "Small Development"
+      - name: git-branch
+        value: "main"
+      - name: template-name
+        value: "Riksarkivets-Developer-Template-GPU"
+      - name: coder-url
+        value: "http://coder.coder.svc.cluster.local"
+      - name: template-params
+        value: |
+          [
+            "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles",
+            "AI Prompt="
+          ]
+      - name: env-vars
+        value: |
+          [
+            "ENABLE_CUDA=true"
+          ]
