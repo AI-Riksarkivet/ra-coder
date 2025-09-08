@@ -472,7 +472,7 @@ module "claude-code" {
   version             = "2.0.3"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
-  install_claude_code = true
+  install_claude_code = false
 
   # Enable experimental features
   experiment_report_tasks = false

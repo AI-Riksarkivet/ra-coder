@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HOMEBREW_NO_CLEANUP_FORMULAE=1 \
     HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=3650
 
-ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
+ENV PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
 
 # Install base packages and create user
 RUN apt-get update && \
@@ -33,12 +33,14 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
     eval "$(${HOMEBREW_PREFIX}/bin/brew shellenv)" && \
     brew install \
         python@3.12 \
+        node@22 \
         kubectl \
         k9s \
         uv \
         git \
         curl \
         jq && \
+    PATH="${HOMEBREW_PREFIX}/opt/node@22/bin:$PATH" ${HOMEBREW_PREFIX}/opt/node@22/bin/npm install -g @anthropic-ai/claude-code && \
     brew cleanup --prune=all
 
 # Copy CLAUDE.md workspace context file
