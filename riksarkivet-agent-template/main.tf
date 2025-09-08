@@ -63,8 +63,8 @@ variable "docker_registry_secret" {
 
 variable "image_repository" {
   type        = string
-  description = "Container image repository name (e.g., riksarkivet/workspace-developer)"
-  default     = "riksarkivet/workspace-developer"
+  description = "Container image repository name (e.g., riksarkivet/workspace-agent)"
+  default     = "riksarkivet/workspace-agent"
 }
 
 variable "image_tag" {
@@ -196,20 +196,72 @@ data "coder_parameter" "shared_memory_percentage" {
 
 
 
-# --- Development Tools Configuration ---
-data "coder_parameter" "ai_prompt" {
-  name        = "AI Prompt"
-  display_name = "AI Assistant Prompt"
-  description = "Custom prompt for Claude Code AI assistant"
-  type        = "string"
-  default     = ""
-  mutable     = true
-  form_type   = "textarea"
-  order       = 20
+# --- Agent Repository Configuration ---
+data "coder_parameter" "agent_git_repo" {
+  name         = "agent_git_repo"
+  display_name = "Agent Repository URL"
+  description  = "Git repository containing your agent code (e.g., https://github.com/org/agent-repo)"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  form_type    = "input"
+  order        = 10
   
   styling = jsonencode({
-    placeholder = "Enter your custom AI prompt or leave empty for default behavior..."
+    placeholder = "https://github.com/your-org/your-agent-repo"
   })
+}
+
+data "coder_parameter" "agent_git_branch" {
+  name         = "agent_git_branch"
+  display_name = "Git Branch/Tag"
+  description  = "Branch, tag, or commit to checkout (default: main)"
+  type         = "string"
+  default      = "main"
+  mutable      = true
+  form_type    = "input"
+  order        = 11
+  
+  styling = jsonencode({
+    placeholder = "main, v1.0.0, or commit hash"
+  })
+}
+
+data "coder_parameter" "agent_work_dir" {
+  name         = "agent_work_dir"
+  display_name = "Agent Working Directory"
+  description  = "Directory name for the cloned repository (default: agent)"
+  type         = "string"
+  default      = "agent"
+  mutable      = false
+  form_type    = "input"
+  order        = 12
+}
+
+# --- Agent Execution Configuration ---
+data "coder_parameter" "agent_task_prompt" {
+  name         = "agent_task_prompt"
+  display_name = "Agent Task Instructions"
+  description  = "Complete instructions for the agent including what to run, analyze, and how to report results"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  form_type    = "textarea"
+  order        = 20
+  
+  styling = jsonencode({
+    placeholder = "Example: Run python k8s_cluster_investigator_v2.py to check cluster state. Analyze the results and identify any issues. Then use slackme -c ml-team -m 'summary' to notify the team with your findings."
+  })
+}
+
+data "coder_parameter" "agent_auto_run" {
+  name         = "agent_auto_run"
+  display_name = "Auto-execute Agent on Startup"
+  description  = "Automatically execute the agent task when workspace starts"
+  type         = "bool"
+  default      = true
+  form_type    = "checkbox"
+  order        = 21
 }
 
 
@@ -426,6 +478,18 @@ module "claude-code" {
   experiment_report_tasks = false
 }
 
+# Git Clone Module for Agent Repository
+module "git-clone" {
+  count    = data.coder_parameter.agent_git_repo.value != "" ? data.coder_workspace.me.start_count : 0
+  source   = "registry.coder.com/modules/git-clone/coder"
+  version  = "1.0.19"
+  agent_id = coder_agent.main.id
+  
+  url    = data.coder_parameter.agent_git_repo.value
+  path   = "/home/coder/${data.coder_parameter.agent_work_dir.value}"
+  branch = data.coder_parameter.agent_git_branch.value
+}
+
 # ========================================
 # Kubernetes Resources
 # ========================================
@@ -557,7 +621,23 @@ resource "kubernetes_deployment" "main" {
           }
           env {
             name  = "CODER_MCP_CLAUDE_TASK_PROMPT"
-            value = data.coder_parameter.ai_prompt.value
+            value = data.coder_parameter.agent_task_prompt.value
+          }
+          env {
+            name  = "AGENT_AUTO_RUN"
+            value = data.coder_parameter.agent_auto_run.value ? "true" : "false"
+          }
+          env {
+            name  = "AGENT_GIT_REPO"
+            value = data.coder_parameter.agent_git_repo.value
+          }
+          env {
+            name  = "AGENT_GIT_BRANCH"
+            value = data.coder_parameter.agent_git_branch.value
+          }
+          env {
+            name  = "AGENT_WORK_DIR"
+            value = data.coder_parameter.agent_work_dir.value
           }
           env {
             name  = "CODER_MCP_APP_STATUS_SLUG"
@@ -766,6 +846,21 @@ resource "coder_script" "coder_cli_config" {
     templatefile("${path.module}/scripts/coder_cli_config.sh", {
       coder_url = "$${CODER_URL:-${var.temp_ip}}"
     }),
+    "\r",
+    ""
+  )
+}
+
+resource "coder_script" "agent_runner" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Agent Auto-Runner"
+  icon               = "/icon/bolt.svg"
+  log_path           = "agent_runner.log"
+  run_on_start       = true
+  start_blocks_login = false
+  
+  script = replace(
+    file("${path.module}/scripts/agent_runner.sh"),
     "\r",
     ""
   )
