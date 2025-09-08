@@ -2,3 +2,4 @@ Riksarkivets-Development-Template/coder-developer-kubeconfig
 kubeconfig
 riksarkivet-test-template/main.tf
 argo-workflows/secrets.yaml
+secrets.yaml

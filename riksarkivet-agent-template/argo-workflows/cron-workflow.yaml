@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: coder-agent-template-nightly-build
+  namespace: ci
+spec:
+  schedule: "0 3 * * *"  # Run at 3 AM UTC every day (1 hour after developer template)
+  timezone: "UTC"
+  suspend: false
+  concurrencyPolicy: "Replace"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  workflowSpec:
+    workflowTemplateRef:
+      name: coder-template-build
+    arguments:
+      parameters:
+      - name: cluster-name
+        value: "agent"
+      - name: image-repository
+        value: "riksarkivet/workspace-agent"
+      - name: image-tag
+        value: "nightly-{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+      - name: docker-username
+        value: "airiksarkivet"
+      - name: preset
+        value: "Simple Development"
+      - name: git-branch
+        value: "main"
+      - name: template-name
+        value: "Riksarkivet-Agent-Template"
+      - name: coder-url
+        value: "http://coder.coder.svc.cluster.local"
+      - name: template-params
+        value: |
+          [
+            "AI Prompt=You are an intelligent agent assistant for automated tasks"
+          ]
+      - name: env-vars
+        value: |
+          [
+            "ENABLE_CUDA=false"
+          ]

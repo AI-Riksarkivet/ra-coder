@@ -239,8 +239,8 @@ data "coder_parameter" "agent_work_dir" {
 }
 
 # --- Agent Execution Configuration ---
-data "coder_parameter" "agent_task_prompt" {
-  name         = "agent_task_prompt"
+data "coder_parameter" "ai_prompt" {
+  name         = "AI Prompt"
   display_name = "Agent Task Instructions"
   description  = "Complete instructions for the agent including what to run, analyze, and how to report results"
   type         = "string"
@@ -480,14 +480,15 @@ module "claude-code" {
 
 # Git Clone Module for Agent Repository
 module "git-clone" {
-  count    = data.coder_parameter.agent_git_repo.value != "" ? data.coder_workspace.me.start_count : 0
-  source   = "registry.coder.com/modules/git-clone/coder"
-  version  = "1.0.19"
-  agent_id = coder_agent.main.id
+  count       = data.coder_parameter.agent_git_repo.value != "" ? data.coder_workspace.me.start_count : 0
+  source      = "registry.coder.com/coder/git-clone/coder"
+  version     = "1.1.1"
+  agent_id    = coder_agent.main.id
   
-  url    = data.coder_parameter.agent_git_repo.value
-  path   = "/home/coder/${data.coder_parameter.agent_work_dir.value}"
-  branch = data.coder_parameter.agent_git_branch.value
+  url         = data.coder_parameter.agent_git_repo.value
+  branch_name = data.coder_parameter.agent_git_branch.value
+  folder_name = data.coder_parameter.agent_work_dir.value
+  base_dir    = "/home/coder"
 }
 
 # ========================================
@@ -621,7 +622,7 @@ resource "kubernetes_deployment" "main" {
           }
           env {
             name  = "CODER_MCP_CLAUDE_TASK_PROMPT"
-            value = data.coder_parameter.agent_task_prompt.value
+            value = data.coder_parameter.ai_prompt.value
           }
           env {
             name  = "AGENT_AUTO_RUN"

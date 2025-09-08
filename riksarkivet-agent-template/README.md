@@ -102,18 +102,21 @@ These variables are automatically set by the Dagger build pipeline:
 Use the Dagger pipeline to build and deploy the template:
 
 ```bash
+# Create a Coder API token
+coder tokens create --name "dagger-deployment" --lifetime 24h
+
 # Set environment variables
 export DOCKER_PASSWORD="your-docker-hub-password"
-export CODER_TOKEN="your-coder-api-token"
+export CODER_TOKEN="your-coder-api-token"  # Use the token from above
 
 # Build and deploy the agent template
 dagger call build-pipeline \
   --cluster-name="agent" \
   --source=./riksarkivet-agent-template \
   --docker-password=env:DOCKER_PASSWORD \
-  --docker-username=riksarkivet \
+  --docker-username=airiksarkivet \
   --image-repository=riksarkivet/workspace-agent \
-  --image-tag=latest \
+  --image-tag=v1.0.0 \
   --preset "Simple Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
