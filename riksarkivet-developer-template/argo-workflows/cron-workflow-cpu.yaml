@@ -12,6 +12,7 @@ spec:
   failedJobsHistoryLimit: 3
   
   workflowSpec:
+    activeDeadlineSeconds: 3600  # 1 hour deadline
     workflowTemplateRef:
       name: coder-template-build
     arguments:
