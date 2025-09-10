@@ -111,7 +111,7 @@ export CODER_TOKEN="your-coder-api-token"  # Use the token from above
 
 # Build and deploy the agent template
 dagger call build-pipeline \
-  --cluster-name="agent" \
+  --cluster-name="agent-cpu" \
   --source=./riksarkivet-agent-template \
   --docker-password=env:DOCKER_PASSWORD \
   --docker-username=airiksarkivet \
@@ -120,9 +120,23 @@ dagger call build-pipeline \
   --preset "Simple Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivet-Agent-Template" \
+  --template-name="Riksarkivet-Agent-Template-CPU" \
   --template-params "AI Prompt=You are an intelligent agent assistant" \
   --env-vars="ENABLE_CUDA=false"
+
+dagger call build-pipeline \
+  --cluster-name="agent-gpu" \
+  --source=./riksarkivet-agent-template \
+  --docker-password=env:DOCKER_PASSWORD \
+  --docker-username=airiksarkivet \
+  --image-repository=riksarkivet/workspace-agent \
+  --image-tag=v1.0.0 \
+  --preset "Simple Development" \
+  --coder-url=http://coder.coder.svc.cluster.local \
+  --coder-token=env:CODER_TOKEN \
+  --template-name="Riksarkivet-Agent-Template-GPU" \
+  --template-params "AI Prompt=You are an intelligent agent assistant" \
+  --env-vars="ENABLE_CUDA=true"
 ```
 
 ### 2. Create Agent Workspace

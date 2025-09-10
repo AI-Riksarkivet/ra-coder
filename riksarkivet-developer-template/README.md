@@ -110,10 +110,27 @@ dagger call build-pipeline \
   --preset "Small Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivets-Developer-Template" \
+  --template-name="Riksarkivet-Developer-Template-CPU" \
   --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
   --template-params "AI Prompt=" \
   --env-vars="ENABLE_CUDA=false"
+
+dagger call build-pipeline \
+  --cluster-name="developer" \
+  --source=./riksarkivet-developer-template \
+  --docker-password=env:DOCKER_PASSWORD \
+  --docker-username=airiksarkivet \
+  --image-repository=riksarkivet/workspace-developer \
+  --image-tag=v1.0.0 \
+  --preset "Small Development" \
+  --coder-url=http://coder.coder.svc.cluster.local \
+  --coder-token=env:CODER_TOKEN \
+  --template-name="Riksarkivet-Developer-Template-GPU" \
+  --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
+  --template-params "AI Prompt=" \
+  --env-vars="ENABLE_CUDA=true"
+
+
 ```
 
 This will:

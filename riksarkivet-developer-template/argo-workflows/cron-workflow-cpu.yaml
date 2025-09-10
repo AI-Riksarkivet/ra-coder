@@ -20,7 +20,7 @@ spec:
       - name: source
         value: "./riksarkivet-developer-template"
       - name: cluster-name
-        value: "developer"
+        value: "developer-cpu"
       - name: image-repository
         value: "riksarkivet/workspace-developer"
       - name: image-tag
@@ -32,7 +32,7 @@ spec:
       - name: git-branch
         value: "main"
       - name: template-name
-        value: "Riksarkivets-Developer-Template-CPU"
+        value: "Riksarkivet-Developer-Template-CPU"
       - name: coder-url
         value: "http://coder.coder.svc.cluster.local"
       - name: template-params

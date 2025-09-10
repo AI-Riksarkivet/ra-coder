@@ -1,0 +1,176 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: folder-mover-job
+  namespace: ci
+spec:
+  schedule: "*/30 * * * *"  # Run every 30 minutes
+  timezone: "UTC"
+  suspend: false
+  concurrencyPolicy: "Forbid"  # Prevent overlapping executions
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  
+  workflowSpec:
+    serviceAccountName: ci-service-account
+    activeDeadlineSeconds: 1800  # 30 minute deadline to prevent hanging
+    entrypoint: folder-mover
+    
+    volumes:
+    - name: folder-a
+      hostPath:
+        path: /mnt/scratch/test/A
+        type: Directory
+    - name: folder-b
+      hostPath:
+        path: /mnt/scratch/test/B
+        type: Directory
+    
+    templates:
+    - name: folder-mover
+      script:
+        image: busybox:latest
+        command: [sh]
+        volumeMounts:
+        - name: folder-a
+          mountPath: /source
+          readOnly: false
+        - name: folder-b
+          mountPath: /destination
+          readOnly: false
+        
+        source: |
+          #!/bin/sh
+          set -ex  # Enable verbose mode and exit on error
+          
+          echo "=== Starting Folder Mover Job ==="
+          echo "Job started at: $(date)"
+          
+          SOURCE_DIR="/source"
+          DEST_DIR="/destination"
+          BATCH_SIZE=10
+          
+          # Function to count subdirectories
+          count_subdirs() {
+            local dir="$1"
+            if [ ! -d "$dir" ]; then
+              echo 0
+              return
+            fi
+            find "$dir" -mindepth 1 -maxdepth 1 -type d | wc -l
+          }
+          
+          # Function to get subdirectories
+          get_subdirs() {
+            local dir="$1"
+            local limit="$2"
+            if [ ! -d "$dir" ]; then
+              return
+            fi
+            find "$dir" -mindepth 1 -maxdepth 1 -type d | head -n "$limit"
+          }
+          
+          echo "=== Checking directory status ==="
+          echo "Source directory: $SOURCE_DIR"
+          echo "Destination directory: $DEST_DIR"
+          
+          # Ensure directories exist
+          if [ ! -d "$SOURCE_DIR" ]; then
+            echo "ERROR: Source directory $SOURCE_DIR does not exist"
+            exit 1
+          fi
+          
+          if [ ! -d "$DEST_DIR" ]; then
+            echo "ERROR: Destination directory $DEST_DIR does not exist"
+            exit 1
+          fi
+          
+          # Count existing subdirectories
+          SOURCE_COUNT=$(count_subdirs "$SOURCE_DIR")
+          DEST_COUNT=$(count_subdirs "$DEST_DIR")
+          
+          echo "Source subdirectories: $SOURCE_COUNT"
+          echo "Destination subdirectories: $DEST_COUNT"
+          
+          # Check conditions for moving folders
+          SHOULD_MOVE=false
+          
+          # Condition 1: If destination is empty, move folders
+          if [ "$DEST_COUNT" -eq 0 ]; then
+            echo "Destination is empty - will move folders"
+            SHOULD_MOVE=true
+          fi
+          
+          # Add additional conditions here if needed
+          # For example: if destination has fewer than X folders, etc.
+          
+          if [ "$SHOULD_MOVE" = "false" ]; then
+            echo "Conditions not met for moving folders. Exiting."
+            exit 0
+          fi
+          
+          # Check if source has any subdirectories to move
+          if [ "$SOURCE_COUNT" -eq 0 ]; then
+            echo "No subdirectories in source to move. Exiting."
+            exit 0
+          fi
+          
+          echo "=== Moving up to $BATCH_SIZE subdirectories ==="
+          
+          # Get subdirectories to move (limited by batch size)
+          DIRS_TO_MOVE=$(get_subdirs "$SOURCE_DIR" "$BATCH_SIZE")
+          
+          if [ -z "$DIRS_TO_MOVE" ]; then
+            echo "No directories found to move. Exiting."
+            exit 0
+          fi
+          
+          MOVED_COUNT=0
+          
+          # Move each directory
+          echo "$DIRS_TO_MOVE" | while read -r dir; do
+            if [ -z "$dir" ]; then
+              continue
+            fi
+            
+            DIR_NAME=$(basename "$dir")
+            
+            echo "Moving: $DIR_NAME"
+            
+            # Check if destination already exists
+            if [ -d "$DEST_DIR/$DIR_NAME" ]; then
+              echo "WARNING: $DIR_NAME already exists in destination, skipping"
+              continue
+            fi
+            
+            # Move the directory
+            if mv "$dir" "$DEST_DIR/"; then
+              echo "Successfully moved: $DIR_NAME"
+              
+              # Create done.txt file in the moved directory
+              echo "Creating done.txt in $DIR_NAME"
+              echo "Moved at: $(date)" > "$DEST_DIR/$DIR_NAME/done.txt"
+              if [ $? -eq 0 ]; then
+                echo "done.txt created successfully in $DIR_NAME"
+              else
+                echo "WARNING: Failed to create done.txt in $DIR_NAME"
+              fi
+              
+              MOVED_COUNT=$((MOVED_COUNT + 1))
+            else
+              echo "ERROR: Failed to move $DIR_NAME"
+              # Continue with other directories instead of failing completely
+            fi
+          done
+          
+          # Final count check
+          FINAL_SOURCE_COUNT=$(count_subdirs "$SOURCE_DIR")
+          FINAL_DEST_COUNT=$(count_subdirs "$DEST_DIR")
+          
+          echo "=== Job Summary ==="
+          echo "Directories moved in this batch: $MOVED_COUNT"
+          echo "Source subdirectories (after): $FINAL_SOURCE_COUNT"
+          echo "Destination subdirectories (after): $FINAL_DEST_COUNT"
+          echo "Job completed at: $(date)"
+          
+          echo "=== Folder Mover Job Completed Successfully ==="

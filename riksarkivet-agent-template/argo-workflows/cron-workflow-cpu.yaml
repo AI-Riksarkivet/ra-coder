@@ -20,7 +20,7 @@ spec:
       - name: source
         value: "./riksarkivet-agent-template"
       - name: cluster-name
-        value: "agent"
+        value: "agent-cpu"
       - name: image-repository
         value: "riksarkivet/workspace-agent"
       - name: image-tag
