@@ -32,7 +32,7 @@ spec:
       - name: git-branch
         value: "main"
       - name: template-name
-        value: "Riksarkivet-Developer-Template-CPU"
+        value: "Riksarkivets-Developer-Template-CPU"
       - name: coder-url
         value: "http://coder.coder.svc.cluster.local"
       - name: template-params
