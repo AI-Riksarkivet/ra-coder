@@ -83,7 +83,7 @@ This command will:
 coder login http://your-coder-url
 
 # Create a token with 1 year lifetime
-coder tokens create --lifetime 8760h --name "build-pipeline"
+coder tokens create --lifetime 168h --name "build-pipeline"
 
 # Set as environment variable
 export CODER_TOKEN="your-token-here"

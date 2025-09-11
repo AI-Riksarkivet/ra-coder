@@ -120,7 +120,7 @@ dagger call build-pipeline \
   --preset "Simple Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivets-Agent-Template-CPU" \
+  --template-name="RA-Agent-CPU" \
   --template-params "AI Prompt=You are an intelligent agent assistant" \
   --env-vars="ENABLE_CUDA=false"
 
@@ -134,7 +134,7 @@ dagger call build-pipeline \
   --preset "Simple Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivets-Agent-Template-GPU" \
+  --template-name="RA-Agent-GPU" \
   --template-params "AI Prompt=You are an intelligent agent assistant" \
   --env-vars="ENABLE_CUDA=true"
 ```

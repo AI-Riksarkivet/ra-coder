@@ -110,7 +110,7 @@ dagger call build-pipeline \
   --preset "Small Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivets-Developer-Template-CPU" \
+  --template-name="RA-Developer-CPU" \
   --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
   --template-params "AI Prompt=" \
   --env-vars="ENABLE_CUDA=false"
@@ -125,7 +125,7 @@ dagger call build-pipeline \
   --preset "Small Development" \
   --coder-url=http://coder.coder.svc.cluster.local \
   --coder-token=env:CODER_TOKEN \
-  --template-name="Riksarkivets-Developer-Template-GPU" \
+  --template-name="RA-Developer-GPU" \
   --template-params "dotfiles_uri=https://github.com/AI-Riksarkivet/dotfiles" \
   --template-params "AI Prompt=" \
   --env-vars="ENABLE_CUDA=true"
