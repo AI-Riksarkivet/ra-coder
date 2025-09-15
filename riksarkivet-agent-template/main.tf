@@ -332,22 +332,6 @@ data "coder_parameter" "hf_token" {
 
 
 
-data "coder_parameter" "ssh_private_key" {
-  count       = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
-  name        = "ssh_private_key"
-  display_name = "SSH Private Key"
-  description = "SSH private key for Git repository access (optional)"
-  type        = "string"
-  default     = ""
-  mutable     = true
-  form_type   = "textarea"
-  order       = 46
-  
-  styling = jsonencode({
-    placeholder = "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----"
-  })
-}
-
 # ========================================
 # Coder Agent Configuration
 # ========================================
