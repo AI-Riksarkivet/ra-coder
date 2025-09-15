@@ -130,6 +130,13 @@ dagger call build-pipeline \
   --template-params "AI Prompt=" \
   --env-vars="ENABLE_CUDA=true"
 
+# Build image locally and open a shell in one command
+dagger call build-local \
+  --source="./" \
+  --image-repository="riksarkivet/coder-workspace-ml" \
+  --env-vars="ENABLE_CUDA=false" \
+  --image-tag="local-test" \
+  terminal
 
 ```
 

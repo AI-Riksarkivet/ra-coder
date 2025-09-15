@@ -15,7 +15,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HOMEBREW_NO_CLEANUP_FORMULAE=1 \
     HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=3650
 
-ENV PATH="${VENV_PATH}/bin:${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
+ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
 
 # Install base packages and create user
 RUN apt-get update && \
@@ -27,7 +27,6 @@ RUN apt-get update && \
     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group && \
     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd && \
     chmod 440 /etc/sudoers.d/nopasswd && \
-    mkdir -p ${VENV_PATH} && chown coder:coder ${VENV_PATH} && \
     mkdir -p /home/linuxbrew && chown coder:coder /home/linuxbrew && \
     rm -rf /var/lib/apt/lists/*
 
