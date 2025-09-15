@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+# Remove 'set -e' to prevent script from exiting on any command failure
+# set -e
 
 # Agent Runner Script
 # Executes Claude Code with the task prompt and stops the workspace when done
@@ -19,14 +20,12 @@ fi
 if [ -z "$CODER_MCP_CLAUDE_TASK_PROMPT" ]; then
     echo "No task prompt provided. Skipping agent execution."
     echo "To run an agent task, set the 'Agent Task Instructions' parameter when creating the workspace."
-    exit 0
 fi
 
-# Check if API key is available
+# Check if API key is available  
 if [ -z "$CODER_MCP_CLAUDE_API_KEY" ]; then
     echo "Warning: No Anthropic API key found."
     echo "Please enable 'Advanced Tools' and provide an API key to use Claude Code."
-    exit 1
 fi
 
 # Wait for git clone to complete if repository is specified
@@ -52,20 +51,25 @@ echo "Task: $CODER_MCP_CLAUDE_TASK_PROMPT"
 echo "Starting at: $(date)"
 echo "---"
 
-# Execute Claude Code with the task prompt
-claude-code "$CODER_MCP_CLAUDE_TASK_PROMPT"
-AGENT_EXIT_CODE=$?
+# Only execute if we have both prompt and API key
+if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ]; then
+    # Execute Claude Code with the task prompt
+    claude-code "$CODER_MCP_CLAUDE_TASK_PROMPT"
+    AGENT_EXIT_CODE=$?
 
-echo "---"
-echo "Agent exit code: $AGENT_EXIT_CODE"
-echo "Completed at: $(date)"
+    echo "---"
+    echo "Agent exit code: $AGENT_EXIT_CODE"
+    echo "Completed at: $(date)"
 
-# Stop the workspace after completion
-echo "=== Stopping workspace in 10 seconds... ==="
-echo "To cancel shutdown, press Ctrl+C now"
-sleep 10
+    # Stop the workspace after completion
+    echo "=== Stopping workspace in 10 seconds... ==="
+    echo "To cancel shutdown, press Ctrl+C now"
+    sleep 10
 
-echo "Stopping workspace: $CODER_WORKSPACE_NAME"
-coder stop "$CODER_WORKSPACE_NAME" -y
+    echo "Stopping workspace: $CODER_WORKSPACE_NAME"
+    coder stop "$CODER_WORKSPACE_NAME" -y
 
-echo "=== Agent task complete, workspace stopping ==="
+    echo "=== Agent task complete, workspace stopping ==="
+else
+    echo "=== Agent execution skipped - missing prompt or API key ==="
+fi

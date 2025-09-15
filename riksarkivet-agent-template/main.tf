@@ -274,7 +274,7 @@ data "coder_parameter" "enable_advanced_tools" {
   display_name = "Enable Advanced Development Tools"
   description  = "Enable additional API tokens and SSH configuration"
   type         = "bool"
-  default      = false
+  default      = true
   form_type    = "checkbox"
   order        = 40
 }
@@ -467,7 +467,7 @@ module "coder-login" {
 }
 
 module "claude-code" {
-  count               = data.coder_workspace.me.start_count
+  count               = data.coder_parameter.ai_prompt.value != "" ? data.coder_workspace.me.start_count : 0
   source              = "registry.coder.com/modules/claude-code/coder"
   version             = "2.0.3"
   agent_id            = coder_agent.main.id
@@ -776,29 +776,6 @@ resource "coder_metadata" "resources" {
 
 }
 
-
-# ========================================
-# Coder Resource Scripts
-# ========================================
-
-
-resource "coder_script" "ssh_setup" {
-  agent_id           = coder_agent.main.id
-  display_name       = "SSH Key Setup"
-  icon               = "/icon/terminal.svg"
-  log_path           = "ssh_setup.log"
-  run_on_start       = true
-  start_blocks_login = false
-  
-  script = replace(
-    templatefile("${path.module}/scripts/ssh_config.sh", {
-      git_author_email = local.git_author_email
-      ssh_private_key  = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.ssh_private_key) > 0 ? data.coder_parameter.ssh_private_key[0].value : ""
-    }),
-    "\r",
-    ""
-  )
-}
 
 
 resource "coder_script" "git_config" {
