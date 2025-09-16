@@ -8,7 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANGUAGE=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew" \
-    UV_SYSTEM_PYTHON=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     HOMEBREW_NO_ANALYTICS=1 \
