@@ -685,18 +685,26 @@ module "slackme" {
 EOF
 }
 
+module "langflow" {
+  count     = data.coder_workspace.me.start_count
+  source    = "git::https://github.com/AI-Riksarkivet/coder-modules.git//langflow?ref=main"
+  agent_id  = coder_agent.main.id
+  port      = 7860
+  subdomain = false
+}
+
 module "marimo" {
   count     = data.coder_workspace.me.start_count
-  source    = source = "git::https://github.com/AI-Riksarkivet/coder-modules.git//marimo?ref=main"
+  source    = "git::https://github.com/AI-Riksarkivet/coder-modules.git//marimo?ref=main"
   agent_id  = coder_agent.main.id
-  port      = 8080
+  port      = 2818
   subdomain = false
 }
 
 module "claude-code" {
   count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
-  version             = "2.2.0"
+  version             = "2.2.1"
   agentapi_version    = "v0.6.1"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
@@ -706,6 +714,7 @@ module "claude-code" {
   # Enable experimental features
   experiment_report_tasks = true
 }
+
 
 # ========================================
 # Kubernetes Resources
