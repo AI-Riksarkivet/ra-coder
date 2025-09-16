@@ -1,5 +1,8 @@
 # Coder Templates Repository
 
+> **⚠️ Work in Progress (WIP)**
+> This repository is currently under active development. Templates, documentation, and build processes are being refined. Expect frequent changes and potential breaking updates. Use in production environments at your own discretion.
+
 This repository contains Coder workspace templates for various development environments. Each template provides a complete, pre-configured development environment that can be deployed on Kubernetes through the Coder platform.
 
 ## 🚀 Build Pipeline (Dagger)
