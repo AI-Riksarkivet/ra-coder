@@ -22,10 +22,14 @@ if [ -z "$CODER_MCP_CLAUDE_TASK_PROMPT" ]; then
     echo "To run an agent task, set the 'Agent Task Instructions' parameter when creating the workspace."
 fi
 
-# Check if API key is available  
-if [ -z "$CODER_MCP_CLAUDE_API_KEY" ]; then
-    echo "Warning: No Anthropic API key found."
-    echo "Please enable 'Advanced Tools' and provide an API key to use Claude Code."
+# Determine authentication mode
+AUTH_MODE="browser"
+if [ -n "$CODER_MCP_CLAUDE_API_KEY" ]; then
+    echo "API key detected - will use API authentication"
+    AUTH_MODE="api"
+else
+    echo "No API key provided - will use browser authentication (automatic login)"
+    AUTH_MODE="browser"
 fi
 
 # Wait for git clone to complete if repository is specified
@@ -51,8 +55,8 @@ echo "Task: $CODER_MCP_CLAUDE_TASK_PROMPT"
 echo "Starting at: $(date)"
 echo "---"
 
-# Only execute if we have both prompt and API key
-if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ]; then
+# Only execute if we have a task prompt
+if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ]; then
     # Wait for claude CLI to be installed (max 120 seconds)
     echo "Waiting for claude CLI to be installed..."
     WAIT_COUNT=0
@@ -66,9 +70,20 @@ if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ];
 
     if command -v claude &> /dev/null; then
         echo "claude CLI found at: $(which claude)"
-        # Execute Claude with the task prompt
-        claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
-        AGENT_EXIT_CODE=$?
+
+        # Execute Claude with the appropriate authentication method
+        if [ "$AUTH_MODE" = "browser" ]; then
+            echo "Using browser authentication (automatic login)..."
+            echo "Note: Browser authentication will open a browser window for login if needed"
+            # For browser auth, claude will automatically handle the login flow
+            claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
+            AGENT_EXIT_CODE=$?
+        else
+            echo "Using API key authentication..."
+            # API key is already set in environment
+            claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
+            AGENT_EXIT_CODE=$?
+        fi
     else
         echo "Error: claude CLI not found after 120 seconds"
         echo "Please check the Claude module installation logs"
@@ -89,5 +104,5 @@ if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ];
 
     echo "=== Agent task complete, workspace stopping ==="
 else
-    echo "=== Agent execution skipped - missing prompt or API key ==="
+    echo "=== Agent execution skipped - no task prompt provided ==="
 fi
