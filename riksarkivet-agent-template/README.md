@@ -115,8 +115,8 @@ Use the Dagger pipeline to build and deploy the template:
 coder tokens create --name "dagger-deployment" --lifetime 24h
 
 # Set environment variables
-export DOCKER_PASSWORD="your-docker-hub-password"
-export CODER_TOKEN="your-coder-api-token"  # Use the token from above
+export DOCKER_PASSWORD="YOUR_DOCKER_HUB_PASSWORD"
+export CODER_TOKEN="YOUR_CODER_API_TOKEN"  # Use the token from above
 
 # Build and deploy the agent template
 dagger call build-pipeline \
@@ -133,8 +133,9 @@ dagger call build-pipeline \
   --template-params "AI Prompt=You are an intelligent agent assistant" \
   --env-vars="ENABLE_CUDA=false"
 
+# Create a Kubernetes investigation workspace
 coder create \
-  --template RA-Agent-CPU test-debug-workspace \
+  --template RA-Agent-CPU k8s-investigation-workspace \
   --parameter "cpu=4" \
   --parameter "memory=8" \
   --parameter "home_disk_size=20" \
@@ -144,12 +145,15 @@ coder create \
   --parameter "agent_git_branch=main" \
   --parameter "agent_work_dir=agent" \
   --parameter "agent_auto_run=true" \
-  --parameter "anthropic_api_key=...." \
-  --parameter "gh_token=...." \
-  --parameter "AI Prompt=Debug test: Run pwd and echo hello world"
+  --parameter "anthropic_api_key=" \
+  --parameter "gh_token=YOUR_GITHUB_TOKEN_HERE" \
+  --parameter "AI Prompt=Run k8s_cluster_investigator_v2.py script with uv run and report back the most important findings to slack via slackme -c ml-team -m message. After report has been sent self close workspace with coder stop command"
 
-
-  coder delete test-debug-workspace --yes
+# The workspace will automatically:
+# 1. Clone the repository and wait for completion
+# 2. Run the k8s investigation script
+# 3. Send findings to Slack via slackme
+# 4. Auto-shutdown when complete
   
 
 dagger call build-pipeline \
@@ -172,35 +176,43 @@ dagger call build-pipeline \
 Once deployed, create a workspace with your agent repository and task:
 
 ```bash
-# Create workspace with automatic agent execution
-coder create cluster-check-agent \
-  --template riksarkivet-agent \
-  --parameter agent_git_repo="https://github.com/your-org/k8s-agents" \
-  --parameter agent_git_branch="main" \
-  --parameter agent_work_dir="agents" \
-  --parameter agent_task_prompt="Run python k8s_cluster_investigator_v2.py to check cluster state. Analyze the results and identify any issues or anomalies. Then use slackme -c ml-team -m 'summary' to notify the team with your findings and recommendations." \
-  --parameter enable_advanced_tools=true \
-  --parameter anthropic_api_key="sk-ant-api03-..." \
-  --parameter cpu=4 \
-  --parameter memory=8 \
-  --parameter home_disk_size=20
+# Create workspace with automatic Kubernetes investigation
+coder create \
+  --template RA-Agent-CPU k8s-investigation-workspace \
+  --parameter "cpu=4" \
+  --parameter "memory=8" \
+  --parameter "home_disk_size=20" \
+  --parameter "shared_memory_percentage=20" \
+  --parameter "enable_advanced_tools=true" \
+  --parameter "agent_git_repo=https://github.com/AI-Riksarkivet/coder-templates" \
+  --parameter "agent_git_branch=main" \
+  --parameter "agent_work_dir=agent" \
+  --parameter "agent_auto_run=true" \
+  --parameter "anthropic_api_key=" \
+  --parameter "gh_token=YOUR_GITHUB_TOKEN_HERE" \
+  --parameter "AI Prompt=Run k8s_cluster_investigator_v2.py script with uv run and report back the most important findings to slack via slackme -c ml-team -m message. After report has been sent self close workspace with coder stop command"
 ```
 
 The workspace will:
 
-1. Clone the repository to `/home/coder/agents`
-2. Automatically execute the agent task using Claude Code
-3. Stop the workspace when the task is complete
+1. Clone the repository and wait for completion
+2. Run the k8s_cluster_investigator_v2.py script using `uv run`
+3. Analyze the results and report important findings to Slack via `slackme`
+4. Auto-shutdown the workspace when complete
 
 ## Agent Task Prompt Examples
 
-### Cluster Health Check Agent
+### Kubernetes Cluster Investigation (Primary Example)
 
 ```sh
-Run python k8s_cluster_investigator_v2.py to check cluster state. 
-Analyze the results and identify any issues or anomalies. 
-Then use slackme -c ml-team -m 'summary' to notify the team with your findings and recommendations.
+Run k8s_cluster_investigator_v2.py script with uv run and report back the most important findings to slack via slackme -c ml-team -m message. After report has been sent self close workspace with coder stop command
 ```
+
+This task will:
+- Execute the k8s investigation script using the modern `uv` Python package manager
+- Extract and analyze the most critical cluster findings
+- Report findings to the ml-team Slack channel using the integrated `slackme` tool
+- Automatically shutdown the workspace to save resources
 
 ### Data Pipeline Monitor
 
@@ -281,10 +293,10 @@ For private repositories, enable "Advanced Tools" and provide a GitHub token:
 
 ```bash
 coder create private-agent \
-  --template riksarkivet-agent \
+  --template RA-Agent-CPU \
   --parameter agent_git_repo="https://github.com/your-org/private-agent" \
   --parameter enable_advanced_tools=true \
-  --parameter gh_token="ghp_your_token_here"
+  --parameter gh_token="YOUR_GITHUB_TOKEN_HERE"
 ```
 
 ### Using Specific Versions
@@ -294,13 +306,13 @@ Deploy a specific version of your agent:
 ```bash
 # Using a tag
 coder create stable-agent \
-  --template riksarkivet-agent \
+  --template RA-Agent-CPU \
   --parameter agent_git_repo="https://github.com/your-org/agent" \
   --parameter agent_git_branch="v1.2.3"
 
 # Using a commit hash
 coder create test-agent \
-  --template riksarkivet-agent \
+  --template RA-Agent-CPU \
   --parameter agent_git_repo="https://github.com/your-org/agent" \
   --parameter agent_git_branch="abc123def"
 ```
