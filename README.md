@@ -143,17 +143,109 @@ A comprehensive development environment optimized for the "Small Development" pr
 
 3. **Access Template**: The template will be automatically uploaded to your Coder instance and ready for workspace creation.
 
-## 🔄 Automated Builds
+## 🔄 Automated Builds with Argo Workflows
 
-For automated nightly builds, see the `argo-workflows/` directory which contains:
-- WorkflowTemplate for manual triggers
-- CronWorkflow for scheduled builds
-- Complete setup documentation
+This repository integrates with [Argo Workflows](https://argoproj.github.io/workflows/) to provide automated CI/CD pipeline capabilities for building and deploying Coder templates. Argo Workflows is a container-native workflow engine for orchestrating parallel jobs on Kubernetes.
+
+### What is Argo Workflows?
+
+[Argo Workflows](https://github.com/argoproj/argo-workflows) is an open-source, cloud-native workflow engine for Kubernetes that enables:
+- **Container-native workflows**: Each step runs in its own container
+- **Complex dependencies**: DAG-based workflow orchestration
+- **Scalable execution**: Native Kubernetes resource management
+- **Rich UI**: Web-based workflow visualization and monitoring
+
+### Workflow Structure
+
+The repository contains Argo Workflow configurations in multiple locations:
+
+#### 1. Global Workflows (`argo-workflows/`)
+- **`workflow-template.yaml`**: Reusable WorkflowTemplate for manual builds
+- **`secrets-example.yaml`**: Example secret configurations for authentication
+
+#### 2. Template-Specific Workflows
+Each template directory contains its own Argo configurations:
+- **`riksarkivet-developer-template/argo-workflows/`**:
+  - `cron-workflow-cpu.yaml`: Nightly CPU-only builds (2 AM UTC)
+  - `cron-workflow-gpu.yaml`: Nightly GPU-enabled builds (2 AM UTC)
+- **`riksarkivet-agent-template/argo-workflows/`**:
+  - `cron-workflow-cpu.yaml`: Agent template CPU builds
+  - `cron-workflow-gpu.yaml`: Agent template GPU builds
+
+### Workflow Features
+
+**Automated Scheduling**: CronWorkflows run nightly builds with timestamped tags:
+```yaml
+schedule: "0 2 * * *"  # 2 AM UTC daily
+image-tag: "nightly-{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+```
+
+**Dagger Integration**: Uses Dagger engine sidecar for containerized builds:
+- Privileged execution for Docker-in-Docker
+- Persistent volume claims for build caching
+- GPU support for CUDA-enabled builds
+
+**Multi-Environment Support**:
+- Separate CPU and GPU build variants
+- Configurable presets and parameters
+- Environment-specific image tagging
+
+### Prerequisites for Argo Workflows
+
+1. **Argo Workflows Installation**: Deploy Argo Workflows on your Kubernetes cluster
+   ```bash
+   kubectl create namespace argo
+   kubectl apply -n argo -f https://github.com/argoproj/argo-workflows/releases/download/v3.5.4/install.yaml
+   ```
+
+2. **Required Secrets**: Configure the following Kubernetes secrets in your `ci` namespace:
+   - `docker-registry-credentials`: Docker Hub authentication
+   - `coder-credentials`: Coder server access credentials
+   - `github-credentials`: GitHub access token for repository access
+   - `dagger-cloud-token`: (Optional) Dagger Cloud integration
+
+3. **Service Account**: Ensure proper RBAC permissions for the `ci-service-account`
+
+4. **Namespace**: Workflows run in the `ci` namespace by default
+
+### Manual Workflow Execution
+
+Trigger manual builds using the Argo CLI or UI:
+
+```bash
+# Using Argo CLI
+argo submit argo-workflows/workflow-template.yaml \
+  --parameter image-tag=manual-v1.0.1 \
+  --parameter template-name="Manual-Build" \
+  -n ci
+
+# Using kubectl
+kubectl create -f argo-workflows/workflow-template.yaml -n ci
+```
+
+### Monitoring and Debugging
+
+**Argo UI**: Access the workflow dashboard at `https://your-argo-server/workflows`
+
+**Workflow Status**: Monitor workflow execution:
+```bash
+argo list -n ci
+argo get <workflow-name> -n ci
+argo logs <workflow-name> -n ci
+```
+
+**Common Issues**:
+- **Secret Access**: Verify all required secrets exist in the `ci` namespace
+- **Storage**: Ensure sufficient PVC storage for Dagger builds (10Gi default)
+- **Permissions**: Check service account has necessary RBAC permissions
+- **Resource Limits**: Monitor CPU/memory usage during parallel builds
 
 ## 📚 Additional Resources
 
 - **[Coder Documentation](https://coder.com/docs)**: Official Coder platform documentation
 - **[Dagger Documentation](https://docs.dagger.io/)**: Dagger build system documentation
+- **[Argo Workflows Documentation](https://argo-workflows.readthedocs.io/)**: Complete Argo Workflows guide
+- **[Argo Workflows GitHub](https://github.com/argoproj/argo-workflows)**: Official Argo Workflows repository
 - **Template-Specific Docs**: See individual template directories for detailed documentation
 
 ## 🤝 Contributing
