@@ -147,6 +147,9 @@ coder create \
   --parameter "anthropic_api_key=...." \
   --parameter "gh_token=...." \
   --parameter "AI Prompt=Debug test: Run pwd and echo hello world"
+
+
+  coder delete test-debug-workspace --yes
   
 
 dagger call build-pipeline \

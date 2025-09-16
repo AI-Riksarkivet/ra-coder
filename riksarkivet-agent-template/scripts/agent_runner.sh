@@ -100,12 +100,12 @@ if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ]; then
             echo "Using browser authentication (automatic login)..."
             echo "Note: Browser authentication will open a browser window for login if needed"
             # For browser auth, claude will automatically handle the login flow
-            claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
+            claude --dangerously-skip-permissions "$CODER_MCP_CLAUDE_TASK_PROMPT"
             AGENT_EXIT_CODE=$?
         else
             echo "Using API key authentication..."
             # API key is already set in environment
-            claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
+            claude --dangerously-skip-permissions "$CODER_MCP_CLAUDE_TASK_PROMPT"
             AGENT_EXIT_CODE=$?
         fi
     else
