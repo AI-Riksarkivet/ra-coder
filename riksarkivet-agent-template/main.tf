@@ -431,16 +431,19 @@ module "coder-login" {
 }
 
 module "claude-code" {
-  count               =  data.coder_workspace.me.start_count
+  count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
-  version             = "2.0.3"
+  version             = "2.2.0"
+  agentapi_version    = "v0.6.1"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
-  install_claude_code = false
+  install_claude_code = true
+  subdomain           = false
 
   # Enable experimental features
-  experiment_report_tasks = false
+  experiment_report_tasks = true
 }
+
 
 # Git Clone Script for Agent Repository (replaced module with custom script for GH_TOKEN support)
 resource "coder_script" "git_clone_agent" {

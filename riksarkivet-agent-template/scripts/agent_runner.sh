@@ -10,7 +10,7 @@ echo "=== Agent Runner ==="
 # Check if auto-run is enabled
 if [ "$AGENT_AUTO_RUN" != "true" ]; then
     echo "Auto-run is disabled. To run the agent manually, use:"
-    echo "  claude-code '$CODER_MCP_CLAUDE_TASK_PROMPT'"
+    echo "  claude '$CODER_MCP_CLAUDE_TASK_PROMPT'"
     echo "To auto-stop workspace after manual run:"
     echo "  coder stop $CODER_WORKSPACE_NAME -y"
     exit 0
@@ -53,9 +53,27 @@ echo "---"
 
 # Only execute if we have both prompt and API key
 if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ]; then
-    # Execute Claude Code with the task prompt
-    claude-code "$CODER_MCP_CLAUDE_TASK_PROMPT"
-    AGENT_EXIT_CODE=$?
+    # Wait for claude CLI to be installed (max 120 seconds)
+    echo "Waiting for claude CLI to be installed..."
+    WAIT_COUNT=0
+    while ! command -v claude &> /dev/null && [ $WAIT_COUNT -lt 60 ]; do
+        sleep 2
+        WAIT_COUNT=$((WAIT_COUNT + 1))
+        if [ $((WAIT_COUNT % 5)) -eq 0 ]; then
+            echo "Still waiting for claude CLI... ($WAIT_COUNT/60)"
+        fi
+    done
+
+    if command -v claude &> /dev/null; then
+        echo "claude CLI found at: $(which claude)"
+        # Execute Claude with the task prompt
+        claude "$CODER_MCP_CLAUDE_TASK_PROMPT"
+        AGENT_EXIT_CODE=$?
+    else
+        echo "Error: claude CLI not found after 120 seconds"
+        echo "Please check the Claude module installation logs"
+        AGENT_EXIT_CODE=127
+    fi
 
     echo "---"
     echo "Agent exit code: $AGENT_EXIT_CODE"
