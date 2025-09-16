@@ -681,8 +681,16 @@ module "slackme" {
   agent_id         = coder_agent.main.id
   auth_provider_id = "slack"
   slack_message    = <<EOF
-$COMMAND took $DURATION to execute!
+🤖 $COMMAND took $DURATION to execute! 
 EOF
+}
+
+module "marimo" {
+  count     = data.coder_workspace.me.start_count
+  source    = source = "git::https://github.com/AI-Riksarkivet/coder-modules.git//marimo?ref=main"
+  agent_id  = coder_agent.main.id
+  port      = 8080
+  subdomain = false
 }
 
 module "claude-code" {
