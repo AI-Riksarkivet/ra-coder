@@ -807,7 +807,12 @@ resource "coder_script" "agent_runner" {
   log_path           = "agent_runner.log"
   run_on_start       = true
   start_blocks_login = false
-  
+
+  # Ensure git clone completes before running the agent
+  depends_on = [
+    coder_script.git_clone_agent
+  ]
+
   script = replace(
     file("${path.module}/scripts/agent_runner.sh"),
     "\r",

@@ -35,18 +35,42 @@ fi
 # Wait for git clone to complete if repository is specified
 if [ -n "$AGENT_GIT_REPO" ]; then
     echo "Waiting for repository clone to complete..."
+    echo "Repository URL: $AGENT_GIT_REPO"
+    echo "Target directory: /home/coder/$AGENT_WORK_DIR"
+
     WAIT_COUNT=0
-    while [ ! -d "/home/coder/$AGENT_WORK_DIR" ] && [ $WAIT_COUNT -lt 30 ]; do
-        sleep 2
-        WAIT_COUNT=$((WAIT_COUNT + 1))
+    GIT_COMPLETE=false
+
+    # Wait up to 5 minutes for git clone to complete
+    while [ "$GIT_COMPLETE" != "true" ] && [ $WAIT_COUNT -lt 150 ]; do
+        if [ -d "/home/coder/$AGENT_WORK_DIR" ]; then
+            # Check if it's a valid git repository with files
+            if [ -d "/home/coder/$AGENT_WORK_DIR/.git" ] && [ "$(ls -A "/home/coder/$AGENT_WORK_DIR" | grep -v '.git' | wc -l)" -gt 0 ]; then
+                echo "Git repository clone completed successfully"
+                cd "/home/coder/$AGENT_WORK_DIR"
+                echo "Changed to working directory: $(pwd)"
+                echo "Repository contents:"
+                ls -la
+                GIT_COMPLETE=true
+            else
+                echo "Repository directory exists but clone may still be in progress... ($WAIT_COUNT/150)"
+            fi
+        else
+            echo "Waiting for git clone to start... ($WAIT_COUNT/150)"
+        fi
+
+        if [ "$GIT_COMPLETE" != "true" ]; then
+            sleep 2
+            WAIT_COUNT=$((WAIT_COUNT + 1))
+        fi
     done
-    
-    if [ -d "/home/coder/$AGENT_WORK_DIR" ]; then
-        echo "Repository found at: /home/coder/$AGENT_WORK_DIR"
-        cd "/home/coder/$AGENT_WORK_DIR"
-    else
-        echo "Warning: Repository directory not found after waiting"
+
+    if [ "$GIT_COMPLETE" != "true" ]; then
+        echo "ERROR: Repository clone did not complete within 5 minutes"
+        echo "This may cause the agent to fail. Continuing anyway..."
     fi
+else
+    echo "No repository specified - running from home directory"
 fi
 
 echo "=== Executing Agent Task ==="
