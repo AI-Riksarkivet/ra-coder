@@ -444,6 +444,16 @@ module "claude-code" {
   experiment_report_tasks = true
 }
 
+module "slackme" {
+  count            = data.coder_workspace.me.start_count
+  source           = "git::https://github.com/AI-Riksarkivet/coder-modules.git//slackme?ref=main"
+  agent_id         = coder_agent.main.id
+  auth_provider_id = "slack"
+  slack_message    = <<EOF
+🤖 Agent task: $COMMAND took $DURATION to complete!
+EOF
+}
+
 
 # Git Clone Script for Agent Repository (replaced module with custom script for GH_TOKEN support)
 resource "coder_script" "git_clone_agent" {
