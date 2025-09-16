@@ -98,26 +98,6 @@ locals {
 }
 
 # ========================================
-# Workspace Presets
-# ========================================
-
-data "coder_workspace_preset" "simple-dev" {
-  name        = "Simple Development"
-  description = "Simple configuration for cluster checking work"
-  icon        = "/emojis/1f435.png"
-  parameters = {
-    "cpu"                      = "4"
-    "memory"                   = "8"
-    "home_disk_size"           = "20"
-    "shared_memory_percentage" = "20"
-    "enable_advanced_tools"    = "false"
-  }
-}
-
-
-
-
-# ========================================
 # Parameters
 # ========================================
 
@@ -451,7 +431,7 @@ module "coder-login" {
 }
 
 module "claude-code" {
-  count               = data.coder_parameter.ai_prompt.value != "" ? data.coder_workspace.me.start_count : 0
+  count               =  data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
   version             = "2.0.3"
   agent_id            = coder_agent.main.id
@@ -462,17 +442,21 @@ module "claude-code" {
   experiment_report_tasks = false
 }
 
-# Git Clone Module for Agent Repository
-module "git-clone" {
-  count       = data.coder_parameter.agent_git_repo.value != "" ? data.coder_workspace.me.start_count : 0
-  source      = "registry.coder.com/coder/git-clone/coder"
-  version     = "1.1.1"
-  agent_id    = coder_agent.main.id
+# Git Clone Script for Agent Repository (replaced module with custom script for GH_TOKEN support)
+resource "coder_script" "git_clone_agent" {
+  count              = data.coder_parameter.agent_git_repo.value != "" ? data.coder_workspace.me.start_count : 0
+  agent_id           = coder_agent.main.id
+  display_name       = "Git Clone"
+  icon               = "/icon/git.svg"
+  log_path           = "git_clone.log"
+  run_on_start       = true
+  start_blocks_login = false
   
-  url         = data.coder_parameter.agent_git_repo.value
-  branch_name = data.coder_parameter.agent_git_branch.value
-  folder_name = data.coder_parameter.agent_work_dir.value
-  base_dir    = "/home/coder"
+  script = replace(
+    file("${path.module}/scripts/git_clone_agent.sh"),
+    "\r",
+    ""
+  )
 }
 
 # ========================================

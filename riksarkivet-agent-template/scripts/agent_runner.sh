@@ -66,8 +66,8 @@ if [ -n "$CODER_MCP_CLAUDE_TASK_PROMPT" ] && [ -n "$CODER_MCP_CLAUDE_API_KEY" ];
     echo "To cancel shutdown, press Ctrl+C now"
     sleep 10
 
-    echo "Stopping workspace: $CODER_WORKSPACE_NAME"
-    coder stop "$CODER_WORKSPACE_NAME" -y
+    ##echo "Stopping workspace: $CODER_WORKSPACE_NAME"
+    ##coder stop "$CODER_WORKSPACE_NAME" -y
 
     echo "=== Agent task complete, workspace stopping ==="
 else
