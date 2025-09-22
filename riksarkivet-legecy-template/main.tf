@@ -1282,7 +1282,7 @@ resource "kubernetes_deployment" "main" {
         # Dagger Engine Sidecar
         container {
           name  = "dagger-engine"
-          image = "registry.dagger.io/engine:v0.18.14"
+          image = "registry.dagger.io/engine:v0.18.19"
           
           # Add command to bypass cgroup issues
           command = ["/usr/local/bin/dagger-engine"]
