@@ -697,8 +697,8 @@ module "marimo" {
 module "claude-code" {
   count               = data.coder_workspace.me.start_count
   source              = "registry.coder.com/modules/claude-code/coder"
-  version             = "2.2.1"
-  agentapi_version    = "v0.6.1"
+  version             = "3.0.0"
+  agentapi_version    = "v0.7.1"
   agent_id            = coder_agent.main.id
   folder              = "/home/coder"
   install_claude_code = true
