@@ -23,7 +23,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         bash ca-certificates curl git jq locales sudo wget \
         build-essential gfortran pkg-config libopenblas-dev \
-        libasound2-dev htop tree unzip && \
+        libasound2-dev htop tree unzip man-db && \
     locale-gen en_US.UTF-8 && \
     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group && \
     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd && \
