@@ -700,12 +700,9 @@ module "claude-code" {
   version             = "3.0.0"
   agentapi_version    = "v0.7.1"
   agent_id            = coder_agent.main.id
-  folder              = "/home/coder"
+  workdir             = "/home/coder"
   install_claude_code = true
   subdomain           = false
-
-  # Enable experimental features
-  experiment_report_tasks = true
 }
 
 
