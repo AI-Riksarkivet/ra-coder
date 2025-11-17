@@ -82,6 +82,8 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
         uv \
         terraform \
         nvtop \
+        tmux  \
+        less \
         dagger \
         starship \
         ripgrep \
