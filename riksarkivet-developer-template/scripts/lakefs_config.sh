@@ -18,12 +18,6 @@ experimental:
             enabled: false
 local:
     skip_non_regular_files: false
-metastore:
-    glue:
-        catalog_id: ""
-    hive:
-        db_location_uri: file:/user/hive/warehouse/
-        uri: ""
 network:
     http2:
         enabled: true
