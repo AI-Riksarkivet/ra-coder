@@ -686,13 +686,13 @@ EOF
 }
 
 
-module "marimo" {
-  count     = data.coder_workspace.me.start_count
-  source    = "git::https://github.com/AI-Riksarkivet/coder-modules.git//marimo?ref=main"
-  agent_id  = coder_agent.main.id
-  port      = 2818
-  subdomain = false
-}
+# module "marimo" {
+#   count     = data.coder_workspace.me.start_count
+#   source    = "git::https://github.com/AI-Riksarkivet/coder-modules.git//marimo?ref=main"
+#   agent_id  = coder_agent.main.id
+#   port      = 2818
+#   subdomain = false
+# }
 
 module "claude-code" {
   count               = data.coder_workspace.me.start_count
