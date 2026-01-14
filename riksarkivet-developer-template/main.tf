@@ -551,9 +551,17 @@ resource "coder_agent" "main" {
   }
 
   metadata {
-    display_name = "Home Disk"
-    key          = "3_home_disk"
+    display_name = "Node Disk"
+    key          = "3_node_disk"
     script       = "coder stat disk --path $${HOME}"
+    interval     = 60
+    timeout      = 1
+  }
+
+  metadata {
+    display_name = "PVC storage usage"
+    key          = "3_pvc_usage"
+    script       = "du -sh $HOME"
     interval     = 60
     timeout      = 1
   }
