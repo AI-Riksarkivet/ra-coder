@@ -56,7 +56,7 @@ variable "temp_ip" {
 variable "mlflow_external_address" {
   type        = string
   description = "The external address for the MLflow Tracking Server UI (e.g., http://mlflow.example.com or http://<IP>:<Port>). Leave empty to disable the MLflow App and environment variable injection."
-  default     = "http://10.100.127.31:30025"
+  default     = "http://10.100.127.31:31996"
 }
 
 variable "argowf_external_address" {
