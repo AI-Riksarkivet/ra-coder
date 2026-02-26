@@ -134,7 +134,8 @@ func (m *Build) BuildAndPublish(
 	// Registry URL
 	// +default="registry:5000"
 	registry string,
-	// Registry service to bind
+	// Registry service to bind (optional, only needed for local registry)
+	// +optional
 	registryService *dagger.Service,
 ) (string, error) {
 	// Calculate final tag using the default function
