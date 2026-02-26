@@ -415,7 +415,7 @@ module "code-server" {
 module "filebrowser" {
   count         = data.coder_workspace.me.start_count
   source        = "registry.coder.com/modules/filebrowser/coder"
-  version       = "1.0.30"
+  version       = "1.1.4"
   agent_id      = coder_agent.main.id
   subdomain     = false
   database_path = ".config/filebrowser.db"
