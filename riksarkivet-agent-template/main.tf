@@ -406,7 +406,7 @@ resource "coder_agent" "main" {
 module "code-server" {
   count      = data.coder_workspace.me.start_count
   source     = "registry.coder.com/coder/code-server/coder"
-  version    = "1.3.1"
+  version    = "1.4.2"
   agent_id   = coder_agent.main.id
   use_cached = true
   subdomain     = false
