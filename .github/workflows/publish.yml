@@ -7,16 +7,13 @@ on:
 permissions:
   contents: read
 
-env:
-  IMAGE: docker.io/riksarkivet/workspace-developer
-
 jobs:
   publish-developer-template:
     name: Publish Developer Template
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ env.IMAGE }}
-      digest: ${{ steps.digest.outputs.digest }}
+      image: ${{ steps.publish.outputs.image }}
+      digest: ${{ steps.publish.outputs.digest }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -37,7 +34,7 @@ jobs:
           version: "latest"
 
       - name: Build, publish and get digest
-        id: digest
+        id: publish
         run: |
           ref=$(dagger call build-and-publish \
             --source=./riksarkivet-developer-template \
@@ -46,6 +43,7 @@ jobs:
             --registry=docker.io \
             --username=${{ secrets.DOCKERHUB_USERNAME }} \
             --password=env:DOCKERHUB_SECRET)
+          echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
           echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
         env:
           DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_SECRET }}
