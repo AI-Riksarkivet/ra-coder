@@ -60,7 +60,7 @@ spec:
         
     sidecars:
     - name: dagger-engine
-      image: registry.dagger.io/engine:vv0.19.2-gpu
+      image: registry.dagger.io/engine:v0.20.0-gpu
       command: ["/usr/local/bin/dagger-engine"]
       securityContext:
         privileged: true

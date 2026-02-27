@@ -975,7 +975,7 @@ resource "kubernetes_deployment" "main" {
           for_each = data.coder_parameter.use_dagger.value ? [1] : []
           content {
             name  = "dagger-engine"
-            image = "registry.dagger.io/engine:v0.18.19-gpu"
+            image = "registry.dagger.io/engine:v0.20.0-gpu"
             
             command = ["/usr/local/bin/dagger-engine"]
             args    = ["--config", "/etc/dagger/engine.toml"]
