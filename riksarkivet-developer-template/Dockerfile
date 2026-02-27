@@ -27,6 +27,7 @@ RUN apt-get update && \
         libasound2-dev htop tree unzip man-db \
         ffmpeg libsm6 libxext6 && \
     locale-gen en_US.UTF-8 && \
+    userdel -r ubuntu 2>/dev/null || true && \
     useradd coder --create-home --shell=/bin/bash --uid=1000 --user-group && \
     echo "coder ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd && \
     chmod 440 /etc/sudoers.d/nopasswd && \
