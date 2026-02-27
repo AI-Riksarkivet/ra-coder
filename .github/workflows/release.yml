@@ -15,13 +15,14 @@ jobs:
         with:
           fetch-depth: 0 # full history for git-cliff
 
-      - name: Install git-cliff
-        uses: taiki-e/install-action@cfdb446e391c69574ebc316dfb7d7849ec12b940 # v2.68.8
-        with:
-          tool: git-cliff
-
       - name: Generate changelog
-        run: git cliff --latest --strip header --output RELEASE_NOTES.md
+        uses: orhun/git-cliff-action@c93ef52f3d0ddcdcc9bd5447d98d458a11cd4f72 # v4
+        with:
+          config: cliff.toml
+          args: --verbose --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+          GITHUB_REPO: ${{ github.repository }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
