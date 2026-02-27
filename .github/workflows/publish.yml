@@ -43,14 +43,13 @@ jobs:
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
       - name: Get image digest
         id: publish
         env:
           IMAGE: docker.io/riksarkivet/workspace-developer
         run: |
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-          echo "digest=$(crane digest $IMAGE:${{ steps.version.outputs.tag }})" >> "$GITHUB_OUTPUT"
+          echo "digest=$(docker buildx imagetools inspect $IMAGE:${{ steps.version.outputs.tag }} --format '{{json .Manifest.Digest}}' | tr -d '\"')" >> "$GITHUB_OUTPUT"
 
   provenance:
     needs: [publish-developer-template]
