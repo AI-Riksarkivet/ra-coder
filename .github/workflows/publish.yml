@@ -47,7 +47,7 @@ jobs:
       - name: Extract image and digest
         id: publish
         run: |
-          ref="${{ steps.dagger.outputs.stdout }}"
+          ref=$(echo "${{ steps.dagger.outputs.stdout }}" | head -1)
           echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
           echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
 
