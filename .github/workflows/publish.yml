@@ -27,7 +27,6 @@ jobs:
           fi
 
       - name: Build and publish
-        id: dagger
         uses: dagger/dagger-for-github@456fc3af63a2ba6f9789af9c55045b459115541b # v8.3.0
         with:
           verb: call
@@ -44,12 +43,14 @@ jobs:
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract image and digest
+      - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
+      - name: Get image digest
         id: publish
+        env:
+          IMAGE: docker.io/riksarkivet/workspace-developer
         run: |
-          ref=$(echo "${{ steps.dagger.outputs.stdout }}" | head -1)
-          echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
-          echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "digest=$(crane digest $IMAGE:${{ steps.version.outputs.tag }})" >> "$GITHUB_OUTPUT"
 
   provenance:
     needs: [publish-developer-template]
