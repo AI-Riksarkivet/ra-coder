@@ -42,7 +42,7 @@ jobs:
             --image-tag=${{ steps.version.outputs.tag }} \
             --registry=docker.io \
             --username=${{ secrets.DOCKERHUB_USERNAME }} \
-            --password=env:DOCKERHUB_SECRET)
+            --password=env://DOCKERHUB_SECRET)
           echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
           echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
         env:
