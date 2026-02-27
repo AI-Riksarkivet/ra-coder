@@ -671,7 +671,7 @@ module "filebrowser" {
 module "dotfiles" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/modules/dotfiles/coder"
-  version  = "1.0.29"
+  version  = "1.3.0"
   default_dotfiles_uri = "https://github.com/AI-Riksarkivet/dotfiles"
   agent_id = coder_agent.main.id
 }
