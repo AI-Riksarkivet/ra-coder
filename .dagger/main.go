@@ -200,7 +200,7 @@ func (m *Build) BuildAndPublish(
 		return "", fmt.Errorf("failed to publish image: %w", err)
 	}
 
-	return fmt.Sprintf("Successfully built and pushed image: %s", addr), nil
+	return addr, nil
 }
 
 // QuickCpuBuild is a convenience function for CPU-only builds
