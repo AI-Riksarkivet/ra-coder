@@ -43,6 +43,9 @@ jobs:
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
       - name: Get image digest
         id: publish
         env:
@@ -62,6 +65,7 @@ jobs:
     with:
       image: ${{ needs.publish-developer-template.outputs.image }}
       digest: ${{ needs.publish-developer-template.outputs.digest }}
+      private-repository: true
     secrets:
       registry-username: ${{ secrets.DOCKERHUB_USERNAME }}
       registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
