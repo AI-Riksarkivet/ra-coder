@@ -426,7 +426,7 @@ module "filebrowser" {
 module "coder-login" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/coder/coder-login/coder"
-  version  = "1.0.31"
+  version  = "1.1.1"
   agent_id = coder_agent.main.id
 }
 
