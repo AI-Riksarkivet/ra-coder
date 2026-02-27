@@ -26,27 +26,30 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install Dagger
+      - name: Build and publish
+        id: dagger
         uses: dagger/dagger-for-github@456fc3af63a2ba6f9789af9c55045b459115541b # v8.3.0
         with:
-          verb: version
+          verb: call
+          args: >-
+            build-and-publish
+            --source=./riksarkivet-developer-template
+            --image-repository=riksarkivet/workspace-developer
+            --image-tag=${{ steps.version.outputs.tag }}
+            --registry=docker.io
+            --username=${{ secrets.DOCKERHUB_USERNAME }}
+            --password=env:DOCKERHUB_SECRET
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           version: "latest"
-
-      - name: Build, publish and get digest
-        id: publish
-        run: |
-          ref=$(dagger call build-and-publish \
-            --source=./riksarkivet-developer-template \
-            --image-repository=riksarkivet/workspace-developer \
-            --image-tag=${{ steps.version.outputs.tag }} \
-            --registry=docker.io \
-            --username=${{ secrets.DOCKERHUB_USERNAME }} \
-            --password=env://DOCKERHUB_SECRET)
-          echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
-          echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
         env:
           DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_SECRET }}
+
+      - name: Extract image and digest
+        id: publish
+        run: |
+          ref="${{ steps.dagger.outputs.stdout }}"
+          echo "image=${ref%%@*}" >> "$GITHUB_OUTPUT"
+          echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
 
   provenance:
     needs: [publish-developer-template]
