@@ -1,3 +1,5 @@
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/AI-Riksarkivet/coder-templates/badge)](https://scorecard.dev/viewer/?uri=github.com/AI-Riksarkivet/coder-templates)
+
 # Coder Templates Repository
 
 > **⚠️ Work in Progress (WIP)**
