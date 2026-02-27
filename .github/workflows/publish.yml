@@ -38,11 +38,11 @@ jobs:
             --image-tag=${{ steps.version.outputs.tag }}
             --registry=docker.io
             --username=${{ secrets.DOCKERHUB_USERNAME }}
-            --password=env:DOCKERHUB_SECRET
+            --password=env:DOCKERHUB_TOKEN
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           version: "latest"
         env:
-          DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_SECRET }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract image and digest
         id: publish
@@ -64,4 +64,4 @@ jobs:
       digest: ${{ needs.publish-developer-template.outputs.digest }}
     secrets:
       registry-username: ${{ secrets.DOCKERHUB_USERNAME }}
-      registry-password: ${{ secrets.DOCKERHUB_SECRET }}
+      registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
