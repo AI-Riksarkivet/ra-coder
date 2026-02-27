@@ -376,6 +376,49 @@ func (m *Build) TestSecurityScan(ctx context.Context,
 	return sbomJson, nil
 }
 
+// TrivyScan scans a container image for vulnerabilities using Trivy.
+// For private images, provide a pre-exported tarball via the tarball parameter.
+func (m *Build) TrivyScan(ctx context.Context,
+	// Image reference to scan (used for pulling public images directly)
+	// +optional
+	image string,
+	// Pre-exported image tarball (for private images pulled outside Dagger)
+	// +optional
+	tarball *dagger.File,
+	// Trivy output format (table, json, sarif, cyclonedx, spdx-json)
+	// +default="table"
+	format string,
+	// Severity filter (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)
+	// +default="UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
+	severity string,
+) (string, error) {
+	var imageFile *dagger.File
+
+	if tarball != nil {
+		imageFile = tarball
+	} else if image != "" {
+		imageFile = dag.Container().From(image).AsTarball()
+	} else {
+		return "", fmt.Errorf("provide either --image or --tarball")
+	}
+
+	output, err := dag.Container().
+		From("aquasec/trivy:latest").
+		WithMountedFile("/tmp/image.tar", imageFile).
+		WithExec([]string{
+			"image",
+			"--input", "/tmp/image.tar",
+			"--severity", severity,
+			"--format", format,
+		}, dagger.ContainerWithExecOpts{UseEntrypoint: true}).
+		Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("trivy scan failed: %w", err)
+	}
+
+	return output, nil
+}
+
 // TestSimpleImageWithSBOM builds a simple image, generates SBOM and pushes to DockerHub
 func (m *Build) TestSimpleImageWithSBOM(ctx context.Context,
 	// DockerHub registry credentials

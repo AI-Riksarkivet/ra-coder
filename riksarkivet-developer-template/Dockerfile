@@ -1,4 +1,4 @@
-FROM ubuntu:jammy AS base
+FROM ubuntu:noble AS base
 
 ARG ENABLE_CUDA=true
 ARG CUDA_VERSION_MAJOR_MINOR=12.2
@@ -20,6 +20,7 @@ ENV PATH="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${PATH}"
 
 # Install base packages and create user
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
         bash ca-certificates curl git jq locales sudo wget \
         build-essential gfortran pkg-config libopenblas-dev \
@@ -37,7 +38,7 @@ FROM base AS cuda-stage
 RUN if [ "$ENABLE_CUDA" = "true" ]; then \
         apt-get update && \
         apt-get install -y --no-install-recommends gnupg2 && \
-        wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
+        wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
         dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb && \
         apt-get update && \
         apt-get install -y --no-install-recommends \
