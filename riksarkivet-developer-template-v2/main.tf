@@ -59,6 +59,8 @@ data "coder_workspace_owner" "me" {}
 # ========================================
 
 locals {
+  git_author_email = data.coder_workspace_owner.me.email
+
   # --- GPU Logic ---
   selected_gpu = data.coder_parameter.gpu_type.value
   # Handle conditional GPU count parameter - only exists for Ada Generation GPUs
@@ -88,53 +90,37 @@ locals {
 
 data "coder_parameter" "cpu" {
   name         = "cpu"
-  display_name = "CPU"
-  description  = "The number of CPU cores"
-  default      = "2"
+  display_name = "CPU Cores"
+  description  = "Number of CPU cores for the workspace"
+  type         = "number"
+  default      = 4
   icon         = "/icon/memory.svg"
   mutable      = true
+  form_type    = "slider"
   order        = 1
-  option {
-    name  = "2 Cores"
-    value = "2"
-  }
-  option {
-    name  = "4 Cores"
-    value = "4"
-  }
-  option {
-    name  = "6 Cores"
-    value = "6"
-  }
-  option {
-    name  = "8 Cores"
-    value = "8"
+
+  validation {
+    min   = 1
+    max   = 36
+    error = "CPU cores must be between {min} and {max}"
   }
 }
 
 data "coder_parameter" "memory" {
   name         = "memory"
-  display_name = "Memory"
-  description  = "The amount of memory in GB"
-  default      = "2"
+  display_name = "Memory (RAM)"
+  description  = "Amount of memory in GB for the workspace"
+  type         = "number"
+  default      = 16
   icon         = "/icon/memory.svg"
   mutable      = true
+  form_type    = "slider"
   order        = 2
-  option {
-    name  = "2 GB"
-    value = "2"
-  }
-  option {
-    name  = "4 GB"
-    value = "4"
-  }
-  option {
-    name  = "6 GB"
-    value = "6"
-  }
-  option {
-    name  = "8 GB"
-    value = "8"
+
+  validation {
+    min   = 3
+    max   = 180
+    error = "Memory must be between {min} and {max} GB"
   }
 }
 
@@ -150,6 +136,24 @@ data "coder_parameter" "home_disk_size" {
   validation {
     min = 1
     max = 99999
+  }
+}
+
+data "coder_parameter" "shared_memory_percentage" {
+  name         = "shared_memory_percentage"
+  display_name = "Shared Memory Allocation"
+  description  = "Percentage of RAM to allocate to shared memory (/dev/shm). This is reserved memory that gets released automatically when not in use."
+  type         = "number"
+  default      = 20
+  icon         = "/icon/memory.svg"
+  mutable      = true
+  form_type    = "slider"
+  order        = 4
+
+  validation {
+    min   = 0
+    max   = 80
+    error = "Shared memory must be between {min}% and {max}% of total RAM"
   }
 }
 
@@ -195,6 +199,128 @@ data "coder_parameter" "gpu_count" {
       value       = option.value.value
       description = option.value.description
     }
+  }
+}
+
+# --- API Keys & Tokens (conditional) ---
+data "coder_parameter" "enable_advanced_tools" {
+  name         = "enable_advanced_tools"
+  display_name = "Enable Advanced Development Tools"
+  description  = "Enable additional API tokens and SSH configuration"
+  type         = "bool"
+  default      = false
+  form_type    = "checkbox"
+  order        = 40
+}
+
+data "coder_parameter" "gh_token" {
+  count        = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
+  name         = "gh_token"
+  display_name = "GitHub Token"
+  description  = "GitHub personal access token for repository access"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  form_type    = "input"
+  order        = 41
+
+  styling = jsonencode({
+    mask_input  = true
+    placeholder = "ghp_..."
+  })
+}
+
+data "coder_parameter" "hf_token" {
+  count        = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
+  name         = "hf_token"
+  display_name = "Hugging Face Token"
+  description  = "Hugging Face access token for model downloads"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  form_type    = "input"
+  order        = 42
+
+  styling = jsonencode({
+    mask_input  = true
+    placeholder = "hf_..."
+  })
+}
+
+data "coder_parameter" "ssh_private_key" {
+  count        = data.coder_parameter.enable_advanced_tools.value ? 1 : 0
+  name         = "ssh_private_key"
+  display_name = "SSH Private Key"
+  description  = "SSH private key for Git repository access (optional)"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  form_type    = "textarea"
+  order        = 43
+
+  styling = jsonencode({
+    placeholder = "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----"
+  })
+}
+
+# ========================================
+# Workspace Presets
+# ========================================
+
+data "coder_workspace_preset" "intense-ml" {
+  name        = "Intense ML Training"
+  description = "High-performance configuration for intensive ML/AI training with dual Ada GPUs"
+  icon        = "/emojis/1f916.png"
+  parameters = {
+    "cpu"                      = "20"
+    "memory"                   = "96"
+    "home_disk_size"           = "500"
+    "shared_memory_percentage" = "60"
+    "gpu_type"                 = "NVIDIA-RTX-6000-Ada-Generation"
+    "gpu_count"                = "2"
+    "enable_advanced_tools"    = "true"
+  }
+}
+
+data "coder_workspace_preset" "standard-ds" {
+  name        = "Standard Data Science"
+  description = "Standard configuration for general development work (without GPU)"
+  icon        = "/emojis/1f435.png"
+  parameters = {
+    "cpu"                      = "8"
+    "memory"                   = "32"
+    "home_disk_size"           = "100"
+    "shared_memory_percentage" = "20"
+    "gpu_type"                 = "None"
+    "enable_advanced_tools"    = "false"
+  }
+}
+
+data "coder_workspace_preset" "standard-dev" {
+  name        = "Standard Development"
+  description = "CI + general development work (without GPU)"
+  icon        = "/emojis/1f435.png"
+  parameters = {
+    "cpu"                      = "8"
+    "memory"                   = "32"
+    "home_disk_size"           = "100"
+    "shared_memory_percentage" = "20"
+    "gpu_type"                 = "None"
+    "enable_advanced_tools"    = "true"
+  }
+}
+
+data "coder_workspace_preset" "small-dev" {
+  name        = "Small Development"
+  description = "CI + general development work (without GPU)"
+  icon        = "/emojis/1f435.png"
+  parameters = {
+    "cpu"                      = "2"
+    "memory"                   = "4"
+    "home_disk_size"           = "10"
+    "shared_memory_percentage" = "50"
+    "gpu_type"                 = "None"
+    "enable_advanced_tools"    = "false"
   }
 }
 
@@ -363,7 +489,7 @@ module "dotfiles" {
   version                 = "1.4.2"
   agent_id                = coder_agent.main.id
   default_dotfiles_branch = ""
-  default_dotfiles_uri    = ""
+  default_dotfiles_uri    = "https://github.com/AI-Riksarkivet/dotfiles"
   description             = "Enter a URL for a [dotfiles repository](https://dotfiles.github.io) to personalize your workspace. Use an SSH URL (e.g. `git@host:user/repo`) if your Git provider restricts HTTPS cloning."
   dotfiles_branch         = null
   dotfiles_uri            = null
@@ -388,6 +514,13 @@ module "git-commit-signing" {
   count    = data.coder_workspace.me.start_count
   source   = "registry.coder.com/coder/git-commit-signing/coder"
   version  = "1.0.32"
+  agent_id = coder_agent.main.id
+}
+
+module "coder-login" {
+  count    = data.coder_workspace.me.start_count
+  source   = "registry.coder.com/coder/coder-login/coder"
+  version  = "1.1.1"
   agent_id = coder_agent.main.id
 }
 
@@ -506,6 +639,14 @@ resource "kubernetes_deployment_v1" "main" {
             name  = "CODER_AGENT_TOKEN"
             value = coder_agent.main.token
           }
+          env {
+            name  = "GH_TOKEN"
+            value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.gh_token) > 0 ? data.coder_parameter.gh_token[0].value : ""
+          }
+          env {
+            name  = "HF_TOKEN"
+            value = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.hf_token) > 0 ? data.coder_parameter.hf_token[0].value : ""
+          }
           resources {
             requests = merge({
               "cpu"    = "250m"
@@ -521,6 +662,12 @@ resource "kubernetes_deployment_v1" "main" {
             name       = "home"
             read_only  = false
           }
+
+          volume_mount {
+            mount_path = "/dev/shm"
+            name       = "dshm"
+            read_only  = false
+          }
         }
 
         volume {
@@ -528,6 +675,14 @@ resource "kubernetes_deployment_v1" "main" {
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim_v1.home.metadata.0.name
             read_only  = false
+          }
+        }
+
+        volume {
+          name = "dshm"
+          empty_dir {
+            medium     = "Memory"
+            size_limit = "${floor(tonumber(data.coder_parameter.memory.value) * (data.coder_parameter.shared_memory_percentage.value / 100))}Gi"
           }
         }
 
@@ -589,4 +744,26 @@ resource "coder_metadata" "resources" {
     key   = "gpu_type"
     value = local.selected_gpu == "None" ? "No GPU" : local.selected_gpu
   }
+}
+
+# ========================================
+# Coder Resource Scripts
+# ========================================
+
+resource "coder_script" "ssh_setup" {
+  agent_id           = coder_agent.main.id
+  display_name       = "SSH Key Setup"
+  icon               = "/icon/terminal.svg"
+  log_path           = "ssh_setup.log"
+  run_on_start       = true
+  start_blocks_login = false
+
+  script = replace(
+    templatefile("${path.module}/scripts/ssh_config.sh", {
+      git_author_email = local.git_author_email
+      ssh_private_key  = data.coder_parameter.enable_advanced_tools.value && length(data.coder_parameter.ssh_private_key) > 0 ? data.coder_parameter.ssh_private_key[0].value : ""
+    }),
+    "\r",
+    ""
+  )
 }
