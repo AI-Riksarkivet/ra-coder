@@ -4,3 +4,5 @@ riksarkivet-test-template/main.tf
 argo-workflows/secrets.yaml
 secrets.yaml
 .venv
+# Terraform local state/providers
+.terraform/

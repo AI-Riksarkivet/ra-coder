@@ -120,6 +120,18 @@ A comprehensive development environment optimized for the "Small Development" pr
 
 **Best for**: General development, CI/CD, lightweight development workflows
 
+### Riksarkivet Developer Template v2
+**Location**: `riksarkivet-developer-template-v2/`
+
+A minimal, modern successor to the developer template, based on the official Coder Kubernetes starter template:
+
+- **Base**: `codercom/example-base:ubuntu` (no custom image build required)
+- **Apps**: Claude Code, VS Code Web, Zed, filebrowser, git-config, git-commit-signing, dotfiles (current Coder registry modules)
+- **Resources**: 2–8 CPU, 2–8 GB RAM, persistent home disk on `nfs-client`
+- **Optional GPU**: RTX 5000 / A5000 / 6000 Ada with node pinning
+
+**Best for**: Everyday development workspaces with a fast, low-maintenance setup. Deployed as template `riksarkivet-developer-v2`.
+
 ## 🎯 Quick Start
 
 1. **Set Environment Variables**:
