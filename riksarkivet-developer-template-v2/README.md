@@ -8,6 +8,13 @@ down to the essentials and updated to current Coder registry modules.
 ## What's included
 
 - **Base image**: `codercom/example-base:ubuntu` (no custom Dockerfile required)
+- **Deterministic toolset via Nix**: a single-user Nix install with the template's
+  [`flake.nix`](flake.nix) provides the dev tools (git, gh, kubectl, helm, k9s,
+  argo, terraform, python312+uv, nodejs 22, go, starship, awscli2, azure-cli, ...).
+  The `/nix` store lives on the home PVC, so tools survive pod restarts.
+  Edit `flake.nix` and push a new template version to change the toolset for
+  everyone; inside a workspace, run `nix profile upgrade ~/devshell` or use
+  `nix develop ~/devshell` for an ephemeral shell.
 - **Apps** (Coder registry modules):
   - [claude-code](https://registry.coder.com/modules/claude-code) v5.2.0 — Claude Code AI assistant
   - [vscode-web](https://registry.coder.com/modules/vscode-web) v1.5.0 — VS Code in the browser

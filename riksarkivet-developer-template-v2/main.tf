@@ -394,6 +394,31 @@ resource "coder_agent" "main" {
     timeout  = 1
   }
 
+  # Shows live Nix toolset install progress by parsing the setup log:
+  # current package being downloaded + total store size, or "ready".
+  metadata {
+    display_name = "Dev Environment (Nix)"
+    key          = "9_nix_status"
+    interval     = 15
+    timeout      = 3
+    script       = <<-EOT
+      LOG=/tmp/nix_setup.log
+      if pgrep -f "nix profile install" >/dev/null 2>&1; then
+        SIZE=$(du -sh /nix/store 2>/dev/null | cut -f1)
+        PKG=$(grep "copying path" "$LOG" 2>/dev/null | tail -1 | sed -E "s|^copying path '/nix/store/[a-z0-9]+-([^']*)'.*|\1|")
+        if [ -n "$PKG" ]; then
+          echo "⏳ $PKG ($SIZE)"
+        else
+          echo "⏳ preparing… ($SIZE)"
+        fi
+      elif [ -e "$HOME/.nix-profile/bin/terraform" ]; then
+        echo "ready ✔"
+      else
+        echo "pending"
+      fi
+    EOT
+  }
+
   dynamic "metadata" {
     for_each = local.actual_gpu_count > 0 ? range(local.actual_gpu_count) : []
     content {
@@ -622,9 +647,25 @@ resource "kubernetes_deployment_v1" "main" {
         }
 
         security_context {
-          run_as_user     = 1000
-          fs_group        = 1000
-          run_as_non_root = true
+          fs_group = 1000
+        }
+
+        # Prepare a persistent /nix store (on the home PVC, owned by coder)
+        # before the non-root workspace container starts.
+        init_container {
+          name              = "nix-store-init"
+          image             = "codercom/example-base:ubuntu"
+          image_pull_policy = "IfNotPresent"
+          command           = ["sh", "-c", "mkdir -p /nix && chown 1000:1000 /nix"]
+          security_context {
+            run_as_user     = "0"
+            run_as_non_root = false
+          }
+          volume_mount {
+            mount_path = "/nix"
+            name       = "home"
+            sub_path   = "nix"
+          }
         }
 
         container {
@@ -633,7 +674,8 @@ resource "kubernetes_deployment_v1" "main" {
           image_pull_policy = "Always"
           command           = ["sh", "-c", coder_agent.main.init_script]
           security_context {
-            run_as_user = "1000"
+            run_as_user     = "1000"
+            run_as_non_root = true
           }
           env {
             name  = "CODER_AGENT_TOKEN"
@@ -660,6 +702,14 @@ resource "kubernetes_deployment_v1" "main" {
           volume_mount {
             mount_path = "/home/coder"
             name       = "home"
+            read_only  = false
+          }
+
+          # Persistent Nix store (lives on the home PVC)
+          volume_mount {
+            mount_path = "/nix"
+            name       = "home"
+            sub_path   = "nix"
             read_only  = false
           }
 
@@ -749,6 +799,23 @@ resource "coder_metadata" "resources" {
 # ========================================
 # Coder Resource Scripts
 # ========================================
+
+resource "coder_script" "nix_setup" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Nix Dev Environment"
+  icon               = "/icon/nix.svg"
+  log_path           = "nix_setup.log"
+  run_on_start       = true
+  start_blocks_login = false
+
+  script = replace(
+    templatefile("${path.module}/scripts/nix_setup.sh", {
+      flake_nix_b64 = base64encode(file("${path.module}/flake.nix"))
+    }),
+    "\r",
+    ""
+  )
+}
 
 resource "coder_script" "ssh_setup" {
   agent_id           = coder_agent.main.id
