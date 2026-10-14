@@ -48,7 +48,7 @@
         kubectl
         kubernetes-helm
         k9s
-        argo
+        argo-workflows
         (terraform-bin pkgs)
 
         # Languages & package managers
