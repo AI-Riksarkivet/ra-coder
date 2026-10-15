@@ -70,10 +70,8 @@ CONFIG="$CONFIG_DIR/opencode.json"
 mkdir -p "$CONFIG_DIR"
 [ -s "$CONFIG" ] || echo '{}' >"$CONFIG"
 
-LOCAL_MODELS=$(curl -sf "$API/api/tags" | jq '[.models[].name]')
-jq --argjson local "$LOCAL_MODELS" --arg default "$MODEL" --argjson ctx "$CONTEXT_LENGTH" '
-  ($local + (if $default != "" then [$default] else [] end) | unique) as $models
-  | ."$schema" = "https://opencode.ai/config.json"
+jq --arg default "$MODEL" '
+  ."$schema" = "https://opencode.ai/config.json"
   | .autoupdate = false
   | .share = "disabled"
   | .disabled_providers = ((.disabled_providers // []) + ["opencode"] | unique)
@@ -81,10 +79,32 @@ jq --argjson local "$LOCAL_MODELS" --arg default "$MODEL" --argjson ctx "$CONTEX
       npm: "@ai-sdk/openai-compatible",
       name: "Ollama (local)",
       options: { baseURL: "http://127.0.0.1:11434/v1" },
-      models: (reduce $models[] as $m ({}; .[$m] = { name: $m, limit: { context: $ctx, output: 8192 } }))
+      models: (.provider.ollama.models // {})
     }
   | if $default != "" then .model = "ollama/" + $default else del(.model) end
 ' "$CONFIG" >"$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
+
+# Model list for the ollama provider: every model on the server plus the
+# selected one. Image input is declared for models Ollama reports as
+# "vision" - without it OpenCode treats a custom model as text-only and
+# refuses attached images. Run again after the pull, when the selected
+# model's capabilities are known.
+write_models() {
+  local caps='{}' m show c
+  for m in $(curl -sf "$API/api/tags" | jq -r '.models[].name') $MODEL; do
+    show=$(curl -sf "$API/api/show" -d "{\"model\": \"$m\"}" || true)
+    c=$([ -n "$show" ] && jq -c '.capabilities // []' <<<"$show" || echo '[]')
+    caps=$(jq -c --arg m "$m" --argjson c "$c" '.[$m] = $c' <<<"$caps")
+  done
+  jq --argjson caps "$caps" --argjson ctx "$CONTEXT_LENGTH" '
+    .provider.ollama.models = ($caps | with_entries(.value = (
+      { name: .key, limit: { context: $ctx, output: 8192 } }
+      + (if (.value | index("vision")) != null
+         then { attachment: true, modalities: { input: ["text", "image"], output: ["text"] } }
+         else {} end))))
+  ' "$CONFIG" >"$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
+}
+write_models
 
 # Default MCP servers: Riksarkivet and Archives Portal Europe. Both are public
 # (no credentials). A user's "enabled": false survives restarts.
@@ -120,6 +140,8 @@ if [ -n "$MODEL" ]; then
         select(.new) | .line)' |
     tee "$LLM_DIR/pull.log" | grep --line-buffered -v '%$' || true
   grep -q '^success$' "$LLM_DIR/pull.log" || { echo "ERROR: pulling $MODEL failed"; exit 1; }
+  write_models
+  echo "Capabilities: $(curl -sf "$API/api/show" -d "{\"model\": \"$MODEL\"}" | jq -r '.capabilities | join(", ")')"
 
   echo "Loading $MODEL into GPU memory..."
   curl -sf "$API/api/generate" -d "{\"model\": \"$MODEL\", \"keep_alive\": \"30m\"}" >/dev/null
