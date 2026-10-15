@@ -42,9 +42,26 @@ in the catalog.
 ## Versions
 
 `local.ollama_image` and `local.opencode_version` in `main.tf` pin both tools;
-bump them together. The model catalog lists download sizes from
-registry.ollama.ai and which GPUs they fit (A5000 24 GB, 6000 Ada 48 GB,
-6000 Blackwell 96 GB, GB10 128 GB shared).
+bump them together.
+
+## Model catalog
+
+The dropdown is chosen by these rules, not by taste:
+
+1. **Tool calling, verified** from the registry: the chat template handles
+   `.Tools` or the model uses one of Ollama's built-in renderers. RA-CODE is
+   an agent; without tool calls it cannot edit files or use the MCP servers.
+2. **Local weights that fit a workspace GPU**: about 19 GB for an A5000
+   (24 GB), 40 GB for a 6000 Ada (48 GB), 85 GB for a 6000 Blackwell (96 GB),
+   more on the GB10 (128 GB shared).
+3. **Current**: updated within 12 months, newest generation of each family.
+4. **Adopted**: at least 1M pulls on ollama.com.
+5. **Coverage**: vision and coding options on every GPU tier, plus one small
+   model for CPU-only workspaces.
+
+`scripts/check_models.sh` checks every catalog entry against
+registry.ollama.ai (tag exists, size, tool support) and exits non-zero on a
+failure. Any other model can still be used through the *Other* option.
 
 ## Logs
 

@@ -51,29 +51,35 @@ locals {
   ollama_image     = "harbor.ra.se/cache-dockerhub/ollama/ollama:0.40.4"
   opencode_version = "1.19.0"
 
-  # Model catalog for the model parameter. Sizes are the download size from
-  # registry.ollama.ai; the GPU needs that plus a few GB for the context.
+  # Model catalog for the model parameter. Selection rules (see README):
+  #   1. tool calling verified from the registry (template or built-in renderer)
+  #   2. local weights that fit a workspace GPU
+  #   3. updated within 12 months, newest generation of each family
+  #   4. at least 1M pulls on ollama.com
+  #   5. vision and coding options on every GPU tier
+  # Sizes are download sizes from registry.ollama.ai; the GPU needs that plus
+  # a few GB for the context. Re-check with scripts/check_models.sh.
   # VRAM: A5000 24 GB, 6000 Ada 48 GB, 6000 Blackwell 96 GB, GB10 128 GB shared.
   ollama_models = [
-    { value = "gemma4:e4b", name = "Gemma 4 E4B", description = "6.6 GB - Google, vision + tools, fits every GPU (default)" },
-    { value = "gemma4:e2b", name = "Gemma 4 E2B", description = "4.6 GB - smallest Gemma 4, fits every GPU" },
-    { value = "gemma4:12b", name = "Gemma 4 12B", description = "8.0 GB - 256K context, fits every GPU" },
-    { value = "gemma4:26b", name = "Gemma 4 26B (MoE)", description = "18.7 GB - 4B active, fast; A5000 or larger" },
-    { value = "gemma4:31b", name = "Gemma 4 31B", description = "20.4 GB - strongest Gemma 4; 6000 Ada or larger" },
-    { value = "qwen3.8:27b", name = "Qwen 3.8 27B", description = "17.7 GB - coding/agentic, vision + thinking; A5000 or larger" },
-    { value = "muse-glimmer:30b", name = "Muse Glimmer 30B", description = "18.2 GB - Meta, built for local agents and tool use; A5000 or larger" },
-    { value = "north-mini-code-1.0", name = "North Mini Code 30B (MoE)", description = "18.6 GB - Cohere, agentic coding, 3B active; A5000 or larger" },
-    { value = "laguna-xs-2.1", name = "Laguna XS 2.1 33B (MoE)", description = "20.3 GB - agentic coding, 3B active; 6000 Ada or larger" },
-    { value = "ornith:9b", name = "Ornith 9B", description = "5.6 GB - agentic coding, fits every GPU" },
-    { value = "ornith:35b", name = "Ornith 35B", description = "21.2 GB - agentic coding; 6000 Ada or larger" },
-    { value = "nemotron-3.5-lightning:30b", name = "Nemotron 3.5 Lightning 30B (MoE)", description = "25.4 GB - NVIDIA, always-on agents, 3B active; 6000 Ada or larger" },
-    { value = "nemotron3:33b", name = "Nemotron 3 Nano Omni 33B", description = "27.6 GB - NVIDIA, text/image/audio/video; 6000 Ada or larger" },
-    { value = "granite4.2:8b", name = "Granite 4.2 8B", description = "5.3 GB - IBM, multilingual, tools + JSON, fits every GPU" },
-    { value = "granite4.2:30b", name = "Granite 4.2 30B", description = "17.7 GB - IBM, multilingual, tools + JSON; A5000 or larger" },
-    { value = "lfm2.5:8b", name = "LFM 2.5 8B (MoE)", description = "5.2 GB - Liquid AI, fast tool calling, fits every GPU" },
-    { value = "gpt-oss:20b", name = "gpt-oss 20B", description = "13.8 GB - OpenAI open weights, reasoning; fits every GPU" },
-    { value = "gpt-oss:120b", name = "gpt-oss 120B", description = "65.4 GB - OpenAI open weights; 6000 Blackwell or GB10 only" },
-    { value = "qwen3-coder:30b", name = "Qwen 3 Coder 30B (MoE)", description = "18.6 GB - long-context coding; A5000 or larger" },
+    # Every GPU (A5000 and up)
+    { value = "gemma4:e4b", name = "Gemma 4 E4B", description = "6.6 GB - Google, vision, fast; every GPU (default)" },
+    { value = "gemma4:e2b", name = "Gemma 4 E2B", description = "4.6 GB - Google, vision; smallest, for CPU-only workspaces" },
+    { value = "qwen3.5:9b", name = "Qwen 3.5 9B", description = "6.6 GB - Alibaba, vision + thinking; every GPU" },
+    { value = "gemma4:12b", name = "Gemma 4 12B", description = "8.0 GB - Google, vision, 256K context; every GPU" },
+    { value = "ministral-3:14b", name = "Ministral 3 14B", description = "9.1 GB - Mistral, vision, efficient; every GPU" },
+    { value = "gpt-oss:20b", name = "gpt-oss 20B", description = "13.8 GB - OpenAI open weights, reasoning; every GPU" },
+    { value = "devstral-small-2:24b", name = "Devstral Small 2 24B", description = "15.2 GB - Mistral, built for coding agents, vision; every GPU" },
+    { value = "qwen3.8:27b", name = "Qwen 3.8 27B", description = "17.7 GB - Alibaba, newest Qwen, coding + agents, vision; every GPU" },
+    { value = "gemma4:26b", name = "Gemma 4 26B (MoE)", description = "18.7 GB - Google, vision, fast (4B active); every GPU" },
+    # 6000 Ada and up
+    { value = "glm-4.7-flash", name = "GLM 4.7 Flash (MoE)", description = "19.0 GB - Zhipu, thinking, strong for its size; 6000 Ada or larger" },
+    { value = "gemma4:31b", name = "Gemma 4 31B", description = "20.4 GB - Google, strongest Gemma 4, vision; 6000 Ada or larger" },
+    { value = "qwen3.6:35b", name = "Qwen 3.6 35B (MoE)", description = "22.6 GB - Alibaba, agentic coding, vision; 6000 Ada or larger" },
+    # 6000 Blackwell and GB10
+    { value = "qwen3-coder-next", name = "Qwen 3 Coder Next 80B (MoE)", description = "51.7 GB - Alibaba, coding agent; 6000 Blackwell or GB10" },
+    { value = "gpt-oss:120b", name = "gpt-oss 120B", description = "65.4 GB - OpenAI open weights, reasoning; 6000 Blackwell or GB10" },
+    { value = "qwen3.5:122b", name = "Qwen 3.5 122B", description = "81.4 GB - Alibaba, largest Qwen 3.5; GB10 (tight on 6000 Blackwell)" },
+    { value = "nemotron-3-super:120b", name = "Nemotron 3 Super 120B", description = "86.8 GB - NVIDIA, multi-agent work, 12B active; GB10 only" },
   ]
 
   # "" = no model; "custom" = the free-text model parameter.
