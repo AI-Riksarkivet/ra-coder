@@ -63,6 +63,25 @@ The dropdown is chosen by these rules, not by taste:
 registry.ollama.ai (tag exists, size, tool support) and exits non-zero on a
 failure. Any other model can still be used through the *Other* option.
 
+### Tested end to end (2026-10-15)
+
+Every catalog model was run through the real path - Coder workspace, setup
+script, `ra-code` - with `scripts/test_models.sh`: write and run a Python
+file (agent tools), look up an SBL article through the Riksarkivet MCP, and
+read text from an image for vision models. All loaded 100% on the GPU.
+
+| Model | GPU tested | Agent | MCP | Vision |
+|---|---|---|---|---|
+| gemma4:e4b, gemma4:e2b, gemma4:12b, gemma4:26b, gemma4:31b | 6000 Ada | ok | ok | ok |
+| qwen3.5:9b, qwen3.8:27b, qwen3.6:35b | 6000 Ada | ok | ok | ok |
+| ministral-3:14b, devstral-small-2:24b | 6000 Ada | ok | ok | ok |
+| gpt-oss:20b, glm-4.7-flash | 6000 Ada | ok | ok | - |
+| qwen3-coder-next, gpt-oss:120b, nemotron-3-super:120b | GB10 | ok | ok | - |
+| qwen3.5:122b | GB10 | ok | ok | read "RA-CODE TEST 42 17" for "4217" |
+
+Not tested: the 6000 Blackwell (no free GPU at the time) and the A5000 with
+the larger models (only gemma4:e4b was run there).
+
 ## Logs
 
 - Setup: the *RA-CODE (Ollama + OpenCode)* script log in the Coder UI
