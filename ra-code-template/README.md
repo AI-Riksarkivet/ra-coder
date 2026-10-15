@@ -23,6 +23,11 @@ plus a local coding assistant:
   cloud models, self-update checks and session sharing are disabled. The
   config is written before the model download starts, so it is correct even
   if RA-CODE is opened while the model is still being pulled.
+- **MCP servers**: the Riksarkivet MCP (`riksarkivet-ra-mcp.hf.space`) and
+  the Archives Portal Europe MCP (`riksarkivet-ape-mcp.hf.space`) are enabled
+  by default. Both are public, so no credentials are involved. Setting
+  `"enabled": false` on one in `~/.config/opencode/opencode.json` sticks
+  across restarts.
 - **Branding**: a small TUI plugin (`scripts/ra-code-branding.tsx`, installed
   to `~/.config/opencode/ra-code/` and registered in `tui.json`) replaces the
   OpenCode logo on the home screen with RA-CODE, and the `ra-code` launcher

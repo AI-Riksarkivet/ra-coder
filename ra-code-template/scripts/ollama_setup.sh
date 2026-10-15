@@ -86,6 +86,14 @@ jq --argjson local "$LOCAL_MODELS" --arg default "$MODEL" --argjson ctx "$CONTEX
   | if $default != "" then .model = "ollama/" + $default else del(.model) end
 ' "$CONFIG" >"$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
 
+# Default MCP servers: Riksarkivet and Archives Portal Europe. Both are public
+# (no credentials). A user's "enabled": false survives restarts.
+jq '
+  def remote($url): { type: "remote", url: $url, oauth: false, timeout: 60000 };
+  .mcp.riksarkivet = remote("https://riksarkivet-ra-mcp.hf.space/mcp") + { enabled: (.mcp.riksarkivet.enabled != false) }
+  | .mcp.ape = remote("https://riksarkivet-ape-mcp.hf.space/mcp") + { enabled: (.mcp.ape.enabled != false) }
+' "$CONFIG" >"$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
+
 # RA-CODE logo on the TUI home screen (a TUI plugin, registered in tui.json
 # next to any plugins the user added).
 BRANDING="$CONFIG_DIR/ra-code/branding.tsx"
