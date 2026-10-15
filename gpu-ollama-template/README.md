@@ -1,32 +1,39 @@
 ---
-display_name: Scratch
-description: A minimal Coder workspace template with just an agent
-icon: ../../../site/static/icon/coder.svg
-maintainer_github: coder
-verified: true
-tags: [minimal, scratch]
+display_name: GPU + Ollama
+description: GPU workspace with a local LLM served by Ollama and OpenCode preconfigured
+icon: /emojis/1f999.png
+tags: [kubernetes, gpu, llm, ollama, opencode]
 ---
 
-# Scratch Template
+# GPU + Ollama
 
-A minimal template that provisions a Coder agent with basic metadata. Use this as a starting point when you want full control over the infrastructure and just need the agent scaffolding.
+The `gpu` template (Kubernetes Deployment, optional GPU, NFS home volume)
+plus a local LLM:
 
-<!-- prerequisites:start -->
+- **Ollama** runs inside the workspace on the selected GPU. An init container
+  copies the binary and its CUDA libraries from the official multi-arch
+  `ollama/ollama` image, so x86 GPU nodes and the ARM GB10 both work.
+- **Model**: picked from a catalog (or any name from ollama.com/library) at
+  workspace creation, changeable later. It is pulled at every start into an
+  `emptyDir` on the node's local disk (`/opt/llm`), never onto the NFS home
+  volume, so it downloads again after a restart.
+- **OpenCode** is installed in `~/.local/bin` at a pinned version and
+  configured with an `ollama` provider listing the models on the server, with
+  the selected one as default. Open it from the *OpenCode* app or run
+  `opencode` in a terminal.
 
-## Prerequisites
+The context window (`OLLAMA_CONTEXT_LENGTH`) defaults to 64K, the minimum
+OpenCode needs. Larger windows cost GPU memory on top of the model size shown
+in the catalog.
 
-This template only provisions a Coder agent. You must provide your own compute platform (e.g. Docker, a VM, Kubernetes) for the agent to run on.
+## Versions
 
-<!-- prerequisites:end -->
+`local.ollama_image` and `local.opencode_version` in `main.tf` pin both tools;
+bump them together. The model catalog lists download sizes from
+registry.ollama.ai and which GPUs they fit (A5000 24 GB, 6000 Ada 48 GB,
+6000 Blackwell 96 GB, GB10 128 GB shared).
 
-## Architecture
+## Logs
 
-This template provisions the following resources:
-
-- Coder agent (with CPU and RAM metadata)
-- Environment variables for Git configuration
-
-No infrastructure resources are included. Extend the template with your own compute resources.
-
-> **Note**
-> This template is designed to be a starting point! Edit the Terraform to extend the template to support your use case.
+- Setup: the *Ollama + OpenCode* script log in the Coder UI
+- Server: `/opt/llm/serve.log`
