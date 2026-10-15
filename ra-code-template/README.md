@@ -20,7 +20,9 @@ plus a local coding assistant:
 - **RA-CODE** is OpenCode, installed in `~/.local/bin` at a pinned version
   and launched as `ra-code` (terminal) or from the *RA-CODE* app. It is
   configured with only the local `ollama` provider: OpenCode's built-in free
-  cloud models, self-update checks and session sharing are disabled. The
+  cloud models, self-update checks, session sharing and the hourly
+  models.opencode.ai catalog fetch are disabled. OpenCode sends no usage
+  telemetry (its OpenTelemetry export only runs when an endpoint is set). The
   config is written before the model download starts, so it is correct even
   if RA-CODE is opened while the model is still being pulled.
 - **MCP servers**: the Riksarkivet MCP (`riksarkivet-ra-mcp.hf.space`) and

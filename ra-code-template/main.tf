@@ -507,6 +507,18 @@ resource "kubernetes_deployment_v1" "main" {
             name  = "OLLAMA_CONTEXT_LENGTH"
             value = data.coder_parameter.context_length.value
           }
+          # OpenCode has no usage telemetry (OTLP export only runs when an
+          # endpoint is configured). These stop its remaining calls home:
+          # the hourly models.opencode.ai catalog fetch (unneeded, the
+          # ollama provider is fully configured) and the update check.
+          env {
+            name  = "OPENCODE_DISABLE_MODELS_FETCH"
+            value = "1"
+          }
+          env {
+            name  = "OPENCODE_DISABLE_AUTOUPDATE"
+            value = "1"
+          }
           resources {
             requests = {
               "cpu"    = "250m"
