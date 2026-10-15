@@ -157,6 +157,44 @@ data "coder_parameter" "shared_memory_percentage" {
   }
 }
 
+data "coder_parameter" "nix_profile" {
+  name         = "nix_profile"
+  display_name = "Toolset Profile"
+  description  = "Which Nix toolset to install. Mutable: change it and restart the workspace to switch profiles."
+  type         = "string"
+  default      = "dev"
+  icon         = "/icon/nix.svg"
+  mutable      = true
+  form_type    = "radio"
+  order        = 5
+
+  option {
+    name        = "Development"
+    value       = "dev"
+    description = "go, nodejs, gcc/make, kubectl, helm, terraform"
+  }
+  option {
+    name        = "Data Science"
+    value       = "datascience"
+    description = "python 3.12 (numpy, pandas, polars, pyarrow, jupyterlab), uv, nodejs"
+  }
+  option {
+    name        = "ML (GPU)"
+    value       = "ml"
+    description = "Data Science + PyTorch with CUDA - for GPU workspaces"
+  }
+  option {
+    name        = "Local LLM (GPU)"
+    value       = "llm"
+    description = "ollama-cuda for GPU-accelerated local models - pair with a GPU"
+  }
+  option {
+    name        = "Kubernetes Ops"
+    value       = "ops"
+    description = "kubectl, helm, k9s, argo, kustomize, kubectx, terraform, aws/azure CLIs"
+  }
+}
+
 # --- GPU Configuration ---
 data "coder_parameter" "gpu_type" {
   name         = "gpu_type"
@@ -263,6 +301,135 @@ data "coder_parameter" "ssh_private_key" {
   })
 }
 
+data "coder_parameter" "local_model" {
+  name         = "local_model"
+  display_name = "Local Model (Ollama)"
+  description  = "Pull a local LLM via Ollama and configure OpenCode to use it. Models are stored on the pod's local disk and re-downloaded on start."
+  type         = "string"
+  default      = "none"
+  icon         = "/emojis/1f999.png"
+  mutable      = true
+  form_type    = "dropdown"
+  order        = 50
+
+  option {
+    name        = "None"
+    value       = "none"
+    description = "No local model"
+  }
+
+  # --- Small (runs on CPU) ---
+  option {
+    name        = "Gemma 3 1B"
+    value       = "gemma3:1b"
+    description = "~0.8 GB, 32K context, runs on CPU"
+  }
+  option {
+    name        = "Qwen 2.5 Coder 1.5B"
+    value       = "qwen2.5-coder:1.5b"
+    description = "~1 GB, runs on CPU"
+  }
+  option {
+    name        = "Llama 3.2 3B"
+    value       = "llama3.2:3b"
+    description = "~2 GB, runs on CPU"
+  }
+  option {
+    name        = "Phi 4 Mini 3.8B"
+    value       = "phi4-mini"
+    description = "~2.5 GB, runs on CPU"
+  }
+
+  # --- Medium (8-16 GB RAM) ---
+  option {
+    name        = "Gemma 3 4B"
+    value       = "gemma3:4b"
+    description = "~3.4 GB, 128K context, vision capable"
+  }
+  option {
+    name        = "Code Llama 7B"
+    value       = "codellama:7b"
+    description = "~3.8 GB"
+  }
+  option {
+    name        = "Mistral 7B"
+    value       = "mistral:7b"
+    description = "~4.1 GB"
+  }
+  option {
+    name        = "Llama 3.1 8B"
+    value       = "llama3.1:8b"
+    description = "~4.7 GB"
+  }
+  option {
+    name        = "Qwen 2.5 Coder 7B"
+    value       = "qwen2.5-coder:7b"
+    description = "~4.7 GB, 8+ GB RAM recommended"
+  }
+  option {
+    name        = "DeepSeek R1 8B"
+    value       = "deepseek-r1:8b"
+    description = "~4.9 GB, reasoning model"
+  }
+  option {
+    name        = "Qwen 3 8B"
+    value       = "qwen3:8b"
+    description = "~5.2 GB"
+  }
+  option {
+    name        = "Gemma 3 12B"
+    value       = "gemma3:12b"
+    description = "~8.2 GB, 128K context, 16+ GB RAM recommended"
+  }
+  option {
+    name        = "DeepSeek Coder V2 16B"
+    value       = "deepseek-coder-v2:16b"
+    description = "~8.9 GB, MoE coding model"
+  }
+  option {
+    name        = "Phi 4 14B"
+    value       = "phi4:14b"
+    description = "~9.1 GB"
+  }
+  option {
+    name        = "Qwen 2.5 Coder 14B"
+    value       = "qwen2.5-coder:14b"
+    description = "~9 GB, 16+ GB RAM recommended"
+  }
+  option {
+    name        = "Devstral 24B"
+    value       = "devstral"
+    description = "~14 GB, Mistral's agentic coding model"
+  }
+
+  # --- Large (GPU workspace strongly recommended) ---
+  option {
+    name        = "Gemma 3 27B"
+    value       = "gemma3:27b"
+    description = "~17 GB, 128K context, GPU strongly recommended"
+  }
+  option {
+    name        = "Qwen 3 Coder 30B"
+    value       = "qwen3-coder:30b"
+    description = "~19 GB, MoE, GPU strongly recommended"
+  }
+  option {
+    name        = "DeepSeek R1 32B"
+    value       = "deepseek-r1:32b"
+    description = "~19 GB, reasoning, GPU strongly recommended"
+  }
+  option {
+    name        = "Qwen 3 32B"
+    value       = "qwen3:32b"
+    description = "~20 GB, GPU strongly recommended"
+  }
+  option {
+    name        = "Llama 3.3 70B"
+    value       = "llama3.3:70b"
+    description = "~43 GB, GPU workspace with 64+ GB RAM required"
+  }
+}
+
 # ========================================
 # Workspace Presets
 # ========================================
@@ -279,12 +446,13 @@ data "coder_workspace_preset" "intense-ml" {
     "gpu_type"                 = "NVIDIA-RTX-6000-Ada-Generation"
     "gpu_count"                = "2"
     "enable_advanced_tools"    = "true"
+    "nix_profile"              = "ml"
   }
 }
 
 data "coder_workspace_preset" "standard-ds" {
   name        = "Standard Data Science"
-  description = "Standard configuration for general development work (without GPU)"
+  description = "Data science work with the Python/PyData toolset (without GPU)"
   icon        = "/emojis/1f435.png"
   parameters = {
     "cpu"                      = "8"
@@ -293,6 +461,7 @@ data "coder_workspace_preset" "standard-ds" {
     "shared_memory_percentage" = "20"
     "gpu_type"                 = "None"
     "enable_advanced_tools"    = "false"
+    "nix_profile"              = "datascience"
   }
 }
 
@@ -307,6 +476,55 @@ data "coder_workspace_preset" "standard-dev" {
     "shared_memory_percentage" = "20"
     "gpu_type"                 = "None"
     "enable_advanced_tools"    = "true"
+    "nix_profile"              = "dev"
+  }
+}
+
+data "coder_workspace_preset" "local-llm-medium" {
+  name        = "Local LLM (Medium)"
+  description = "GPU workspace for local models up to ~14B - comes with Gemma 3 12B"
+  icon        = "/emojis/1f999.png"
+  parameters = {
+    "cpu"                      = "8"
+    "memory"                   = "48"
+    "home_disk_size"           = "100"
+    "shared_memory_percentage" = "20"
+    "gpu_type"                 = "NVIDIA-RTX-A5000"
+    "enable_advanced_tools"    = "false"
+    "nix_profile"              = "llm"
+    "local_model"              = "gemma3:12b"
+  }
+}
+
+data "coder_workspace_preset" "local-llm-large" {
+  name        = "Local LLM (Large)"
+  description = "GPU workspace for large local models - comes with Qwen 3 Coder 30B"
+  icon        = "/emojis/1f999.png"
+  parameters = {
+    "cpu"                      = "20"
+    "memory"                   = "96"
+    "home_disk_size"           = "200"
+    "shared_memory_percentage" = "30"
+    "gpu_type"                 = "NVIDIA-RTX-6000-Ada-Generation"
+    "gpu_count"                = "1"
+    "enable_advanced_tools"    = "true"
+    "nix_profile"              = "llm"
+    "local_model"              = "qwen3-coder:30b"
+  }
+}
+
+data "coder_workspace_preset" "kubernetes-ops" {
+  name        = "Kubernetes Ops"
+  description = "Cluster operations toolset: kubectl, helm, k9s, argo, cloud CLIs"
+  icon        = "/emojis/2638-fe0f.png"
+  parameters = {
+    "cpu"                      = "4"
+    "memory"                   = "16"
+    "home_disk_size"           = "50"
+    "shared_memory_percentage" = "20"
+    "gpu_type"                 = "None"
+    "enable_advanced_tools"    = "true"
+    "nix_profile"              = "ops"
   }
 }
 
@@ -321,6 +539,7 @@ data "coder_workspace_preset" "small-dev" {
     "shared_memory_percentage" = "50"
     "gpu_type"                 = "None"
     "enable_advanced_tools"    = "false"
+    "nix_profile"              = "dev"
   }
 }
 
@@ -394,6 +613,24 @@ resource "coder_agent" "main" {
     timeout  = 1
   }
 
+  # Shows the selected local model and whether it can actually use a GPU.
+  dynamic "metadata" {
+    for_each = data.coder_parameter.local_model.value != "none" ? [1] : []
+    content {
+      display_name = "Local Model"
+      key          = "8_local_model"
+      interval     = 60
+      timeout      = 5
+      script       = <<-EOT
+        if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+          echo "${data.coder_parameter.local_model.value} @ GPU ✔"
+        else
+          echo "${data.coder_parameter.local_model.value} @ CPU ⚠ (no GPU)"
+        fi
+      EOT
+    }
+  }
+
   # Shows live Nix toolset install progress by parsing the setup log:
   # current package being downloaded + total store size, or "ready".
   metadata {
@@ -411,7 +648,7 @@ resource "coder_agent" "main" {
         else
           echo "⏳ preparing… ($SIZE)"
         fi
-      elif [ -e "$HOME/.nix-profile/bin/terraform" ]; then
+      elif [ -e "$HOME/.nix-profile/bin/starship" ]; then
         echo "ready ✔"
       else
         echo "pending"
@@ -811,6 +1048,25 @@ resource "coder_script" "nix_setup" {
   script = replace(
     templatefile("${path.module}/scripts/nix_setup.sh", {
       flake_nix_b64 = base64encode(file("${path.module}/flake.nix"))
+      nix_profile   = data.coder_parameter.nix_profile.value
+    }),
+    "\r",
+    ""
+  )
+}
+
+resource "coder_script" "ollama_setup" {
+  count              = data.coder_parameter.local_model.value != "none" ? 1 : 0
+  agent_id           = coder_agent.main.id
+  display_name       = "Ollama Local Model"
+  icon               = "/emojis/1f999.png"
+  log_path           = "ollama_setup.log"
+  run_on_start       = true
+  start_blocks_login = false
+
+  script = replace(
+    templatefile("${path.module}/scripts/ollama_setup.sh", {
+      ollama_model = data.coder_parameter.local_model.value
     }),
     "\r",
     ""

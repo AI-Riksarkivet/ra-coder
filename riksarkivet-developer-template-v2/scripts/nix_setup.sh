@@ -8,7 +8,7 @@ echo "Setting up Nix (single-user, with flakes)..."
 # Removed at the end of this script.
 touch "$HOME/.bashrc"
 grep -qF "Dev tools are still installing" "$HOME/.bashrc" || cat >> "$HOME/.bashrc" <<'HINT'
-[ -e "$HOME/.nix-profile/bin/terraform" ] || echo "🔧 Dev tools are still installing in the background - watch progress: tail -f /tmp/nix_setup.log"
+[ -e "$HOME/.nix-profile/bin/starship" ] || echo "🔧 Dev tools are still installing in the background - watch progress: tail -f /tmp/nix_setup.log"
 HINT
 
 # Preflight checks
@@ -39,8 +39,14 @@ grep -q "^sandbox" "$HOME/.config/nix/nix.conf" || \
 mkdir -p "$HOME/devshell"
 echo "${flake_nix_b64}" | base64 -d > "$HOME/devshell/flake.nix"
 
-echo "Installing dev toolset via nix profile (first run downloads all packages and may take a while)..."
-nix profile add "$HOME/devshell"
+# Replace any previously installed toolset with the selected profile
+# (keeps profile switching clean and avoids binary conflicts)
+for entry in $(nix profile list 2>/dev/null | awk '/^Name:/ {print $2}' | grep -vx nix); do
+  nix profile remove "$entry" || true
+done
+
+echo "Installing '${nix_profile}' toolset via nix profile (first run downloads all packages and may take a while)..."
+nix profile add "$HOME/devshell#${nix_profile}"
 
 # Remove the "still installing" terminal hint
 sed -i '/Dev tools are still installing/d' "$HOME/.bashrc"

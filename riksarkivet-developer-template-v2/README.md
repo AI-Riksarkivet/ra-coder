@@ -9,12 +9,40 @@ down to the essentials and updated to current Coder registry modules.
 
 - **Base image**: `codercom/example-base:ubuntu` (no custom Dockerfile required)
 - **Deterministic toolset via Nix**: a single-user Nix install with the template's
-  [`flake.nix`](flake.nix) provides the dev tools (git, gh, kubectl, helm, k9s,
-  argo, terraform, python312+uv, nodejs 22, go, starship, awscli2, azure-cli, ...).
-  The `/nix` store lives on the home PVC, so tools survive pod restarts.
-  Edit `flake.nix` and push a new template version to change the toolset for
-  everyone; inside a workspace, run `nix profile upgrade ~/devshell` or use
-  `nix develop ~/devshell` for an ephemeral shell.
+  [`flake.nix`](flake.nix) provides the dev tools. The `/nix` store lives on the
+  home PVC, so tools survive pod restarts. Edit `flake.nix` and push a new
+  template version to change the toolsets for everyone.
+
+### Toolset profiles
+
+The flake ships four profiles (shared core: git, gh, jq, ripgrep, fd, starship, uv, opencode, ollama):
+
+| Profile | Contents |
+|---------|----------|
+| `dev` (default) | go, nodejs 22, gcc/make/pkg-config, kubectl, helm, terraform |
+| `datascience` | python 3.12 (numpy, pandas, polars, pyarrow, jupyterlab), nodejs |
+| `ml` | datascience + PyTorch CUDA (torch-bin) + ollama-cuda — for GPU workspaces |
+| `llm` | ollama-cuda + nodejs — GPU-accelerated local models without the ML stack |
+| `ops` | kubectl, helm, k9s, argo, kustomize, kubectx, terraform, aws/azure CLIs |
+
+### Local models (Ollama + OpenCode)
+
+Every profile includes `opencode` and `ollama`. Set the `local_model`
+parameter to pull a local LLM on workspace start and auto-configure OpenCode
+(`ollama/<model>`). Models are stored on the pod's **local disk**
+(`/tmp/ollama`, not the NFS home volume) and re-downloaded on start.
+
+For anything beyond the smallest models, use a GPU: the **Local LLM
+(Medium/Large) presets** bundle GPU + `llm` profile (ollama-cuda) + model,
+and a dashboard indicator shows `model @ GPU ✔` or `model @ CPU ⚠`.
+Note: `ollama-cuda` is unfree and not in the public binary cache, so the
+first start of an `llm`/`ml` workspace compiles it once (~10 min); it then
+persists in the workspace's `/nix` store.
+
+Selected via the `nix_profile` parameter (mapped by the workspace presets).
+Mutable: change it and restart the workspace to switch. Inside a workspace:
+`nix profile add ~/devshell#ops` to switch manually, or
+`nix develop ~/devshell#datascience` for an ephemeral shell without installing.
 - **Apps** (Coder registry modules):
   - [claude-code](https://registry.coder.com/modules/claude-code) v5.2.0 — Claude Code AI assistant
   - [vscode-web](https://registry.coder.com/modules/vscode-web) v1.5.0 — VS Code in the browser
@@ -24,7 +52,7 @@ down to the essentials and updated to current Coder registry modules.
   - [dotfiles](https://registry.coder.com/modules/dotfiles) v1.4.2 (defaults to the [AI-Riksarkivet dotfiles](https://github.com/AI-Riksarkivet/dotfiles))
   - [filebrowser](https://registry.coder.com/modules/filebrowser) v1.1.5
   - [coder-login](https://registry.coder.com/modules/coder-login) v1.1.1 — pre-authenticated Coder CLI in the workspace
-- **Workspace presets**: Small Development, Standard Development, Standard Data Science, Intense ML Training
+- **Workspace presets**: Small Development, Standard Development, Standard Data Science, Intense ML Training, Kubernetes Ops, Local LLM (Medium/Large) — the LLM presets bundle a GPU, the `llm` profile, and a model
 - **Persistent storage**: home directory on a PVC (`nfs-client` storage class)
 - **Shared memory**: configurable `/dev/shm` (percentage of RAM) for ML/data workloads
 - **Optional GPU**: select a GPU type (Quadro RTX 5000 / RTX A5000 / RTX 6000 Ada)
@@ -40,6 +68,8 @@ down to the essentials and updated to current Coder registry modules.
 | `memory` | Memory in GB (slider, 3–180) | 16 |
 | `home_disk_size` | Home disk size in GB (immutable) | 10 |
 | `shared_memory_percentage` | % of RAM for `/dev/shm` (0–80) | 20 |
+| `nix_profile` | Toolset profile: `dev` / `datascience` / `ml` / `ops` | dev |
+| `local_model` | Ollama model to pull + configure in OpenCode | none |
 | `gpu_type` | GPU model or `None` (immutable) | None |
 | `gpu_count` | Number of Ada GPUs (only for RTX 6000 Ada) | 1 |
 | `enable_advanced_tools` | Reveal token/SSH parameters | false |

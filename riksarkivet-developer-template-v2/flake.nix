@@ -1,5 +1,5 @@
 {
-  description = "Riksarkivet developer workspace toolset";
+  description = "Riksarkivet developer workspace toolsets (profiles: dev, datascience, ops)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -7,7 +7,10 @@
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      pkgsFor = system: import nixpkgs { inherit system; };
+      pkgsFor = system: import nixpkgs {
+        inherit system;
+        config.allowUnfree = true; # torch-bin bundles CUDA (NVIDIA EULA)
+      };
 
       # Terraform from the official pinned binary. The nixpkgs build is
       # unfree (BUSL-1.1) and therefore NOT in cache.nixos.org - every
@@ -38,60 +41,104 @@
           '';
         };
 
-      # The workspace toolset - edit to taste.
-      toolset = pkgs: with pkgs; [
-        # Git & VCS
+      # Shared base for every profile.
+      coreBase = pkgs: with pkgs; [
         git
         gh
-
-        # Kubernetes & infra
-        kubectl
-        kubernetes-helm
-        k9s
-        argo-workflows
-        (terraform-bin pkgs)
-
-        # Languages & package managers
-        python312
-        uv
-        nodejs_22
-        go
-
-        # Build tools
-        gnumake
-        gcc
-        pkg-config
-
-        # Shell & utilities
-        starship
         jq
         ripgrep
         fd
-
-        # Cloud CLIs
-        awscli2
-        azure-cli
+        starship
+        uv
+        opencode
       ];
+
+      # Core = base + CPU ollama (the ml profile swaps in ollama-cuda instead)
+      core = pkgs: coreBase pkgs ++ [ pkgs.ollama ];
+
+      # Python package sets, composed per profile (one python env per profile -
+      # two withPackages envs would collide in the same buildEnv).
+      dsPythonPackages = ps: with ps; [
+        numpy
+        pandas
+        polars
+        pyarrow
+        jupyterlab
+      ];
+
+      # Toolset profiles - edit to taste.
+      profiles = pkgs: {
+        dev = core pkgs ++ (with pkgs; [
+          go
+          nodejs_22
+          gnumake
+          gcc
+          pkg-config
+          kubectl
+          kubernetes-helm
+          (terraform-bin pkgs)
+        ]);
+
+        datascience = core pkgs ++ (with pkgs; [
+          (python312.withPackages dsPythonPackages)
+          nodejs_22
+        ]);
+
+        # ML = datascience + PyTorch with CUDA (official wheels via torch-bin;
+        # torchWithCuda from nixpkgs would compile from source for hours)
+        # + ollama-cuda for GPU-accelerated local models.
+        # For GPU workspaces - CPU-only workspaces should use 'datascience'.
+        ml = coreBase pkgs ++ (with pkgs; [
+          ollama-cuda
+          (python312.withPackages (ps: dsPythonPackages ps ++ [ ps.torch-bin ]))
+          nodejs_22
+        ]);
+
+        # LLM = GPU-accelerated local models (ollama-cuda) without the ML
+        # python stack - for workspaces whose main job is running a local LLM.
+        llm = coreBase pkgs ++ (with pkgs; [
+          ollama-cuda
+          nodejs_22
+        ]);
+
+        ops = core pkgs ++ (with pkgs; [
+          kubectl
+          kubernetes-helm
+          k9s
+          argo-workflows
+          kustomize
+          kubectx
+          awscli2
+          azure-cli
+          (terraform-bin pkgs)
+        ]);
+      };
     in
     {
-      # Installable environment: `nix profile install <this flake>`
+      # Installable environments: `nix profile add <flake>#<profile>`
       packages = forAllSystems (system:
-        let pkgs = pkgsFor system;
-        in {
-          default = pkgs.buildEnv {
-            name  = "riksarkivet-dev-env";
-            paths = toolset pkgs;
-          };
-        });
+        let
+          pkgs = pkgsFor system;
+          envs = builtins.mapAttrs
+            (name: tools: pkgs.buildEnv {
+              name  = "riksarkivet-${name}-env";
+              paths = tools;
+            })
+            (profiles pkgs);
+        in
+        envs // { default = envs.dev; });
 
-      # Alternative: ephemeral shell via `nix develop <this flake>`
+      # Alternative: ephemeral shells via `nix develop <flake>#<profile>`
       devShells = forAllSystems (system:
-        let pkgs = pkgsFor system;
-        in {
-          default = pkgs.mkShell {
-            name     = "riksarkivet-dev";
-            packages = toolset pkgs;
-          };
-        });
+        let
+          pkgs = pkgsFor system;
+          shells = builtins.mapAttrs
+            (name: tools: pkgs.mkShell {
+              name     = "riksarkivet-${name}";
+              packages = tools;
+            })
+            (profiles pkgs);
+        in
+        shells // { default = shells.dev; });
     };
 }
