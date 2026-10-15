@@ -1,14 +1,14 @@
 ---
-display_name: GPU + Ollama
-description: GPU workspace with a local LLM served by Ollama and OpenCode preconfigured
+display_name: RA-CODE
+description: GPU workspace with a local LLM (Ollama) and RA-CODE (OpenCode) preconfigured
 icon: /emojis/1f999.png
 tags: [kubernetes, gpu, llm, ollama, opencode]
 ---
 
-# GPU + Ollama
+# RA-CODE
 
 The `gpu` template (Kubernetes Deployment, optional GPU, NFS home volume)
-plus a local LLM:
+plus a local coding assistant:
 
 - **Ollama** runs inside the workspace on the selected GPU. An init container
   copies the binary and its CUDA libraries from the official multi-arch
@@ -17,10 +17,12 @@ plus a local LLM:
   workspace creation, changeable later. It is pulled at every start into an
   `emptyDir` on the node's local disk (`/opt/llm`), never onto the NFS home
   volume, so it downloads again after a restart.
-- **OpenCode** is installed in `~/.local/bin` at a pinned version and
-  configured with an `ollama` provider listing the models on the server, with
-  the selected one as default. Open it from the *OpenCode* app or run
-  `opencode` in a terminal.
+- **RA-CODE** is OpenCode, installed in `~/.local/bin` at a pinned version
+  and launched as `ra-code` (terminal) or from the *RA-CODE* app. It is
+  configured with only the local `ollama` provider: OpenCode's built-in free
+  cloud models, self-update checks and session sharing are disabled. The
+  config is written before the model download starts, so it is correct even
+  if RA-CODE is opened while the model is still being pulled.
 
 The context window (`OLLAMA_CONTEXT_LENGTH`) defaults to 64K, the minimum
 OpenCode needs. Larger windows cost GPU memory on top of the model size shown
@@ -35,5 +37,6 @@ registry.ollama.ai and which GPUs they fit (A5000 24 GB, 6000 Ada 48 GB,
 
 ## Logs
 
-- Setup: the *Ollama + OpenCode* script log in the Coder UI
+- Setup: the *RA-CODE (Ollama + OpenCode)* script log in the Coder UI
+- Model download: `/opt/llm/pull.log`
 - Server: `/opt/llm/serve.log`

@@ -335,7 +335,7 @@ resource "coder_agent" "main" {
 
 resource "coder_script" "ollama_setup" {
   agent_id           = coder_agent.main.id
-  display_name       = "Ollama + OpenCode"
+  display_name       = "RA-CODE (Ollama + OpenCode)"
   icon               = "/emojis/1f999.png"
   log_path           = "ollama_setup.log"
   run_on_start       = true
@@ -347,12 +347,12 @@ resource "coder_script" "ollama_setup" {
   })
 }
 
-resource "coder_app" "opencode" {
+resource "coder_app" "ra_code" {
   agent_id     = coder_agent.main.id
-  slug         = "opencode"
-  display_name = "OpenCode"
+  slug         = "ra-code"
+  display_name = "RA-CODE"
   icon         = "/icon/opencode.svg"
-  command      = "opencode"
+  command      = "ra-code"
   order        = 1
 }
 

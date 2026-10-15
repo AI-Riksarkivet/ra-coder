@@ -51,6 +51,12 @@ if [ "$("$HOME/.local/bin/opencode" --version 2>/dev/null || true)" != "$OPENCOD
   install -m 755 "$TMP/opencode" "$HOME/.local/bin/opencode"
   rm -rf "$TMP"
 fi
+# RA-CODE: the name users launch it by (the Coder app and the terminal).
+cat >"$HOME/.local/bin/ra-code" <<'WRAPPER'
+#!/bin/sh
+exec "$HOME/.local/bin/opencode" "$@"
+WRAPPER
+chmod 755 "$HOME/.local/bin/ra-code"
 
 # --- OpenCode config, written before the pull so it is right from the start ---
 # Only the local Ollama provider: the built-in "opencode" provider (its free
@@ -82,12 +88,14 @@ if [ -n "$MODEL" ]; then
   echo "Pulling $MODEL (re-downloaded on every workspace start)..."
   # The API stream instead of `ollama pull`, whose spinner floods the log.
   curl -sfN "$API/api/pull" -d "{\"model\": \"$MODEL\"}" |
-    jq -r --unbuffered '
-      if .error then "ERROR: " + .error
-      elif .total and .completed then "\(.status) \(.completed * 100 / .total | floor)%"
-      else .status end' |
-    awk '$0 != last { print; fflush(); last = $0 }' |
-    tee "$LLM_DIR/pull.log" | grep -v '%$' || true
+    jq -rn --unbuffered '
+      foreach inputs as $e ({};
+        .line = (if $e.error then "ERROR: " + $e.error
+                 elif $e.total and $e.completed then "\($e.status) \($e.completed * 100 / $e.total | floor)%"
+                 else $e.status end)
+        | .new = (.line != .last) | .last = .line;
+        select(.new) | .line)' |
+    tee "$LLM_DIR/pull.log" | grep --line-buffered -v '%$' || true
   grep -q '^success$' "$LLM_DIR/pull.log" || { echo "ERROR: pulling $MODEL failed"; exit 1; }
 
   echo "Loading $MODEL into GPU memory..."
@@ -95,4 +103,4 @@ if [ -n "$MODEL" ]; then
   curl -sf "$API/api/ps" | jq -r '.models[] | "Loaded \(.name): \(.size_vram * 100 / .size | floor)% on GPU, context \(.context_length)"'
 fi
 
-echo "Ready. Run 'opencode' (default model: ollama/$${MODEL:-none})."
+echo "Ready. Run 'ra-code' (default model: ollama/$${MODEL:-none})."
