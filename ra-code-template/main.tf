@@ -45,9 +45,10 @@ locals {
     local.has_gpu ? { "nvidia.com/gpu" = "1" } : {}
   )
 
-  # Ollama is copied out of the official multi-arch image by an init
+  # Ollama is copied out of the official multi-arch image (via the Harbor
+  # Docker Hub proxy, as the registry policy requires) by an init
   # container; bump together with opencode when upgrading.
-  ollama_image     = "ollama/ollama:0.40.4"
+  ollama_image     = "harbor.ra.se/cache-dockerhub/ollama/ollama:0.40.4"
   opencode_version = "1.19.0"
 
   # Model catalog for the model parameter. Sizes are the download size from
@@ -456,7 +457,14 @@ resource "kubernetes_deployment_v1" "main" {
           name              = "ollama-install"
           image             = local.ollama_image
           image_pull_policy = "IfNotPresent"
-          command           = ["sh", "-c", "rm -rf /opt/llm/ollama && mkdir -p /opt/llm/ollama/bin /opt/llm/ollama/lib /opt/llm/models && cp /usr/bin/ollama /opt/llm/ollama/bin/ && cp -r /usr/lib/ollama /opt/llm/ollama/lib/"]
+          security_context {
+            read_only_root_filesystem  = true
+            allow_privilege_escalation = false
+            capabilities {
+              drop = ["ALL"]
+            }
+          }
+          command = ["sh", "-c", "rm -rf /opt/llm/ollama && mkdir -p /opt/llm/ollama/bin /opt/llm/ollama/lib /opt/llm/models && cp /usr/bin/ollama /opt/llm/ollama/bin/ && cp -r /usr/lib/ollama /opt/llm/ollama/lib/"]
           resources {
             requests = {
               "cpu"    = "100m"
@@ -475,7 +483,7 @@ resource "kubernetes_deployment_v1" "main" {
 
         container {
           name              = "dev"
-          image             = "codercom/example-base:ubuntu"
+          image             = "harbor.ra.se/cache-dockerhub/codercom/example-base:ubuntu"
           image_pull_policy = "Always"
           command           = ["sh", "-c", coder_agent.main.init_script]
           env {
