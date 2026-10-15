@@ -52,9 +52,12 @@ if [ "$("$HOME/.local/bin/opencode" --version 2>/dev/null || true)" != "$OPENCOD
   rm -rf "$TMP"
 fi
 # RA-CODE: the name users launch it by (the Coder app and the terminal).
+# OpenCode hardcodes "OpenCode" as the terminal title, so the launcher turns
+# that off and sets its own.
 cat >"$HOME/.local/bin/ra-code" <<'WRAPPER'
 #!/bin/sh
-exec "$HOME/.local/bin/opencode" "$@"
+[ -t 1 ] && printf '\033]0;RA-CODE\007'
+OPENCODE_DISABLE_TERMINAL_TITLE=1 exec "$HOME/.local/bin/opencode" "$@"
 WRAPPER
 chmod 755 "$HOME/.local/bin/ra-code"
 
@@ -83,6 +86,18 @@ jq --argjson local "$LOCAL_MODELS" --arg default "$MODEL" --argjson ctx "$CONTEX
   | if $default != "" then .model = "ollama/" + $default else del(.model) end
 ' "$CONFIG" >"$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
 
+# RA-CODE logo on the TUI home screen (a TUI plugin, registered in tui.json
+# next to any plugins the user added).
+BRANDING="$CONFIG_DIR/ra-code/branding.tsx"
+mkdir -p "$CONFIG_DIR/ra-code"
+echo "${branding_b64}" | base64 -d >"$BRANDING"
+TUI_CONFIG="$CONFIG_DIR/tui.json"
+[ -s "$TUI_CONFIG" ] || echo '{}' >"$TUI_CONFIG"
+jq --arg spec "file://$BRANDING" '
+  ."$schema" = "https://opencode.ai/tui.json"
+  | .plugin = (((.plugin // []) - [$spec]) + [$spec])
+' "$TUI_CONFIG" >"$TUI_CONFIG.tmp" && mv "$TUI_CONFIG.tmp" "$TUI_CONFIG"
+
 # --- Pull and preload the selected model ---
 if [ -n "$MODEL" ]; then
   echo "Pulling $MODEL (re-downloaded on every workspace start)..."
@@ -103,4 +118,8 @@ if [ -n "$MODEL" ]; then
   curl -sf "$API/api/ps" | jq -r '.models[] | "Loaded \(.name): \(.size_vram * 100 / .size | floor)% on GPU, context \(.context_length)"'
 fi
 
-echo "Ready. Run 'ra-code' (default model: ollama/$${MODEL:-none})."
+if [ -n "$MODEL" ]; then
+  echo "Ready. Run 'ra-code' (default model: ollama/$MODEL)."
+else
+  echo "Ready. No model selected: 'ollama pull <model>', then pick it in ra-code."
+fi

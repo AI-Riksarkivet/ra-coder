@@ -345,6 +345,7 @@ resource "coder_script" "ollama_setup" {
     model            = local.model
     context_length   = data.coder_parameter.context_length.value
     opencode_version = local.opencode_version
+    branding_b64     = base64encode(file("${path.module}/scripts/ra-code-branding.tsx"))
   })
 }
 

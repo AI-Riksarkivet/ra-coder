@@ -23,6 +23,10 @@ plus a local coding assistant:
   cloud models, self-update checks and session sharing are disabled. The
   config is written before the model download starts, so it is correct even
   if RA-CODE is opened while the model is still being pulled.
+- **Branding**: a small TUI plugin (`scripts/ra-code-branding.tsx`, installed
+  to `~/.config/opencode/ra-code/` and registered in `tui.json`) replaces the
+  OpenCode logo on the home screen with RA-CODE, and the `ra-code` launcher
+  sets the terminal title to RA-CODE.
 
 The context window (`OLLAMA_CONTEXT_LENGTH`) defaults to 64K, the minimum
 OpenCode needs. Larger windows cost GPU memory on top of the model size shown
