@@ -44,6 +44,110 @@ locals {
     },
     local.has_gpu ? { "nvidia.com/gpu" = "1" } : {}
   )
+
+  # Ollama is copied out of the official multi-arch image by an init
+  # container; bump together with opencode when upgrading.
+  ollama_image     = "ollama/ollama:0.40.4"
+  opencode_version = "1.19.0"
+
+  # Model catalog for the model parameter. Sizes are the download size from
+  # registry.ollama.ai; the GPU needs that plus a few GB for the context.
+  # VRAM: A5000 24 GB, 6000 Ada 48 GB, 6000 Blackwell 96 GB, GB10 128 GB shared.
+  ollama_models = [
+    { value = "gemma4:e4b", name = "Gemma 4 E4B", description = "6.6 GB - Google, vision + tools, fits every GPU (default)" },
+    { value = "gemma4:e2b", name = "Gemma 4 E2B", description = "4.6 GB - smallest Gemma 4, fits every GPU" },
+    { value = "gemma4:12b", name = "Gemma 4 12B", description = "8.0 GB - 256K context, fits every GPU" },
+    { value = "gemma4:26b", name = "Gemma 4 26B (MoE)", description = "18.7 GB - 4B active, fast; A5000 or larger" },
+    { value = "gemma4:31b", name = "Gemma 4 31B", description = "20.4 GB - strongest Gemma 4; 6000 Ada or larger" },
+    { value = "qwen3.8:27b", name = "Qwen 3.8 27B", description = "17.7 GB - coding/agentic, vision + thinking; A5000 or larger" },
+    { value = "muse-glimmer:30b", name = "Muse Glimmer 30B", description = "18.2 GB - Meta, built for local agents and tool use; A5000 or larger" },
+    { value = "north-mini-code-1.0", name = "North Mini Code 30B (MoE)", description = "18.6 GB - Cohere, agentic coding, 3B active; A5000 or larger" },
+    { value = "laguna-xs-2.1", name = "Laguna XS 2.1 33B (MoE)", description = "20.3 GB - agentic coding, 3B active; 6000 Ada or larger" },
+    { value = "ornith:9b", name = "Ornith 9B", description = "5.6 GB - agentic coding, fits every GPU" },
+    { value = "ornith:35b", name = "Ornith 35B", description = "21.2 GB - agentic coding; 6000 Ada or larger" },
+    { value = "nemotron-3.5-lightning:30b", name = "Nemotron 3.5 Lightning 30B (MoE)", description = "25.4 GB - NVIDIA, always-on agents, 3B active; 6000 Ada or larger" },
+    { value = "nemotron3:33b", name = "Nemotron 3 Nano Omni 33B", description = "27.6 GB - NVIDIA, text/image/audio/video; 6000 Ada or larger" },
+    { value = "granite4.2:8b", name = "Granite 4.2 8B", description = "5.3 GB - IBM, multilingual, tools + JSON, fits every GPU" },
+    { value = "granite4.2:30b", name = "Granite 4.2 30B", description = "17.7 GB - IBM, multilingual, tools + JSON; A5000 or larger" },
+    { value = "lfm2.5:8b", name = "LFM 2.5 8B (MoE)", description = "5.2 GB - Liquid AI, fast tool calling, fits every GPU" },
+    { value = "gpt-oss:20b", name = "gpt-oss 20B", description = "13.8 GB - OpenAI open weights, reasoning; fits every GPU" },
+    { value = "gpt-oss:120b", name = "gpt-oss 120B", description = "65.4 GB - OpenAI open weights; 6000 Blackwell or GB10 only" },
+    { value = "qwen3-coder:30b", name = "Qwen 3 Coder 30B (MoE)", description = "18.6 GB - long-context coding; A5000 or larger" },
+  ]
+
+  # "" = no model; "custom" = the free-text model parameter.
+  model = (
+    data.coder_parameter.ollama_model.value == "none" ? "" :
+    data.coder_parameter.ollama_model.value == "custom" ? trimspace(data.coder_parameter.custom_model[0].value) :
+    data.coder_parameter.ollama_model.value
+  )
+}
+
+data "coder_parameter" "ollama_model" {
+  name         = "ollama_model"
+  display_name = "Local model (Ollama)"
+  description  = "Pulled at every workspace start onto the node's local disk (never NFS) and set as OpenCode's default. Change it and restart to switch."
+  default      = "gemma4:e4b"
+  icon         = "/emojis/1f999.png"
+  mutable      = true
+  form_type    = "dropdown"
+  order        = 10
+
+  dynamic "option" {
+    for_each = local.ollama_models
+    content {
+      name        = option.value.name
+      value       = option.value.value
+      description = option.value.description
+    }
+  }
+  option {
+    name        = "Other (enter a name)"
+    value       = "custom"
+    description = "Any model from ollama.com/library"
+  }
+  option {
+    name        = "None"
+    value       = "none"
+    description = "Start Ollama and OpenCode without pulling a model"
+  }
+}
+
+data "coder_parameter" "custom_model" {
+  count        = data.coder_parameter.ollama_model.value == "custom" ? 1 : 0
+  name         = "custom_model"
+  display_name = "Model name"
+  description  = "Name and tag from ollama.com/library, e.g. qwen3.8:27b"
+  type         = "string"
+  default      = ""
+  mutable      = true
+  order        = 11
+  validation {
+    regex = "^[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9._-]+)?$"
+    error = "Use an Ollama model name such as gemma4:12b"
+  }
+}
+
+data "coder_parameter" "context_length" {
+  name         = "context_length"
+  display_name = "Context length"
+  description  = "Ollama context window. OpenCode needs at least 64K; larger windows use more GPU memory."
+  default      = "65536"
+  icon         = "/emojis/1f4cf.png"
+  mutable      = true
+  order        = 12
+  option {
+    name  = "32K"
+    value = "32768"
+  }
+  option {
+    name  = "64K"
+    value = "65536"
+  }
+  option {
+    name  = "128K"
+    value = "131072"
+  }
 }
 
 data "coder_parameter" "gpu_type" {
@@ -126,6 +230,10 @@ data "coder_parameter" "memory" {
   option {
     name  = "64 GB"
     value = "64"
+  }
+  option {
+    name  = "96 GB"
+    value = "96"
   }
 }
 
@@ -213,6 +321,39 @@ resource "coder_agent" "main" {
     interval = 60
     timeout  = 1
   }
+
+  metadata {
+    display_name = "Local Model"
+    key          = "7_local_model"
+    script       = <<-EOT
+      curl -sf http://127.0.0.1:11434/api/ps | jq -r '.models[0] // empty | "\(.name) \(.size_vram * 100 / .size | floor)% GPU"' | grep . || echo "not loaded"
+    EOT
+    interval     = 15
+    timeout      = 3
+  }
+}
+
+resource "coder_script" "ollama_setup" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Ollama + OpenCode"
+  icon               = "/emojis/1f999.png"
+  log_path           = "ollama_setup.log"
+  run_on_start       = true
+  start_blocks_login = false
+  script = templatefile("${path.module}/scripts/ollama_setup.sh", {
+    model            = local.model
+    context_length   = data.coder_parameter.context_length.value
+    opencode_version = local.opencode_version
+  })
+}
+
+resource "coder_app" "opencode" {
+  agent_id     = coder_agent.main.id
+  slug         = "opencode"
+  display_name = "OpenCode"
+  icon         = "/icon/opencode.svg"
+  command      = "opencode"
+  order        = 1
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "home" {
@@ -308,6 +449,30 @@ resource "kubernetes_deployment_v1" "main" {
           run_as_non_root = true
         }
 
+        # Copy ollama and its CUDA libraries into the node-local volume.
+        # The workspace image has no zstd for the upstream .tar.zst, and
+        # the official image is multi-arch (x86 nodes and the ARM GB10).
+        init_container {
+          name              = "ollama-install"
+          image             = local.ollama_image
+          image_pull_policy = "IfNotPresent"
+          command           = ["sh", "-c", "rm -rf /opt/llm/ollama && mkdir -p /opt/llm/ollama/bin /opt/llm/ollama/lib /opt/llm/models && cp /usr/bin/ollama /opt/llm/ollama/bin/ && cp -r /usr/lib/ollama /opt/llm/ollama/lib/"]
+          resources {
+            requests = {
+              "cpu"    = "100m"
+              "memory" = "128Mi"
+            }
+            limits = {
+              "cpu"    = "2"
+              "memory" = "1Gi"
+            }
+          }
+          volume_mount {
+            mount_path = "/opt/llm"
+            name       = "llm"
+          }
+        }
+
         container {
           name              = "dev"
           image             = "codercom/example-base:ubuntu"
@@ -321,6 +486,18 @@ resource "kubernetes_deployment_v1" "main" {
             name  = "NVIDIA_DRIVER_CAPABILITIES"
             value = "compute,utility"
           }
+          env {
+            name  = "PATH"
+            value = "/opt/llm/ollama/bin:/home/coder/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          }
+          env {
+            name  = "OLLAMA_MODELS"
+            value = "/opt/llm/models"
+          }
+          env {
+            name  = "OLLAMA_CONTEXT_LENGTH"
+            value = data.coder_parameter.context_length.value
+          }
           resources {
             requests = {
               "cpu"    = "250m"
@@ -332,6 +509,19 @@ resource "kubernetes_deployment_v1" "main" {
             mount_path = "/home/coder"
             name       = "home"
             read_only  = false
+          }
+          volume_mount {
+            mount_path = "/opt/llm"
+            name       = "llm"
+          }
+        }
+
+        # Ollama binary + models on the node's local disk, not NFS. Wiped
+        # when the pod goes away, so the model is pulled again on start.
+        volume {
+          name = "llm"
+          empty_dir {
+            size_limit = "200Gi"
           }
         }
 
