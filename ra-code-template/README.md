@@ -80,7 +80,9 @@ read text from an image for vision models. All loaded 100% on the GPU.
 | qwen3.5:122b | GB10 | ok | ok | read "RA-CODE TEST 42 17" for "4217" |
 
 Not tested: the 6000 Blackwell (no free GPU at the time) and the A5000 with
-the larger models (only gemma4:e4b was run there).
+the larger models (only gemma4:e4b was run there). `nemotron-3.5-super:120b`
+was added to the catalog 2026-10-16 (needs Ollama 0.40.5; a rule-4 exception,
+released the day before) and has not been through the end-to-end test yet.
 
 ## Logs
 

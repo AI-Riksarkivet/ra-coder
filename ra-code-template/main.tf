@@ -48,7 +48,7 @@ locals {
   # Ollama is copied out of the official multi-arch image (via the Harbor
   # Docker Hub proxy, as the registry policy requires) by an init
   # container; bump together with opencode when upgrading.
-  ollama_image     = "harbor.ra.se/cache-dockerhub/ollama/ollama:0.40.4"
+  ollama_image     = "harbor.ra.se/cache-dockerhub/ollama/ollama:0.40.5"
   opencode_version = "1.19.0"
 
   # Model catalog for the model parameter. Selection rules (see README):
@@ -80,6 +80,8 @@ locals {
     { value = "gpt-oss:120b", name = "gpt-oss 120B", description = "65.4 GB - OpenAI open weights, reasoning; 6000 Blackwell or GB10" },
     { value = "qwen3.5:122b", name = "Qwen 3.5 122B", description = "81.4 GB - Alibaba, largest Qwen 3.5; GB10 (tight on 6000 Blackwell)" },
     { value = "nemotron-3-super:120b", name = "Nemotron 3 Super 120B", description = "86.8 GB - NVIDIA, multi-agent work, 12B active; GB10 only" },
+    # Rule-4 exception: released 2026-10-15, pulls still ramping. Needs Ollama 0.40.5+.
+    { value = "nemotron-3.5-super:120b", name = "Nemotron 3.5 Super VL 120B", description = "90.2 GB - NVIDIA, vision + agentic coding, 12B active; GB10 only" },
   ]
 
   # "" = no model; "custom" = the free-text model parameter.
