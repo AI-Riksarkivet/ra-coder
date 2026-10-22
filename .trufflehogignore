@@ -1,0 +1,3 @@
+# Intentional dummy credentials for the ephemeral CI-test PostgreSQL
+# deployed by the Dagger pipeline (coder/coder, never leaves the test run).
+.dagger/build_pipeline.go
